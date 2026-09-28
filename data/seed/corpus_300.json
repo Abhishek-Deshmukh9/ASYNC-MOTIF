@@ -1,0 +1,4822 @@
+[
+  {
+    "id": "5939e8cb-0cf1-4655-93b1-e766018408c0",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0001",
+    "content": "Rating 1/5: Exporting CSV or Excel reports with more than 10,000 rows silently truncates the output file without throwing an error.",
+    "customer_id": "appstore_user_101",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-01T11:40:00+00:00",
+    "metadata": {
+      "rating": 1,
+      "platform": "android",
+      "version": "2.1.0"
+    }
+  },
+  {
+    "id": "fd039e42-7a24-45d6-8c9b-49e80c4e905d",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0002",
+    "content": "The mobile iOS app fails to sync offline changes made during transit, causing conflicting version overwrites when reconnected. This is creating daily frustration for our team.",
+    "customer_id": "appstore_user_102",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-01T13:47:00+00:00",
+    "metadata": {
+      "rating": 2,
+      "platform": "ios",
+      "version": "2.2.0"
+    }
+  },
+  {
+    "id": "58cec5a7-9e19-46d5-ad4c-c7dc133f7851",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0003",
+    "content": "Rating 3/5: Invoices generated in EUR are showing the USD symbol on receipt PDFs, causing compliance headaches with European accounting.",
+    "customer_id": "appstore_user_103",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-01T15:14:00+00:00",
+    "metadata": {
+      "rating": 3,
+      "platform": "android",
+      "version": "2.3.0"
+    }
+  },
+  {
+    "id": "e83ec2d1-d16b-4870-8532-721d084d541f",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0004",
+    "content": "Frustrating bug: When endpoint returns 503, Motif initiates an exponential retry storm without jitter, taking down our internal webhook receiver. Support ticket filed #REV-1004.",
+    "customer_id": "appstore_user_104",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-01T17:43:00+00:00",
+    "metadata": {
+      "rating": 1,
+      "platform": "ios",
+      "version": "2.4.0"
+    }
+  },
+  {
+    "id": "8dd2d292-fd80-4d0f-8766-95137eef0cfa",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0005",
+    "content": "Rating 3/5: Dark mode font contrast on secondary table headers is unreadable in bright sunlight.",
+    "customer_id": "appstore_user_105",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-01T19:02:00+00:00",
+    "metadata": {
+      "rating": 3,
+      "platform": "android",
+      "version": "2.0.0"
+    }
+  },
+  {
+    "id": "58e77a10-a941-47c2-a392-6da906d6adae",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0006",
+    "content": "Rating 1/5: Google Workspace SSO tokens expire after 20 minutes and force users to re-login in the middle of active editing sessions.",
+    "customer_id": "appstore_user_106",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-01T21:13:00+00:00",
+    "metadata": {
+      "rating": 1,
+      "platform": "ios",
+      "version": "2.1.0"
+    }
+  },
+  {
+    "id": "a10f73b4-86b7-4116-959f-606d3ea88ba2",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0007",
+    "content": "Frustrating bug: Exporting CSV or Excel reports with more than 10,000 rows silently truncates the output file without throwing an error. Support ticket filed #REV-1007.",
+    "customer_id": "appstore_user_107",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-01T23:35:00+00:00",
+    "metadata": {
+      "rating": 1,
+      "platform": "android",
+      "version": "2.2.0"
+    }
+  },
+  {
+    "id": "6b6bacdb-33fb-48a8-9717-b8c1bf73cdfa",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0008",
+    "content": "Love the overall vision, but the mobile ios app fails to sync offline changes made during transit, causing conflicting version overwrites when reconnected. makes it difficult to recommend.",
+    "customer_id": "appstore_user_108",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-02T01:14:00+00:00",
+    "metadata": {
+      "rating": 2,
+      "platform": "ios",
+      "version": "2.3.0"
+    }
+  },
+  {
+    "id": "21125570-0443-49cd-9b87-76b0cb78bd7b",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0009",
+    "content": "Invoices generated in EUR are showing the USD symbol on receipt PDFs, causing compliance headaches with European accounting. This is creating daily frustration for our team.",
+    "customer_id": "appstore_user_109",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-02T03:51:00+00:00",
+    "metadata": {
+      "rating": 3,
+      "platform": "android",
+      "version": "2.4.0"
+    }
+  },
+  {
+    "id": "c97809ea-d066-4121-84f8-2d558f1d10d4",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0010",
+    "content": "Love the overall vision, but when endpoint returns 503, motif initiates an exponential retry storm without jitter, taking down our internal webhook receiver. makes it difficult to recommend.",
+    "customer_id": "appstore_user_110",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-02T05:44:00+00:00",
+    "metadata": {
+      "rating": 2,
+      "platform": "ios",
+      "version": "2.0.0"
+    }
+  },
+  {
+    "id": "7fdfe569-3a6f-40f2-a7bb-ad00f4a0191a",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0011",
+    "content": "Dark mode font contrast on secondary table headers is unreadable in bright sunlight. This is creating daily frustration for our team.",
+    "customer_id": "appstore_user_111",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-02T07:17:00+00:00",
+    "metadata": {
+      "rating": 3,
+      "platform": "android",
+      "version": "2.1.0"
+    }
+  },
+  {
+    "id": "316a7ec2-4b70-466a-8617-bb57b431b22f",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0012",
+    "content": "Rating 2/5: Google Workspace SSO tokens expire after 20 minutes and force users to re-login in the middle of active editing sessions.",
+    "customer_id": "appstore_user_112",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-02T09:48:00+00:00",
+    "metadata": {
+      "rating": 2,
+      "platform": "ios",
+      "version": "2.2.0"
+    }
+  },
+  {
+    "id": "c3ad2f1a-9441-4c37-b9db-ac079812e930",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0013",
+    "content": "Rating 2/5: Exporting CSV or Excel reports with more than 10,000 rows silently truncates the output file without throwing an error.",
+    "customer_id": "appstore_user_113",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-02T11:05:00+00:00",
+    "metadata": {
+      "rating": 2,
+      "platform": "android",
+      "version": "2.3.0"
+    }
+  },
+  {
+    "id": "528a0954-e6ae-4e40-b752-3c93ec409749",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0014",
+    "content": "Love the overall vision, but the mobile ios app fails to sync offline changes made during transit, causing conflicting version overwrites when reconnected. makes it difficult to recommend.",
+    "customer_id": "appstore_user_114",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-02T13:22:00+00:00",
+    "metadata": {
+      "rating": 2,
+      "platform": "ios",
+      "version": "2.4.0"
+    }
+  },
+  {
+    "id": "7862fb4c-0949-4c4c-9852-582371fb4629",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0015",
+    "content": "Love the overall vision, but the mobile ios app fails to sync offline changes made during transit, causing conflicting version overwrites when reconnected. makes it difficult to recommend.",
+    "customer_id": "appstore_user_115",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-02T15:51:00+00:00",
+    "metadata": {
+      "rating": 3,
+      "platform": "android",
+      "version": "2.0.0"
+    }
+  },
+  {
+    "id": "6704870e-1239-43f9-9654-bb63cd16eb25",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0016",
+    "content": "Rating 2/5: When endpoint returns 503, Motif initiates an exponential retry storm without jitter, taking down our internal webhook receiver.",
+    "customer_id": "appstore_user_116",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-02T17:46:00+00:00",
+    "metadata": {
+      "rating": 2,
+      "platform": "ios",
+      "version": "2.1.0"
+    }
+  },
+  {
+    "id": "7b2584cc-a14f-4598-aca7-60fc43f4b76e",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0017",
+    "content": "Rating 4/5: Dark mode font contrast on secondary table headers is unreadable in bright sunlight.",
+    "customer_id": "appstore_user_117",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-02T19:59:00+00:00",
+    "metadata": {
+      "rating": 4,
+      "platform": "android",
+      "version": "2.2.0"
+    }
+  },
+  {
+    "id": "9318b501-f4a3-4c43-bdd0-367745fb3236",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0018",
+    "content": "Love the overall vision, but google workspace sso tokens expire after 20 minutes and force users to re-login in the middle of active editing sessions. makes it difficult to recommend.",
+    "customer_id": "appstore_user_118",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-02T21:35:00+00:00",
+    "metadata": {
+      "rating": 2,
+      "platform": "ios",
+      "version": "2.3.0"
+    }
+  },
+  {
+    "id": "33e09a7f-b6b5-473a-b4dd-fb08a465550e",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0019",
+    "content": "Rating 1/5: Exporting CSV or Excel reports with more than 10,000 rows silently truncates the output file without throwing an error.",
+    "customer_id": "appstore_user_119",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-02T23:36:00+00:00",
+    "metadata": {
+      "rating": 1,
+      "platform": "android",
+      "version": "2.4.0"
+    }
+  },
+  {
+    "id": "2dcb7fd6-573d-4d6b-8506-8f63df3b4b40",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0020",
+    "content": "Love the overall vision, but the mobile ios app fails to sync offline changes made during transit, causing conflicting version overwrites when reconnected. makes it difficult to recommend.",
+    "customer_id": "appstore_user_120",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-03T01:02:00+00:00",
+    "metadata": {
+      "rating": 1,
+      "platform": "ios",
+      "version": "2.0.0"
+    }
+  },
+  {
+    "id": "d939d79f-73a1-4046-98ac-90364d301fec",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0021",
+    "content": "Rating 3/5: Invoices generated in EUR are showing the USD symbol on receipt PDFs, causing compliance headaches with European accounting.",
+    "customer_id": "appstore_user_121",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-03T03:05:00+00:00",
+    "metadata": {
+      "rating": 3,
+      "platform": "android",
+      "version": "2.1.0"
+    }
+  },
+  {
+    "id": "f4987f7d-6f53-41d0-84a7-144c354fce1b",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0022",
+    "content": "Rating 3/5: Invoices generated in EUR are showing the USD symbol on receipt PDFs, causing compliance headaches with European accounting. Please fix this ASAP!",
+    "customer_id": "appstore_user_122",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-03T05:24:00+00:00",
+    "metadata": {
+      "rating": 2,
+      "platform": "ios",
+      "version": "2.2.0"
+    }
+  },
+  {
+    "id": "1fff7f69-6cff-483e-a51a-282c8a9dd0d2",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0023",
+    "content": "Dark mode font contrast on secondary table headers is unreadable in bright sunlight. This is creating daily frustration for our team.",
+    "customer_id": "appstore_user_123",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-03T07:29:00+00:00",
+    "metadata": {
+      "rating": 4,
+      "platform": "android",
+      "version": "2.3.0"
+    }
+  },
+  {
+    "id": "03302de4-b756-42dc-89ab-3cef289de248",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0024",
+    "content": "Google Workspace SSO tokens expire after 20 minutes and force users to re-login in the middle of active editing sessions. This is creating daily frustration for our team.",
+    "customer_id": "appstore_user_124",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-03T09:23:00+00:00",
+    "metadata": {
+      "rating": 2,
+      "platform": "ios",
+      "version": "2.4.0"
+    }
+  },
+  {
+    "id": "d1c3cbc8-080e-47e6-9833-ed772ce181aa",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0025",
+    "content": "Rating 2/5: Exporting CSV or Excel reports with more than 10,000 rows silently truncates the output file without throwing an error.",
+    "customer_id": "appstore_user_125",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-03T11:42:00+00:00",
+    "metadata": {
+      "rating": 2,
+      "platform": "android",
+      "version": "2.0.0"
+    }
+  },
+  {
+    "id": "ed9b753b-f3c5-4c86-a0e8-ed3ea2116802",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0026",
+    "content": "The mobile iOS app fails to sync offline changes made during transit, causing conflicting version overwrites when reconnected. This is creating daily frustration for our team.",
+    "customer_id": "appstore_user_126",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-03T13:38:00+00:00",
+    "metadata": {
+      "rating": 1,
+      "platform": "ios",
+      "version": "2.1.0"
+    }
+  },
+  {
+    "id": "a08a1505-59de-4b2d-92f7-cde7ebb871c4",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0027",
+    "content": "Frustrating bug: Invoices generated in EUR are showing the USD symbol on receipt PDFs, causing compliance headaches with European accounting. Support ticket filed #REV-1027.",
+    "customer_id": "appstore_user_127",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-03T15:10:00+00:00",
+    "metadata": {
+      "rating": 4,
+      "platform": "android",
+      "version": "2.2.0"
+    }
+  },
+  {
+    "id": "31901c91-cd74-4e37-ae99-630c0edb8b73",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0028",
+    "content": "Love the overall vision, but when endpoint returns 503, motif initiates an exponential retry storm without jitter, taking down our internal webhook receiver. makes it difficult to recommend.",
+    "customer_id": "appstore_user_128",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-03T17:17:00+00:00",
+    "metadata": {
+      "rating": 1,
+      "platform": "ios",
+      "version": "2.3.0"
+    }
+  },
+  {
+    "id": "d3fa3c6d-e35a-480f-b5ba-a12a6e526ad0",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0029",
+    "content": "Dark mode font contrast on secondary table headers is unreadable in bright sunlight. This is creating daily frustration for our team.",
+    "customer_id": "appstore_user_129",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-03T19:53:00+00:00",
+    "metadata": {
+      "rating": 3,
+      "platform": "android",
+      "version": "2.4.0"
+    }
+  },
+  {
+    "id": "1a925f6c-64d8-4cc4-91ee-012b3b6c1ef1",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0030",
+    "content": "Dark mode font contrast on secondary table headers is unreadable in bright sunlight. This is creating daily frustration for our team.",
+    "customer_id": "appstore_user_130",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-03T21:52:00+00:00",
+    "metadata": {
+      "rating": 1,
+      "platform": "ios",
+      "version": "2.0.0"
+    }
+  },
+  {
+    "id": "e4165915-6aba-46b2-9e5c-274da5330f15",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0031",
+    "content": "Frustrating bug: Exporting CSV or Excel reports with more than 10,000 rows silently truncates the output file without throwing an error. Support ticket filed #REV-1031.",
+    "customer_id": "appstore_user_131",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-03T23:51:00+00:00",
+    "metadata": {
+      "rating": 2,
+      "platform": "android",
+      "version": "2.1.0"
+    }
+  },
+  {
+    "id": "655ff0d2-7ddb-42bc-b6ae-da5ad3737cf6",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0032",
+    "content": "The mobile iOS app fails to sync offline changes made during transit, causing conflicting version overwrites when reconnected. This is creating daily frustration for our team.",
+    "customer_id": "appstore_user_132",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-04T01:17:00+00:00",
+    "metadata": {
+      "rating": 1,
+      "platform": "ios",
+      "version": "2.2.0"
+    }
+  },
+  {
+    "id": "ba23d032-ecfe-4d7a-8261-18d9f45a4daf",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0033",
+    "content": "Invoices generated in EUR are showing the USD symbol on receipt PDFs, causing compliance headaches with European accounting. This is creating daily frustration for our team.",
+    "customer_id": "appstore_user_133",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-04T03:58:00+00:00",
+    "metadata": {
+      "rating": 4,
+      "platform": "android",
+      "version": "2.3.0"
+    }
+  },
+  {
+    "id": "ed8c62a8-2a80-4fd8-9812-b2af395f7cd4",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0034",
+    "content": "Frustrating bug: When endpoint returns 503, Motif initiates an exponential retry storm without jitter, taking down our internal webhook receiver. Support ticket filed #REV-1034.",
+    "customer_id": "appstore_user_134",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-04T05:41:00+00:00",
+    "metadata": {
+      "rating": 2,
+      "platform": "ios",
+      "version": "2.4.0"
+    }
+  },
+  {
+    "id": "c79e29c2-babf-4304-8e07-aaaad398fa20",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0035",
+    "content": "Dark mode font contrast on secondary table headers is unreadable in bright sunlight. This is creating daily frustration for our team.",
+    "customer_id": "appstore_user_135",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-04T07:56:00+00:00",
+    "metadata": {
+      "rating": 4,
+      "platform": "android",
+      "version": "2.0.0"
+    }
+  },
+  {
+    "id": "3f67515e-9833-4f57-a0ef-e617c80a82be",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0036",
+    "content": "Google Workspace SSO tokens expire after 20 minutes and force users to re-login in the middle of active editing sessions. This is creating daily frustration for our team.",
+    "customer_id": "appstore_user_136",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-04T09:16:00+00:00",
+    "metadata": {
+      "rating": 1,
+      "platform": "ios",
+      "version": "2.1.0"
+    }
+  },
+  {
+    "id": "45691422-cc7d-4607-90ae-11862f98dcff",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0037",
+    "content": "Frustrating bug: Exporting CSV or Excel reports with more than 10,000 rows silently truncates the output file without throwing an error. Support ticket filed #REV-1037.",
+    "customer_id": "appstore_user_137",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-04T11:47:00+00:00",
+    "metadata": {
+      "rating": 2,
+      "platform": "android",
+      "version": "2.2.0"
+    }
+  },
+  {
+    "id": "58fc53ac-de72-4db4-b9b6-8acbb74ebdfa",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0038",
+    "content": "Love the overall vision, but the mobile ios app fails to sync offline changes made during transit, causing conflicting version overwrites when reconnected. makes it difficult to recommend.",
+    "customer_id": "appstore_user_138",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-04T13:57:00+00:00",
+    "metadata": {
+      "rating": 2,
+      "platform": "ios",
+      "version": "2.3.0"
+    }
+  },
+  {
+    "id": "6a1455b0-07aa-4a53-9cb0-6edd6b5a6121",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0039",
+    "content": "Frustrating bug: Invoices generated in EUR are showing the USD symbol on receipt PDFs, causing compliance headaches with European accounting. Support ticket filed #REV-1039.",
+    "customer_id": "appstore_user_139",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-04T15:14:00+00:00",
+    "metadata": {
+      "rating": 3,
+      "platform": "android",
+      "version": "2.4.0"
+    }
+  },
+  {
+    "id": "7b31d9e1-94c1-4e0a-800a-d85586ff1360",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0040",
+    "content": "Rating 1/5: When endpoint returns 503, Motif initiates an exponential retry storm without jitter, taking down our internal webhook receiver.",
+    "customer_id": "appstore_user_140",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-04T17:05:00+00:00",
+    "metadata": {
+      "rating": 1,
+      "platform": "ios",
+      "version": "2.0.0"
+    }
+  },
+  {
+    "id": "43858d35-243f-4dee-8a56-7bfc7e60df16",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0041",
+    "content": "Frustrating bug: Dark mode font contrast on secondary table headers is unreadable in bright sunlight. Support ticket filed #REV-1041.",
+    "customer_id": "appstore_user_141",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-04T19:09:00+00:00",
+    "metadata": {
+      "rating": 3,
+      "platform": "android",
+      "version": "2.1.0"
+    }
+  },
+  {
+    "id": "3976eebb-20ed-4b48-8b74-e22a2aa53fe3",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0042",
+    "content": "Frustrating bug: Google Workspace SSO tokens expire after 20 minutes and force users to re-login in the middle of active editing sessions. Support ticket filed #REV-1042.",
+    "customer_id": "appstore_user_142",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-04T21:38:00+00:00",
+    "metadata": {
+      "rating": 1,
+      "platform": "ios",
+      "version": "2.2.0"
+    }
+  },
+  {
+    "id": "2fca5f7c-7b8e-4af1-b775-5ba7ca13a0b5",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0043",
+    "content": "Love the overall vision, but exporting csv or excel reports with more than 10,000 rows silently truncates the output file without throwing an error. makes it difficult to recommend.",
+    "customer_id": "appstore_user_143",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-04T23:24:00+00:00",
+    "metadata": {
+      "rating": 2,
+      "platform": "android",
+      "version": "2.3.0"
+    }
+  },
+  {
+    "id": "733ed0de-16d5-40a9-b65d-528a16fb8b97",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0044",
+    "content": "Rating 1/5: The mobile iOS app fails to sync offline changes made during transit, causing conflicting version overwrites when reconnected.",
+    "customer_id": "appstore_user_144",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-05T01:35:00+00:00",
+    "metadata": {
+      "rating": 1,
+      "platform": "ios",
+      "version": "2.4.0"
+    }
+  },
+  {
+    "id": "c8ed7e1d-7f47-489e-99b8-ec6755ea8e90",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0045",
+    "content": "Rating 1/5: The mobile iOS app fails to sync offline changes made during transit, causing conflicting version overwrites when reconnected.",
+    "customer_id": "appstore_user_145",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-05T03:43:00+00:00",
+    "metadata": {
+      "rating": 4,
+      "platform": "android",
+      "version": "2.0.0"
+    }
+  },
+  {
+    "id": "a273d7a5-8627-4c5b-8713-f1cae39af1ab",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0046",
+    "content": "Rating 2/5: When endpoint returns 503, Motif initiates an exponential retry storm without jitter, taking down our internal webhook receiver.",
+    "customer_id": "appstore_user_146",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-05T05:49:00+00:00",
+    "metadata": {
+      "rating": 2,
+      "platform": "ios",
+      "version": "2.1.0"
+    }
+  },
+  {
+    "id": "18ab6739-11f9-4aed-b805-ad2302296f4c",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0047",
+    "content": "Dark mode font contrast on secondary table headers is unreadable in bright sunlight. This is creating daily frustration for our team.",
+    "customer_id": "appstore_user_147",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-05T07:18:00+00:00",
+    "metadata": {
+      "rating": 4,
+      "platform": "android",
+      "version": "2.2.0"
+    }
+  },
+  {
+    "id": "b12b8fb6-43a9-4a3e-abf4-5ce0c56b5b90",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0048",
+    "content": "Love the overall vision, but google workspace sso tokens expire after 20 minutes and force users to re-login in the middle of active editing sessions. makes it difficult to recommend.",
+    "customer_id": "appstore_user_148",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-05T09:29:00+00:00",
+    "metadata": {
+      "rating": 1,
+      "platform": "ios",
+      "version": "2.3.0"
+    }
+  },
+  {
+    "id": "03aff11d-d207-442b-929d-eb3594d28725",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0049",
+    "content": "Rating 1/5: Exporting CSV or Excel reports with more than 10,000 rows silently truncates the output file without throwing an error.",
+    "customer_id": "appstore_user_149",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-05T11:32:00+00:00",
+    "metadata": {
+      "rating": 1,
+      "platform": "android",
+      "version": "2.4.0"
+    }
+  },
+  {
+    "id": "7cf7da03-a307-4bd3-9b94-8a50cb7ca87f",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0050",
+    "content": "The mobile iOS app fails to sync offline changes made during transit, causing conflicting version overwrites when reconnected. This is creating daily frustration for our team.",
+    "customer_id": "appstore_user_100",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-05T13:55:00+00:00",
+    "metadata": {
+      "rating": 2,
+      "platform": "ios",
+      "version": "2.0.0"
+    }
+  },
+  {
+    "id": "71742042-0c66-478d-9586-c9e6e9581fcc",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0051",
+    "content": "Invoices generated in EUR are showing the USD symbol on receipt PDFs, causing compliance headaches with European accounting. This is creating daily frustration for our team.",
+    "customer_id": "appstore_user_101",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-05T15:09:00+00:00",
+    "metadata": {
+      "rating": 4,
+      "platform": "android",
+      "version": "2.1.0"
+    }
+  },
+  {
+    "id": "f4b83ebf-cbbf-4aa8-9d48-d0982b0fb00e",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0052",
+    "content": "Love the overall vision, but when endpoint returns 503, motif initiates an exponential retry storm without jitter, taking down our internal webhook receiver. makes it difficult to recommend.",
+    "customer_id": "appstore_user_102",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-05T17:34:00+00:00",
+    "metadata": {
+      "rating": 1,
+      "platform": "ios",
+      "version": "2.2.0"
+    }
+  },
+  {
+    "id": "420177ec-9206-48d4-ac04-02d4985380ae",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0053",
+    "content": "Rating 3/5: Dark mode font contrast on secondary table headers is unreadable in bright sunlight.",
+    "customer_id": "appstore_user_103",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-05T19:31:00+00:00",
+    "metadata": {
+      "rating": 3,
+      "platform": "android",
+      "version": "2.3.0"
+    }
+  },
+  {
+    "id": "bed85139-48d5-4013-b35d-576a1dfcc3ae",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0054",
+    "content": "Love the overall vision, but google workspace sso tokens expire after 20 minutes and force users to re-login in the middle of active editing sessions. makes it difficult to recommend.",
+    "customer_id": "appstore_user_104",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-05T21:59:00+00:00",
+    "metadata": {
+      "rating": 2,
+      "platform": "ios",
+      "version": "2.4.0"
+    }
+  },
+  {
+    "id": "19b39285-2908-48be-9ef6-c84c7a2516bf",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0055",
+    "content": "Love the overall vision, but google workspace sso tokens expire after 20 minutes and force users to re-login in the middle of active editing sessions. makes it difficult to recommend. Please fix this ASAP!",
+    "customer_id": "appstore_user_105",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-05T23:15:00+00:00",
+    "metadata": {
+      "rating": 1,
+      "platform": "android",
+      "version": "2.0.0"
+    }
+  },
+  {
+    "id": "84d0aa6f-58e7-4898-8d04-272fd4f1d05c",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0056",
+    "content": "Rating 1/5: The mobile iOS app fails to sync offline changes made during transit, causing conflicting version overwrites when reconnected.",
+    "customer_id": "appstore_user_106",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-06T01:15:00+00:00",
+    "metadata": {
+      "rating": 1,
+      "platform": "ios",
+      "version": "2.1.0"
+    }
+  },
+  {
+    "id": "c7bdff1c-e869-4f3e-b827-657d32d18dcd",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0057",
+    "content": "Rating 4/5: Invoices generated in EUR are showing the USD symbol on receipt PDFs, causing compliance headaches with European accounting.",
+    "customer_id": "appstore_user_107",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-06T03:46:00+00:00",
+    "metadata": {
+      "rating": 4,
+      "platform": "android",
+      "version": "2.2.0"
+    }
+  },
+  {
+    "id": "fa6bc718-468e-48c3-8845-4eb06028e1ac",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0058",
+    "content": "When endpoint returns 503, Motif initiates an exponential retry storm without jitter, taking down our internal webhook receiver. This is creating daily frustration for our team.",
+    "customer_id": "appstore_user_108",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-06T05:48:00+00:00",
+    "metadata": {
+      "rating": 1,
+      "platform": "ios",
+      "version": "2.3.0"
+    }
+  },
+  {
+    "id": "30c1a959-58dd-488a-bab1-cad812ee3b8e",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0059",
+    "content": "Dark mode font contrast on secondary table headers is unreadable in bright sunlight. This is creating daily frustration for our team.",
+    "customer_id": "appstore_user_109",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-06T07:42:00+00:00",
+    "metadata": {
+      "rating": 4,
+      "platform": "android",
+      "version": "2.4.0"
+    }
+  },
+  {
+    "id": "f89025a6-5e64-4c79-93bc-13f696780c8c",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0060",
+    "content": "Dark mode font contrast on secondary table headers is unreadable in bright sunlight. This is creating daily frustration for our team.",
+    "customer_id": "appstore_user_110",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-06T09:16:00+00:00",
+    "metadata": {
+      "rating": 2,
+      "platform": "ios",
+      "version": "2.0.0"
+    }
+  },
+  {
+    "id": "e687602b-9e79-4840-b103-10fda4cc3031",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0061",
+    "content": "Love the overall vision, but exporting csv or excel reports with more than 10,000 rows silently truncates the output file without throwing an error. makes it difficult to recommend.",
+    "customer_id": "appstore_user_111",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-06T11:13:00+00:00",
+    "metadata": {
+      "rating": 1,
+      "platform": "android",
+      "version": "2.1.0"
+    }
+  },
+  {
+    "id": "03959669-e7c3-43ea-8355-3fb0424adbe4",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0062",
+    "content": "Frustrating bug: The mobile iOS app fails to sync offline changes made during transit, causing conflicting version overwrites when reconnected. Support ticket filed #REV-1062.",
+    "customer_id": "appstore_user_112",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-06T13:25:00+00:00",
+    "metadata": {
+      "rating": 2,
+      "platform": "ios",
+      "version": "2.2.0"
+    }
+  },
+  {
+    "id": "c0e7fa3a-50f4-48a8-bf14-323b231e68c2",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0063",
+    "content": "Rating 4/5: Invoices generated in EUR are showing the USD symbol on receipt PDFs, causing compliance headaches with European accounting.",
+    "customer_id": "appstore_user_113",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-06T15:57:00+00:00",
+    "metadata": {
+      "rating": 4,
+      "platform": "android",
+      "version": "2.3.0"
+    }
+  },
+  {
+    "id": "78035990-c1e9-4c1f-b1a5-d44d83760353",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0064",
+    "content": "Rating 1/5: When endpoint returns 503, Motif initiates an exponential retry storm without jitter, taking down our internal webhook receiver.",
+    "customer_id": "appstore_user_114",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-06T17:15:00+00:00",
+    "metadata": {
+      "rating": 1,
+      "platform": "ios",
+      "version": "2.4.0"
+    }
+  },
+  {
+    "id": "77968b0b-7ab7-414a-80ce-6920811977dd",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0065",
+    "content": "Dark mode font contrast on secondary table headers is unreadable in bright sunlight. This is creating daily frustration for our team.",
+    "customer_id": "appstore_user_115",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-06T19:21:00+00:00",
+    "metadata": {
+      "rating": 3,
+      "platform": "android",
+      "version": "2.0.0"
+    }
+  },
+  {
+    "id": "09299de4-239d-40c3-9a73-5c70aecde88f",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0066",
+    "content": "Rating 1/5: Google Workspace SSO tokens expire after 20 minutes and force users to re-login in the middle of active editing sessions.",
+    "customer_id": "appstore_user_116",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-06T21:37:00+00:00",
+    "metadata": {
+      "rating": 1,
+      "platform": "ios",
+      "version": "2.1.0"
+    }
+  },
+  {
+    "id": "a014870a-8b01-4388-8082-1f384a9f0eac",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0067",
+    "content": "Exporting CSV or Excel reports with more than 10,000 rows silently truncates the output file without throwing an error. This is creating daily frustration for our team.",
+    "customer_id": "appstore_user_117",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-06T23:04:00+00:00",
+    "metadata": {
+      "rating": 1,
+      "platform": "android",
+      "version": "2.2.0"
+    }
+  },
+  {
+    "id": "4039a321-91ef-47a3-b9d0-e6e01ea58ed6",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0068",
+    "content": "Love the overall vision, but the mobile ios app fails to sync offline changes made during transit, causing conflicting version overwrites when reconnected. makes it difficult to recommend.",
+    "customer_id": "appstore_user_118",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-07T01:04:00+00:00",
+    "metadata": {
+      "rating": 1,
+      "platform": "ios",
+      "version": "2.3.0"
+    }
+  },
+  {
+    "id": "43a4afe7-349a-47a7-81e8-1aeafd05ce66",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0069",
+    "content": "Love the overall vision, but invoices generated in eur are showing the usd symbol on receipt pdfs, causing compliance headaches with european accounting. makes it difficult to recommend.",
+    "customer_id": "appstore_user_119",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-07T03:04:00+00:00",
+    "metadata": {
+      "rating": 3,
+      "platform": "android",
+      "version": "2.4.0"
+    }
+  },
+  {
+    "id": "6c3a1a24-733b-4aa7-91e3-94113e49624b",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0070",
+    "content": "When endpoint returns 503, Motif initiates an exponential retry storm without jitter, taking down our internal webhook receiver. This is creating daily frustration for our team.",
+    "customer_id": "appstore_user_120",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-07T05:42:00+00:00",
+    "metadata": {
+      "rating": 2,
+      "platform": "ios",
+      "version": "2.0.0"
+    }
+  },
+  {
+    "id": "77dc7996-3e70-4256-a3eb-84a9c7f13840",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0071",
+    "content": "Frustrating bug: Dark mode font contrast on secondary table headers is unreadable in bright sunlight. Support ticket filed #REV-1071.",
+    "customer_id": "appstore_user_121",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-07T07:34:00+00:00",
+    "metadata": {
+      "rating": 3,
+      "platform": "android",
+      "version": "2.1.0"
+    }
+  },
+  {
+    "id": "dac792f5-0f53-47cb-812a-abd88a3c21bc",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0072",
+    "content": "Frustrating bug: Google Workspace SSO tokens expire after 20 minutes and force users to re-login in the middle of active editing sessions. Support ticket filed #REV-1072.",
+    "customer_id": "appstore_user_122",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-07T09:15:00+00:00",
+    "metadata": {
+      "rating": 2,
+      "platform": "ios",
+      "version": "2.2.0"
+    }
+  },
+  {
+    "id": "3e80f3f8-3e25-4401-99af-b3bfaee47f69",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0073",
+    "content": "Rating 1/5: Exporting CSV or Excel reports with more than 10,000 rows silently truncates the output file without throwing an error.",
+    "customer_id": "appstore_user_123",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-07T11:12:00+00:00",
+    "metadata": {
+      "rating": 1,
+      "platform": "android",
+      "version": "2.3.0"
+    }
+  },
+  {
+    "id": "3e778c94-6b01-4bc9-8d2f-2bed6c61fc3e",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0074",
+    "content": "Love the overall vision, but the mobile ios app fails to sync offline changes made during transit, causing conflicting version overwrites when reconnected. makes it difficult to recommend.",
+    "customer_id": "appstore_user_124",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-07T13:42:00+00:00",
+    "metadata": {
+      "rating": 2,
+      "platform": "ios",
+      "version": "2.4.0"
+    }
+  },
+  {
+    "id": "0ae64295-602d-469b-b6af-080c8e094ae9",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0075",
+    "content": "Love the overall vision, but the mobile ios app fails to sync offline changes made during transit, causing conflicting version overwrites when reconnected. makes it difficult to recommend.",
+    "customer_id": "appstore_user_125",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-07T15:27:00+00:00",
+    "metadata": {
+      "rating": 4,
+      "platform": "android",
+      "version": "2.0.0"
+    }
+  },
+  {
+    "id": "8ae69233-7747-4133-813b-4564febab0ac",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0076",
+    "content": "Rating 1/5: When endpoint returns 503, Motif initiates an exponential retry storm without jitter, taking down our internal webhook receiver.",
+    "customer_id": "appstore_user_126",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-07T17:29:00+00:00",
+    "metadata": {
+      "rating": 1,
+      "platform": "ios",
+      "version": "2.1.0"
+    }
+  },
+  {
+    "id": "5191b0de-01d5-478f-a9eb-b12912f52c07",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0077",
+    "content": "Love the overall vision, but dark mode font contrast on secondary table headers is unreadable in bright sunlight. makes it difficult to recommend.",
+    "customer_id": "appstore_user_127",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-07T19:03:00+00:00",
+    "metadata": {
+      "rating": 4,
+      "platform": "android",
+      "version": "2.2.0"
+    }
+  },
+  {
+    "id": "76aaf864-4a4a-4072-9f78-76f27ca093b4",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0078",
+    "content": "Google Workspace SSO tokens expire after 20 minutes and force users to re-login in the middle of active editing sessions. This is creating daily frustration for our team.",
+    "customer_id": "appstore_user_128",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-07T21:51:00+00:00",
+    "metadata": {
+      "rating": 1,
+      "platform": "ios",
+      "version": "2.3.0"
+    }
+  },
+  {
+    "id": "1f498393-157e-413e-97c5-db13fdc52a2b",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0079",
+    "content": "Frustrating bug: Exporting CSV or Excel reports with more than 10,000 rows silently truncates the output file without throwing an error. Support ticket filed #REV-1079.",
+    "customer_id": "appstore_user_129",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-07T23:12:00+00:00",
+    "metadata": {
+      "rating": 1,
+      "platform": "android",
+      "version": "2.4.0"
+    }
+  },
+  {
+    "id": "70f496e5-3e99-4efb-9a4e-a1be30145a7a",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0080",
+    "content": "The mobile iOS app fails to sync offline changes made during transit, causing conflicting version overwrites when reconnected. This is creating daily frustration for our team.",
+    "customer_id": "appstore_user_130",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-08T01:08:00+00:00",
+    "metadata": {
+      "rating": 2,
+      "platform": "ios",
+      "version": "2.0.0"
+    }
+  },
+  {
+    "id": "50b464ec-3cbe-415d-8046-f4c02cdadfb6",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0081",
+    "content": "Invoices generated in EUR are showing the USD symbol on receipt PDFs, causing compliance headaches with European accounting. This is creating daily frustration for our team.",
+    "customer_id": "appstore_user_131",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-08T03:17:00+00:00",
+    "metadata": {
+      "rating": 4,
+      "platform": "android",
+      "version": "2.1.0"
+    }
+  },
+  {
+    "id": "f82e506a-b233-49b6-a308-8acdc0389fd9",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0082",
+    "content": "Frustrating bug: When endpoint returns 503, Motif initiates an exponential retry storm without jitter, taking down our internal webhook receiver. Support ticket filed #REV-1082.",
+    "customer_id": "appstore_user_132",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-08T05:55:00+00:00",
+    "metadata": {
+      "rating": 1,
+      "platform": "ios",
+      "version": "2.2.0"
+    }
+  },
+  {
+    "id": "12775e9e-8bc0-4bb7-8003-d0541342c1a8",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0083",
+    "content": "Rating 3/5: Dark mode font contrast on secondary table headers is unreadable in bright sunlight.",
+    "customer_id": "appstore_user_133",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-08T07:51:00+00:00",
+    "metadata": {
+      "rating": 3,
+      "platform": "android",
+      "version": "2.3.0"
+    }
+  },
+  {
+    "id": "d2067e20-691c-4475-ae2f-06194c9ef91d",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0084",
+    "content": "Rating 1/5: Google Workspace SSO tokens expire after 20 minutes and force users to re-login in the middle of active editing sessions.",
+    "customer_id": "appstore_user_134",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-08T09:41:00+00:00",
+    "metadata": {
+      "rating": 1,
+      "platform": "ios",
+      "version": "2.4.0"
+    }
+  },
+  {
+    "id": "f4c5bdc2-ec96-4bfa-81c3-bebbb4120a08",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0085",
+    "content": "Exporting CSV or Excel reports with more than 10,000 rows silently truncates the output file without throwing an error. This is creating daily frustration for our team.",
+    "customer_id": "appstore_user_135",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-08T11:59:00+00:00",
+    "metadata": {
+      "rating": 1,
+      "platform": "android",
+      "version": "2.0.0"
+    }
+  },
+  {
+    "id": "0ed0d310-4039-4cec-a5da-0d14e40d7a13",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0086",
+    "content": "Frustrating bug: The mobile iOS app fails to sync offline changes made during transit, causing conflicting version overwrites when reconnected. Support ticket filed #REV-1086.",
+    "customer_id": "appstore_user_136",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-08T13:26:00+00:00",
+    "metadata": {
+      "rating": 2,
+      "platform": "ios",
+      "version": "2.1.0"
+    }
+  },
+  {
+    "id": "42852891-e3a9-42b2-bf38-837887260def",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0087",
+    "content": "Rating 4/5: Invoices generated in EUR are showing the USD symbol on receipt PDFs, causing compliance headaches with European accounting.",
+    "customer_id": "appstore_user_137",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-08T15:13:00+00:00",
+    "metadata": {
+      "rating": 4,
+      "platform": "android",
+      "version": "2.2.0"
+    }
+  },
+  {
+    "id": "1f3b8e31-28f3-46d8-9d1a-194f35f25e21",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0088",
+    "content": "Rating 4/5: Invoices generated in EUR are showing the USD symbol on receipt PDFs, causing compliance headaches with European accounting. Please fix this ASAP!",
+    "customer_id": "appstore_user_138",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-08T17:10:00+00:00",
+    "metadata": {
+      "rating": 2,
+      "platform": "ios",
+      "version": "2.3.0"
+    }
+  },
+  {
+    "id": "fb5beb66-64a3-4798-9f83-89342c2c20f0",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0089",
+    "content": "Love the overall vision, but dark mode font contrast on secondary table headers is unreadable in bright sunlight. makes it difficult to recommend.",
+    "customer_id": "appstore_user_139",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-08T19:00:00+00:00",
+    "metadata": {
+      "rating": 4,
+      "platform": "android",
+      "version": "2.4.0"
+    }
+  },
+  {
+    "id": "3184f076-7e21-4695-9768-a49d1f07c392",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0090",
+    "content": "Love the overall vision, but google workspace sso tokens expire after 20 minutes and force users to re-login in the middle of active editing sessions. makes it difficult to recommend.",
+    "customer_id": "appstore_user_140",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-08T21:59:00+00:00",
+    "metadata": {
+      "rating": 2,
+      "platform": "ios",
+      "version": "2.0.0"
+    }
+  },
+  {
+    "id": "a2786966-dcc8-4a64-9868-50f9ecdf4075",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0091",
+    "content": "Exporting CSV or Excel reports with more than 10,000 rows silently truncates the output file without throwing an error. This is creating daily frustration for our team.",
+    "customer_id": "appstore_user_141",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-08T23:27:00+00:00",
+    "metadata": {
+      "rating": 2,
+      "platform": "android",
+      "version": "2.1.0"
+    }
+  },
+  {
+    "id": "88b03948-895c-4cc5-b988-e4743033bfa1",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0092",
+    "content": "The mobile iOS app fails to sync offline changes made during transit, causing conflicting version overwrites when reconnected. This is creating daily frustration for our team.",
+    "customer_id": "appstore_user_142",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-09T01:12:00+00:00",
+    "metadata": {
+      "rating": 2,
+      "platform": "ios",
+      "version": "2.2.0"
+    }
+  },
+  {
+    "id": "38400cc3-4648-4696-8b47-262af9c411f4",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0093",
+    "content": "Love the overall vision, but invoices generated in eur are showing the usd symbol on receipt pdfs, causing compliance headaches with european accounting. makes it difficult to recommend.",
+    "customer_id": "appstore_user_143",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-09T03:03:00+00:00",
+    "metadata": {
+      "rating": 3,
+      "platform": "android",
+      "version": "2.3.0"
+    }
+  },
+  {
+    "id": "53fe4924-9035-4984-9cb5-2cc4ac3e3c0b",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0094",
+    "content": "Frustrating bug: When endpoint returns 503, Motif initiates an exponential retry storm without jitter, taking down our internal webhook receiver. Support ticket filed #REV-1094.",
+    "customer_id": "appstore_user_144",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-09T05:03:00+00:00",
+    "metadata": {
+      "rating": 1,
+      "platform": "ios",
+      "version": "2.4.0"
+    }
+  },
+  {
+    "id": "527538e4-d0e4-4b9b-a8b9-86cd2b8ff28d",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0095",
+    "content": "Rating 3/5: Dark mode font contrast on secondary table headers is unreadable in bright sunlight.",
+    "customer_id": "appstore_user_145",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-09T07:32:00+00:00",
+    "metadata": {
+      "rating": 3,
+      "platform": "android",
+      "version": "2.0.0"
+    }
+  },
+  {
+    "id": "ebb07ede-0994-4dd2-92e9-443cf720816d",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0096",
+    "content": "Google Workspace SSO tokens expire after 20 minutes and force users to re-login in the middle of active editing sessions. This is creating daily frustration for our team.",
+    "customer_id": "appstore_user_146",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-09T09:32:00+00:00",
+    "metadata": {
+      "rating": 1,
+      "platform": "ios",
+      "version": "2.1.0"
+    }
+  },
+  {
+    "id": "c580d3d8-63a2-4d82-9f32-53debb7e3523",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0097",
+    "content": "Exporting CSV or Excel reports with more than 10,000 rows silently truncates the output file without throwing an error. This is creating daily frustration for our team.",
+    "customer_id": "appstore_user_147",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-09T11:04:00+00:00",
+    "metadata": {
+      "rating": 1,
+      "platform": "android",
+      "version": "2.2.0"
+    }
+  },
+  {
+    "id": "def79ce6-0345-4faf-b400-cab4fdaa61ca",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0098",
+    "content": "The mobile iOS app fails to sync offline changes made during transit, causing conflicting version overwrites when reconnected. This is creating daily frustration for our team.",
+    "customer_id": "appstore_user_148",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-09T13:25:00+00:00",
+    "metadata": {
+      "rating": 1,
+      "platform": "ios",
+      "version": "2.3.0"
+    }
+  },
+  {
+    "id": "08aacec9-c314-483b-a01e-b302020fe2b9",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0099",
+    "content": "Rating 3/5: Invoices generated in EUR are showing the USD symbol on receipt PDFs, causing compliance headaches with European accounting.",
+    "customer_id": "appstore_user_149",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-09T15:37:00+00:00",
+    "metadata": {
+      "rating": 3,
+      "platform": "android",
+      "version": "2.4.0"
+    }
+  },
+  {
+    "id": "5756fc20-5793-4a20-8267-85b6c17788cd",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0100",
+    "content": "Love the overall vision, but when endpoint returns 503, motif initiates an exponential retry storm without jitter, taking down our internal webhook receiver. makes it difficult to recommend.",
+    "customer_id": "appstore_user_100",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-09T17:26:00+00:00",
+    "metadata": {
+      "rating": 2,
+      "platform": "ios",
+      "version": "2.0.0"
+    }
+  },
+  {
+    "id": "457ace13-48bf-4f26-843e-e81e4487ed9d",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0101",
+    "content": "Dark mode font contrast on secondary table headers is unreadable in bright sunlight. This is creating daily frustration for our team.",
+    "customer_id": "appstore_user_101",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-09T19:13:00+00:00",
+    "metadata": {
+      "rating": 4,
+      "platform": "android",
+      "version": "2.1.0"
+    }
+  },
+  {
+    "id": "2504625c-17f4-4f19-8b97-4b963390523c",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0102",
+    "content": "Google Workspace SSO tokens expire after 20 minutes and force users to re-login in the middle of active editing sessions. This is creating daily frustration for our team.",
+    "customer_id": "appstore_user_102",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-09T21:16:00+00:00",
+    "metadata": {
+      "rating": 2,
+      "platform": "ios",
+      "version": "2.2.0"
+    }
+  },
+  {
+    "id": "37995fd2-d0a6-406e-9d45-d2ae5300fbb6",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0103",
+    "content": "Frustrating bug: Exporting CSV or Excel reports with more than 10,000 rows silently truncates the output file without throwing an error. Support ticket filed #REV-1103.",
+    "customer_id": "appstore_user_103",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-09T23:42:00+00:00",
+    "metadata": {
+      "rating": 2,
+      "platform": "android",
+      "version": "2.3.0"
+    }
+  },
+  {
+    "id": "140ed492-2a93-42d2-bb3a-6229df351a69",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0104",
+    "content": "Rating 1/5: The mobile iOS app fails to sync offline changes made during transit, causing conflicting version overwrites when reconnected.",
+    "customer_id": "appstore_user_104",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-10T01:20:00+00:00",
+    "metadata": {
+      "rating": 1,
+      "platform": "ios",
+      "version": "2.4.0"
+    }
+  },
+  {
+    "id": "4d19bcf1-b663-4a35-8eff-2513a7c384ca",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0105",
+    "content": "Rating 3/5: Invoices generated in EUR are showing the USD symbol on receipt PDFs, causing compliance headaches with European accounting.",
+    "customer_id": "appstore_user_105",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-10T03:29:00+00:00",
+    "metadata": {
+      "rating": 3,
+      "platform": "android",
+      "version": "2.0.0"
+    }
+  },
+  {
+    "id": "315af185-6771-4a40-b4f1-2203fb8b8988",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0106",
+    "content": "Love the overall vision, but when endpoint returns 503, motif initiates an exponential retry storm without jitter, taking down our internal webhook receiver. makes it difficult to recommend.",
+    "customer_id": "appstore_user_106",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-10T05:34:00+00:00",
+    "metadata": {
+      "rating": 1,
+      "platform": "ios",
+      "version": "2.1.0"
+    }
+  },
+  {
+    "id": "2d64b76a-5511-4b34-a82e-30cfb127dd10",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0107",
+    "content": "Rating 4/5: Dark mode font contrast on secondary table headers is unreadable in bright sunlight.",
+    "customer_id": "appstore_user_107",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-10T07:08:00+00:00",
+    "metadata": {
+      "rating": 4,
+      "platform": "android",
+      "version": "2.2.0"
+    }
+  },
+  {
+    "id": "80422856-5812-4207-888e-da1bc8c81d47",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0108",
+    "content": "Love the overall vision, but google workspace sso tokens expire after 20 minutes and force users to re-login in the middle of active editing sessions. makes it difficult to recommend.",
+    "customer_id": "appstore_user_108",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-10T09:56:00+00:00",
+    "metadata": {
+      "rating": 1,
+      "platform": "ios",
+      "version": "2.3.0"
+    }
+  },
+  {
+    "id": "3bc24801-1c90-444e-a931-9fc958be05ec",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0109",
+    "content": "Frustrating bug: Exporting CSV or Excel reports with more than 10,000 rows silently truncates the output file without throwing an error. Support ticket filed #REV-1109.",
+    "customer_id": "appstore_user_109",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-10T11:18:00+00:00",
+    "metadata": {
+      "rating": 1,
+      "platform": "android",
+      "version": "2.4.0"
+    }
+  },
+  {
+    "id": "abd84a5a-3c9d-4ac5-8b93-50614243cfd8",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0110",
+    "content": "Rating 2/5: The mobile iOS app fails to sync offline changes made during transit, causing conflicting version overwrites when reconnected.",
+    "customer_id": "appstore_user_110",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-10T13:53:00+00:00",
+    "metadata": {
+      "rating": 2,
+      "platform": "ios",
+      "version": "2.0.0"
+    }
+  },
+  {
+    "id": "98cf1254-bffc-4c5c-a3b8-9b970aa353b7",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0111",
+    "content": "Rating 4/5: Invoices generated in EUR are showing the USD symbol on receipt PDFs, causing compliance headaches with European accounting.",
+    "customer_id": "appstore_user_111",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-10T15:42:00+00:00",
+    "metadata": {
+      "rating": 4,
+      "platform": "android",
+      "version": "2.1.0"
+    }
+  },
+  {
+    "id": "2daa6cd1-2bc2-4c01-b8cc-64cc1e606e1b",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0112",
+    "content": "Love the overall vision, but when endpoint returns 503, motif initiates an exponential retry storm without jitter, taking down our internal webhook receiver. makes it difficult to recommend.",
+    "customer_id": "appstore_user_112",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-10T17:56:00+00:00",
+    "metadata": {
+      "rating": 1,
+      "platform": "ios",
+      "version": "2.2.0"
+    }
+  },
+  {
+    "id": "de9d7e53-2e41-4e41-a38f-9624071465ba",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0113",
+    "content": "Dark mode font contrast on secondary table headers is unreadable in bright sunlight. This is creating daily frustration for our team.",
+    "customer_id": "appstore_user_113",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-10T19:07:00+00:00",
+    "metadata": {
+      "rating": 3,
+      "platform": "android",
+      "version": "2.3.0"
+    }
+  },
+  {
+    "id": "50da71fb-0252-46c5-8348-dcf9c6779934",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0114",
+    "content": "Google Workspace SSO tokens expire after 20 minutes and force users to re-login in the middle of active editing sessions. This is creating daily frustration for our team.",
+    "customer_id": "appstore_user_114",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-10T21:17:00+00:00",
+    "metadata": {
+      "rating": 2,
+      "platform": "ios",
+      "version": "2.4.0"
+    }
+  },
+  {
+    "id": "a7b40472-c670-4184-8efe-35f22edec4f4",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0115",
+    "content": "Exporting CSV or Excel reports with more than 10,000 rows silently truncates the output file without throwing an error. This is creating daily frustration for our team.",
+    "customer_id": "appstore_user_115",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-10T23:45:00+00:00",
+    "metadata": {
+      "rating": 2,
+      "platform": "android",
+      "version": "2.0.0"
+    }
+  },
+  {
+    "id": "082a5da8-b514-46fb-91e0-ad3b99799054",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0116",
+    "content": "Frustrating bug: The mobile iOS app fails to sync offline changes made during transit, causing conflicting version overwrites when reconnected. Support ticket filed #REV-1116.",
+    "customer_id": "appstore_user_116",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-11T01:43:00+00:00",
+    "metadata": {
+      "rating": 2,
+      "platform": "ios",
+      "version": "2.1.0"
+    }
+  },
+  {
+    "id": "7dcd0d02-7a23-409f-a40f-d1c12451d8c8",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0117",
+    "content": "Rating 3/5: Invoices generated in EUR are showing the USD symbol on receipt PDFs, causing compliance headaches with European accounting.",
+    "customer_id": "appstore_user_117",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-11T03:16:00+00:00",
+    "metadata": {
+      "rating": 3,
+      "platform": "android",
+      "version": "2.2.0"
+    }
+  },
+  {
+    "id": "38f3efc7-8e33-4d64-b47e-6ae4dad056dc",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0118",
+    "content": "Love the overall vision, but when endpoint returns 503, motif initiates an exponential retry storm without jitter, taking down our internal webhook receiver. makes it difficult to recommend.",
+    "customer_id": "appstore_user_118",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-11T05:40:00+00:00",
+    "metadata": {
+      "rating": 2,
+      "platform": "ios",
+      "version": "2.3.0"
+    }
+  },
+  {
+    "id": "876d0b82-278a-45f8-b9b3-2392a3b2a437",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0119",
+    "content": "Love the overall vision, but dark mode font contrast on secondary table headers is unreadable in bright sunlight. makes it difficult to recommend.",
+    "customer_id": "appstore_user_119",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-11T07:02:00+00:00",
+    "metadata": {
+      "rating": 3,
+      "platform": "android",
+      "version": "2.4.0"
+    }
+  },
+  {
+    "id": "cb981cf0-e36e-4958-9b80-c84234d3b0eb",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0120",
+    "content": "Love the overall vision, but dark mode font contrast on secondary table headers is unreadable in bright sunlight. makes it difficult to recommend. Please fix this ASAP!",
+    "customer_id": "appstore_user_120",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-11T09:49:00+00:00",
+    "metadata": {
+      "rating": 1,
+      "platform": "ios",
+      "version": "2.0.0"
+    }
+  },
+  {
+    "id": "9284cb9e-c529-48ec-b0e1-f8acafa43a32",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0121",
+    "content": "Exporting CSV or Excel reports with more than 10,000 rows silently truncates the output file without throwing an error. This is creating daily frustration for our team.",
+    "customer_id": "appstore_user_121",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-11T11:40:00+00:00",
+    "metadata": {
+      "rating": 2,
+      "platform": "android",
+      "version": "2.1.0"
+    }
+  },
+  {
+    "id": "eb13e25f-d80e-461e-9211-7b84e77e1020",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0122",
+    "content": "Frustrating bug: The mobile iOS app fails to sync offline changes made during transit, causing conflicting version overwrites when reconnected. Support ticket filed #REV-1122.",
+    "customer_id": "appstore_user_122",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-11T13:47:00+00:00",
+    "metadata": {
+      "rating": 2,
+      "platform": "ios",
+      "version": "2.2.0"
+    }
+  },
+  {
+    "id": "de05157f-c044-48ba-8b13-f16789cae4ba",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0123",
+    "content": "Rating 3/5: Invoices generated in EUR are showing the USD symbol on receipt PDFs, causing compliance headaches with European accounting.",
+    "customer_id": "appstore_user_123",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-11T15:35:00+00:00",
+    "metadata": {
+      "rating": 3,
+      "platform": "android",
+      "version": "2.3.0"
+    }
+  },
+  {
+    "id": "eed17b95-ee3d-48e8-ba7c-e51d0757cfc4",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0124",
+    "content": "Rating 1/5: When endpoint returns 503, Motif initiates an exponential retry storm without jitter, taking down our internal webhook receiver.",
+    "customer_id": "appstore_user_124",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-11T17:04:00+00:00",
+    "metadata": {
+      "rating": 1,
+      "platform": "ios",
+      "version": "2.4.0"
+    }
+  },
+  {
+    "id": "beb17c32-2b61-4f60-a6f3-8f738bfc799d",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0125",
+    "content": "Dark mode font contrast on secondary table headers is unreadable in bright sunlight. This is creating daily frustration for our team.",
+    "customer_id": "appstore_user_125",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-11T19:53:00+00:00",
+    "metadata": {
+      "rating": 4,
+      "platform": "android",
+      "version": "2.0.0"
+    }
+  },
+  {
+    "id": "c96ae718-debb-4601-86ef-44ca0ba5dffd",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0126",
+    "content": "Rating 1/5: Google Workspace SSO tokens expire after 20 minutes and force users to re-login in the middle of active editing sessions.",
+    "customer_id": "appstore_user_126",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-11T21:27:00+00:00",
+    "metadata": {
+      "rating": 1,
+      "platform": "ios",
+      "version": "2.1.0"
+    }
+  },
+  {
+    "id": "8933505a-0481-491f-8db8-83d711a8183b",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0127",
+    "content": "Rating 2/5: Exporting CSV or Excel reports with more than 10,000 rows silently truncates the output file without throwing an error.",
+    "customer_id": "appstore_user_127",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-11T23:19:00+00:00",
+    "metadata": {
+      "rating": 2,
+      "platform": "android",
+      "version": "2.2.0"
+    }
+  },
+  {
+    "id": "0283bf21-f6a0-4424-872f-82847baf6383",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0128",
+    "content": "The mobile iOS app fails to sync offline changes made during transit, causing conflicting version overwrites when reconnected. This is creating daily frustration for our team.",
+    "customer_id": "appstore_user_128",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-12T01:57:00+00:00",
+    "metadata": {
+      "rating": 2,
+      "platform": "ios",
+      "version": "2.3.0"
+    }
+  },
+  {
+    "id": "a924d21d-c72f-4c5b-9349-575e7d6f6509",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0129",
+    "content": "Rating 3/5: Invoices generated in EUR are showing the USD symbol on receipt PDFs, causing compliance headaches with European accounting.",
+    "customer_id": "appstore_user_129",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-12T03:43:00+00:00",
+    "metadata": {
+      "rating": 3,
+      "platform": "android",
+      "version": "2.4.0"
+    }
+  },
+  {
+    "id": "d1a6bbf6-7352-4098-8f53-7f3e90646355",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0130",
+    "content": "When endpoint returns 503, Motif initiates an exponential retry storm without jitter, taking down our internal webhook receiver. This is creating daily frustration for our team.",
+    "customer_id": "appstore_user_130",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-12T05:22:00+00:00",
+    "metadata": {
+      "rating": 2,
+      "platform": "ios",
+      "version": "2.0.0"
+    }
+  },
+  {
+    "id": "2b2cc3b0-aa8e-42b8-a8b9-6f7a4e1a3b72",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0131",
+    "content": "Dark mode font contrast on secondary table headers is unreadable in bright sunlight. This is creating daily frustration for our team.",
+    "customer_id": "appstore_user_131",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-12T07:59:00+00:00",
+    "metadata": {
+      "rating": 3,
+      "platform": "android",
+      "version": "2.1.0"
+    }
+  },
+  {
+    "id": "2651904c-e696-46c8-9dc9-e3a61b7c077c",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0132",
+    "content": "Frustrating bug: Google Workspace SSO tokens expire after 20 minutes and force users to re-login in the middle of active editing sessions. Support ticket filed #REV-1132.",
+    "customer_id": "appstore_user_132",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-12T09:51:00+00:00",
+    "metadata": {
+      "rating": 1,
+      "platform": "ios",
+      "version": "2.2.0"
+    }
+  },
+  {
+    "id": "233b4daa-8127-40fd-b34f-e422205ea98a",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0133",
+    "content": "Love the overall vision, but exporting csv or excel reports with more than 10,000 rows silently truncates the output file without throwing an error. makes it difficult to recommend.",
+    "customer_id": "appstore_user_133",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-12T11:01:00+00:00",
+    "metadata": {
+      "rating": 1,
+      "platform": "android",
+      "version": "2.3.0"
+    }
+  },
+  {
+    "id": "6898e696-29c5-4f30-9758-af969db7efd9",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0134",
+    "content": "The mobile iOS app fails to sync offline changes made during transit, causing conflicting version overwrites when reconnected. This is creating daily frustration for our team.",
+    "customer_id": "appstore_user_134",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-12T13:50:00+00:00",
+    "metadata": {
+      "rating": 2,
+      "platform": "ios",
+      "version": "2.4.0"
+    }
+  },
+  {
+    "id": "c402cea6-9cb9-4893-ab95-02ba1a301ddf",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0135",
+    "content": "Rating 3/5: Invoices generated in EUR are showing the USD symbol on receipt PDFs, causing compliance headaches with European accounting.",
+    "customer_id": "appstore_user_135",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-12T15:17:00+00:00",
+    "metadata": {
+      "rating": 3,
+      "platform": "android",
+      "version": "2.0.0"
+    }
+  },
+  {
+    "id": "aa3fb4ff-be6a-479e-86bd-3118ab4de039",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0136",
+    "content": "Frustrating bug: When endpoint returns 503, Motif initiates an exponential retry storm without jitter, taking down our internal webhook receiver. Support ticket filed #REV-1136.",
+    "customer_id": "appstore_user_136",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-12T17:24:00+00:00",
+    "metadata": {
+      "rating": 1,
+      "platform": "ios",
+      "version": "2.1.0"
+    }
+  },
+  {
+    "id": "bb0e468b-32a0-4fd4-8884-7f8c8c7900f7",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0137",
+    "content": "Frustrating bug: Dark mode font contrast on secondary table headers is unreadable in bright sunlight. Support ticket filed #REV-1137.",
+    "customer_id": "appstore_user_137",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-12T19:14:00+00:00",
+    "metadata": {
+      "rating": 3,
+      "platform": "android",
+      "version": "2.2.0"
+    }
+  },
+  {
+    "id": "bd77a8e5-c4b3-46e0-ba8b-00c3b09123ed",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0138",
+    "content": "Google Workspace SSO tokens expire after 20 minutes and force users to re-login in the middle of active editing sessions. This is creating daily frustration for our team.",
+    "customer_id": "appstore_user_138",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-12T21:22:00+00:00",
+    "metadata": {
+      "rating": 2,
+      "platform": "ios",
+      "version": "2.3.0"
+    }
+  },
+  {
+    "id": "28558446-8679-4c0e-8567-58c763f46f5a",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0139",
+    "content": "Exporting CSV or Excel reports with more than 10,000 rows silently truncates the output file without throwing an error. This is creating daily frustration for our team.",
+    "customer_id": "appstore_user_139",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-12T23:14:00+00:00",
+    "metadata": {
+      "rating": 1,
+      "platform": "android",
+      "version": "2.4.0"
+    }
+  },
+  {
+    "id": "a22fc353-9216-4a16-92d5-6629bfb88daf",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0140",
+    "content": "Love the overall vision, but the mobile ios app fails to sync offline changes made during transit, causing conflicting version overwrites when reconnected. makes it difficult to recommend.",
+    "customer_id": "appstore_user_140",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-13T01:25:00+00:00",
+    "metadata": {
+      "rating": 2,
+      "platform": "ios",
+      "version": "2.0.0"
+    }
+  },
+  {
+    "id": "46250900-a29f-40d6-aa93-914585b710a9",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0141",
+    "content": "Love the overall vision, but invoices generated in eur are showing the usd symbol on receipt pdfs, causing compliance headaches with european accounting. makes it difficult to recommend.",
+    "customer_id": "appstore_user_141",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-13T03:55:00+00:00",
+    "metadata": {
+      "rating": 3,
+      "platform": "android",
+      "version": "2.1.0"
+    }
+  },
+  {
+    "id": "48ff8eb7-c786-4ccf-8678-b77f9e389550",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0142",
+    "content": "Love the overall vision, but when endpoint returns 503, motif initiates an exponential retry storm without jitter, taking down our internal webhook receiver. makes it difficult to recommend.",
+    "customer_id": "appstore_user_142",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-13T05:22:00+00:00",
+    "metadata": {
+      "rating": 2,
+      "platform": "ios",
+      "version": "2.2.0"
+    }
+  },
+  {
+    "id": "e485bfdc-c400-4068-80f6-40d672aaa3c9",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0143",
+    "content": "Love the overall vision, but dark mode font contrast on secondary table headers is unreadable in bright sunlight. makes it difficult to recommend.",
+    "customer_id": "appstore_user_143",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-13T07:01:00+00:00",
+    "metadata": {
+      "rating": 3,
+      "platform": "android",
+      "version": "2.3.0"
+    }
+  },
+  {
+    "id": "97c13759-c62d-4aee-8a2f-f1f99e39ba2e",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0144",
+    "content": "Rating 2/5: Google Workspace SSO tokens expire after 20 minutes and force users to re-login in the middle of active editing sessions.",
+    "customer_id": "appstore_user_144",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-13T09:11:00+00:00",
+    "metadata": {
+      "rating": 2,
+      "platform": "ios",
+      "version": "2.4.0"
+    }
+  },
+  {
+    "id": "950df9a0-971a-47f0-8762-327f97370f79",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0145",
+    "content": "Love the overall vision, but exporting csv or excel reports with more than 10,000 rows silently truncates the output file without throwing an error. makes it difficult to recommend.",
+    "customer_id": "appstore_user_145",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-13T11:06:00+00:00",
+    "metadata": {
+      "rating": 2,
+      "platform": "android",
+      "version": "2.0.0"
+    }
+  },
+  {
+    "id": "a3365b3c-7ae9-4c57-97bd-e732856ad686",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0146",
+    "content": "Frustrating bug: The mobile iOS app fails to sync offline changes made during transit, causing conflicting version overwrites when reconnected. Support ticket filed #REV-1146.",
+    "customer_id": "appstore_user_146",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-13T13:46:00+00:00",
+    "metadata": {
+      "rating": 2,
+      "platform": "ios",
+      "version": "2.1.0"
+    }
+  },
+  {
+    "id": "7b21ed3f-e156-4029-a5df-a346acf84e78",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0147",
+    "content": "Frustrating bug: Invoices generated in EUR are showing the USD symbol on receipt PDFs, causing compliance headaches with European accounting. Support ticket filed #REV-1147.",
+    "customer_id": "appstore_user_147",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-13T15:38:00+00:00",
+    "metadata": {
+      "rating": 3,
+      "platform": "android",
+      "version": "2.2.0"
+    }
+  },
+  {
+    "id": "d9256c22-3d75-4cab-b74d-330b9214f041",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0148",
+    "content": "Love the overall vision, but when endpoint returns 503, motif initiates an exponential retry storm without jitter, taking down our internal webhook receiver. makes it difficult to recommend.",
+    "customer_id": "appstore_user_148",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-13T17:57:00+00:00",
+    "metadata": {
+      "rating": 1,
+      "platform": "ios",
+      "version": "2.3.0"
+    }
+  },
+  {
+    "id": "6baa7c8a-5340-49e6-b2d0-5a891d7fb64c",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0149",
+    "content": "Rating 4/5: Dark mode font contrast on secondary table headers is unreadable in bright sunlight.",
+    "customer_id": "appstore_user_149",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-13T19:02:00+00:00",
+    "metadata": {
+      "rating": 4,
+      "platform": "android",
+      "version": "2.4.0"
+    }
+  },
+  {
+    "id": "576f3b6b-f701-4110-bbe7-df993ecc5cb2",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0150",
+    "content": "Love the overall vision, but google workspace sso tokens expire after 20 minutes and force users to re-login in the middle of active editing sessions. makes it difficult to recommend.",
+    "customer_id": "appstore_user_100",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-13T21:33:00+00:00",
+    "metadata": {
+      "rating": 1,
+      "platform": "ios",
+      "version": "2.0.0"
+    }
+  },
+  {
+    "id": "99ca7ea9-4a1f-4c16-b3d8-ca5253c2757c",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0151",
+    "content": "Love the overall vision, but exporting csv or excel reports with more than 10,000 rows silently truncates the output file without throwing an error. makes it difficult to recommend.",
+    "customer_id": "appstore_user_101",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-13T23:27:00+00:00",
+    "metadata": {
+      "rating": 1,
+      "platform": "android",
+      "version": "2.1.0"
+    }
+  },
+  {
+    "id": "dd1ae90f-b074-45db-bf04-95db3c6b88cb",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0152",
+    "content": "Rating 2/5: The mobile iOS app fails to sync offline changes made during transit, causing conflicting version overwrites when reconnected.",
+    "customer_id": "appstore_user_102",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-14T01:39:00+00:00",
+    "metadata": {
+      "rating": 2,
+      "platform": "ios",
+      "version": "2.2.0"
+    }
+  },
+  {
+    "id": "07d9a9cc-7a13-46e4-8367-81977b525739",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0153",
+    "content": "Love the overall vision, but invoices generated in eur are showing the usd symbol on receipt pdfs, causing compliance headaches with european accounting. makes it difficult to recommend.",
+    "customer_id": "appstore_user_103",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-14T03:46:00+00:00",
+    "metadata": {
+      "rating": 4,
+      "platform": "android",
+      "version": "2.3.0"
+    }
+  },
+  {
+    "id": "c170d3a9-1170-443c-a0eb-05c2b64f958e",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0154",
+    "content": "Love the overall vision, but when endpoint returns 503, motif initiates an exponential retry storm without jitter, taking down our internal webhook receiver. makes it difficult to recommend.",
+    "customer_id": "appstore_user_104",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-14T05:42:00+00:00",
+    "metadata": {
+      "rating": 2,
+      "platform": "ios",
+      "version": "2.4.0"
+    }
+  },
+  {
+    "id": "4f540d9a-f362-48df-88a4-0b3b543a90bf",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0155",
+    "content": "Dark mode font contrast on secondary table headers is unreadable in bright sunlight. This is creating daily frustration for our team.",
+    "customer_id": "appstore_user_105",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-14T07:25:00+00:00",
+    "metadata": {
+      "rating": 4,
+      "platform": "android",
+      "version": "2.0.0"
+    }
+  },
+  {
+    "id": "24283799-8303-4345-a558-a10c4f96e54a",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0156",
+    "content": "Frustrating bug: Google Workspace SSO tokens expire after 20 minutes and force users to re-login in the middle of active editing sessions. Support ticket filed #REV-1156.",
+    "customer_id": "appstore_user_106",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-14T09:12:00+00:00",
+    "metadata": {
+      "rating": 2,
+      "platform": "ios",
+      "version": "2.1.0"
+    }
+  },
+  {
+    "id": "50952c7d-0eab-43e8-bc22-c0266dd0f5af",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0157",
+    "content": "Love the overall vision, but exporting csv or excel reports with more than 10,000 rows silently truncates the output file without throwing an error. makes it difficult to recommend.",
+    "customer_id": "appstore_user_107",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-14T11:43:00+00:00",
+    "metadata": {
+      "rating": 1,
+      "platform": "android",
+      "version": "2.2.0"
+    }
+  },
+  {
+    "id": "4d75b4b4-14f7-42d7-bdaf-1830d7bee2f6",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0158",
+    "content": "Love the overall vision, but the mobile ios app fails to sync offline changes made during transit, causing conflicting version overwrites when reconnected. makes it difficult to recommend.",
+    "customer_id": "appstore_user_108",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-14T13:25:00+00:00",
+    "metadata": {
+      "rating": 1,
+      "platform": "ios",
+      "version": "2.3.0"
+    }
+  },
+  {
+    "id": "82787c73-b2ed-4a41-9195-4141e017f433",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0159",
+    "content": "Frustrating bug: Invoices generated in EUR are showing the USD symbol on receipt PDFs, causing compliance headaches with European accounting. Support ticket filed #REV-1159.",
+    "customer_id": "appstore_user_109",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-14T15:18:00+00:00",
+    "metadata": {
+      "rating": 3,
+      "platform": "android",
+      "version": "2.4.0"
+    }
+  },
+  {
+    "id": "abbe5eb7-a7c0-41ca-8ddc-8b8594d785e9",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0160",
+    "content": "Frustrating bug: When endpoint returns 503, Motif initiates an exponential retry storm without jitter, taking down our internal webhook receiver. Support ticket filed #REV-1160.",
+    "customer_id": "appstore_user_110",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-14T17:50:00+00:00",
+    "metadata": {
+      "rating": 2,
+      "platform": "ios",
+      "version": "2.0.0"
+    }
+  },
+  {
+    "id": "d01f06df-799a-48c1-b150-2cd16674ecf3",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0161",
+    "content": "Dark mode font contrast on secondary table headers is unreadable in bright sunlight. This is creating daily frustration for our team.",
+    "customer_id": "appstore_user_111",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-14T19:28:00+00:00",
+    "metadata": {
+      "rating": 4,
+      "platform": "android",
+      "version": "2.1.0"
+    }
+  },
+  {
+    "id": "71971bb1-e682-4ea5-a77a-c0cd6cb425f8",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0162",
+    "content": "Google Workspace SSO tokens expire after 20 minutes and force users to re-login in the middle of active editing sessions. This is creating daily frustration for our team.",
+    "customer_id": "appstore_user_112",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-14T21:32:00+00:00",
+    "metadata": {
+      "rating": 2,
+      "platform": "ios",
+      "version": "2.2.0"
+    }
+  },
+  {
+    "id": "0b297e8b-209b-4518-9251-cde11bdd2a52",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0163",
+    "content": "Love the overall vision, but exporting csv or excel reports with more than 10,000 rows silently truncates the output file without throwing an error. makes it difficult to recommend.",
+    "customer_id": "appstore_user_113",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-14T23:42:00+00:00",
+    "metadata": {
+      "rating": 1,
+      "platform": "android",
+      "version": "2.3.0"
+    }
+  },
+  {
+    "id": "cf137018-987f-4531-8fad-0f6aa4f2c772",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0164",
+    "content": "Rating 2/5: The mobile iOS app fails to sync offline changes made during transit, causing conflicting version overwrites when reconnected.",
+    "customer_id": "appstore_user_114",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-15T01:32:00+00:00",
+    "metadata": {
+      "rating": 2,
+      "platform": "ios",
+      "version": "2.4.0"
+    }
+  },
+  {
+    "id": "07ef79ab-a43e-4485-af24-0d1df77aaf82",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0165",
+    "content": "Love the overall vision, but invoices generated in eur are showing the usd symbol on receipt pdfs, causing compliance headaches with european accounting. makes it difficult to recommend.",
+    "customer_id": "appstore_user_115",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-15T03:52:00+00:00",
+    "metadata": {
+      "rating": 3,
+      "platform": "android",
+      "version": "2.0.0"
+    }
+  },
+  {
+    "id": "ac3a32f0-37e3-4949-9527-c2fb107b9a58",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0166",
+    "content": "When endpoint returns 503, Motif initiates an exponential retry storm without jitter, taking down our internal webhook receiver. This is creating daily frustration for our team.",
+    "customer_id": "appstore_user_116",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-15T05:14:00+00:00",
+    "metadata": {
+      "rating": 1,
+      "platform": "ios",
+      "version": "2.1.0"
+    }
+  },
+  {
+    "id": "a360fe3a-6b41-4061-b312-83aa324f6b4d",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0167",
+    "content": "Dark mode font contrast on secondary table headers is unreadable in bright sunlight. This is creating daily frustration for our team.",
+    "customer_id": "appstore_user_117",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-15T07:01:00+00:00",
+    "metadata": {
+      "rating": 3,
+      "platform": "android",
+      "version": "2.2.0"
+    }
+  },
+  {
+    "id": "cd51493f-ae9b-43e5-9606-7cc4e2a4fdde",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0168",
+    "content": "Frustrating bug: Google Workspace SSO tokens expire after 20 minutes and force users to re-login in the middle of active editing sessions. Support ticket filed #REV-1168.",
+    "customer_id": "appstore_user_118",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-15T09:30:00+00:00",
+    "metadata": {
+      "rating": 1,
+      "platform": "ios",
+      "version": "2.3.0"
+    }
+  },
+  {
+    "id": "fd13df3f-366b-4a4a-b7bb-1376408fc3a9",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0169",
+    "content": "Frustrating bug: Exporting CSV or Excel reports with more than 10,000 rows silently truncates the output file without throwing an error. Support ticket filed #REV-1169.",
+    "customer_id": "appstore_user_119",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-15T11:26:00+00:00",
+    "metadata": {
+      "rating": 1,
+      "platform": "android",
+      "version": "2.4.0"
+    }
+  },
+  {
+    "id": "4a1c51b8-567f-4227-85cc-9996393b1222",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0170",
+    "content": "The mobile iOS app fails to sync offline changes made during transit, causing conflicting version overwrites when reconnected. This is creating daily frustration for our team.",
+    "customer_id": "appstore_user_120",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-15T13:31:00+00:00",
+    "metadata": {
+      "rating": 2,
+      "platform": "ios",
+      "version": "2.0.0"
+    }
+  },
+  {
+    "id": "c161731c-05cc-498e-a098-54e4b00b5dbd",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0171",
+    "content": "Rating 3/5: Invoices generated in EUR are showing the USD symbol on receipt PDFs, causing compliance headaches with European accounting.",
+    "customer_id": "appstore_user_121",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-15T15:09:00+00:00",
+    "metadata": {
+      "rating": 3,
+      "platform": "android",
+      "version": "2.1.0"
+    }
+  },
+  {
+    "id": "cf98889e-3fa9-41ea-ac9b-e449ca8cd74a",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0172",
+    "content": "When endpoint returns 503, Motif initiates an exponential retry storm without jitter, taking down our internal webhook receiver. This is creating daily frustration for our team.",
+    "customer_id": "appstore_user_122",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-15T17:49:00+00:00",
+    "metadata": {
+      "rating": 2,
+      "platform": "ios",
+      "version": "2.2.0"
+    }
+  },
+  {
+    "id": "ca3f1dbc-20bc-4dad-b0df-9541c732b220",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0173",
+    "content": "Rating 4/5: Dark mode font contrast on secondary table headers is unreadable in bright sunlight.",
+    "customer_id": "appstore_user_123",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-15T19:11:00+00:00",
+    "metadata": {
+      "rating": 4,
+      "platform": "android",
+      "version": "2.3.0"
+    }
+  },
+  {
+    "id": "18fa7f4c-00ac-49bf-b45e-1de574a0bf6c",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0174",
+    "content": "Rating 1/5: Google Workspace SSO tokens expire after 20 minutes and force users to re-login in the middle of active editing sessions.",
+    "customer_id": "appstore_user_124",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-15T21:35:00+00:00",
+    "metadata": {
+      "rating": 1,
+      "platform": "ios",
+      "version": "2.4.0"
+    }
+  },
+  {
+    "id": "2d308499-f17a-448f-8a25-4e1c9f45ece0",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0175",
+    "content": "Frustrating bug: Exporting CSV or Excel reports with more than 10,000 rows silently truncates the output file without throwing an error. Support ticket filed #REV-1175.",
+    "customer_id": "appstore_user_125",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-15T23:29:00+00:00",
+    "metadata": {
+      "rating": 1,
+      "platform": "android",
+      "version": "2.0.0"
+    }
+  },
+  {
+    "id": "c0030cee-25ac-40c0-95e1-5bee4cba9924",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0176",
+    "content": "Frustrating bug: The mobile iOS app fails to sync offline changes made during transit, causing conflicting version overwrites when reconnected. Support ticket filed #REV-1176.",
+    "customer_id": "appstore_user_126",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-16T01:42:00+00:00",
+    "metadata": {
+      "rating": 2,
+      "platform": "ios",
+      "version": "2.1.0"
+    }
+  },
+  {
+    "id": "bad9ef12-b1c7-485e-8c5d-dc923cc73086",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0177",
+    "content": "Frustrating bug: Invoices generated in EUR are showing the USD symbol on receipt PDFs, causing compliance headaches with European accounting. Support ticket filed #REV-1177.",
+    "customer_id": "appstore_user_127",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-16T03:39:00+00:00",
+    "metadata": {
+      "rating": 4,
+      "platform": "android",
+      "version": "2.2.0"
+    }
+  },
+  {
+    "id": "907672a3-7e7d-43e0-8f96-6771efea2860",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0178",
+    "content": "Frustrating bug: When endpoint returns 503, Motif initiates an exponential retry storm without jitter, taking down our internal webhook receiver. Support ticket filed #REV-1178.",
+    "customer_id": "appstore_user_128",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-16T05:57:00+00:00",
+    "metadata": {
+      "rating": 1,
+      "platform": "ios",
+      "version": "2.3.0"
+    }
+  },
+  {
+    "id": "a2451389-3836-41f7-bc00-abc62060c83e",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0179",
+    "content": "Dark mode font contrast on secondary table headers is unreadable in bright sunlight. This is creating daily frustration for our team.",
+    "customer_id": "appstore_user_129",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-16T07:28:00+00:00",
+    "metadata": {
+      "rating": 4,
+      "platform": "android",
+      "version": "2.4.0"
+    }
+  },
+  {
+    "id": "68339965-abf4-47ab-8349-5bf6d44e5597",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0180",
+    "content": "Frustrating bug: Google Workspace SSO tokens expire after 20 minutes and force users to re-login in the middle of active editing sessions. Support ticket filed #REV-1180.",
+    "customer_id": "appstore_user_130",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-16T09:53:00+00:00",
+    "metadata": {
+      "rating": 2,
+      "platform": "ios",
+      "version": "2.0.0"
+    }
+  },
+  {
+    "id": "e0d5736b-d1d9-49db-9ca1-e7069b8e98dc",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0181",
+    "content": "Love the overall vision, but exporting csv or excel reports with more than 10,000 rows silently truncates the output file without throwing an error. makes it difficult to recommend.",
+    "customer_id": "appstore_user_131",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-16T11:40:00+00:00",
+    "metadata": {
+      "rating": 1,
+      "platform": "android",
+      "version": "2.1.0"
+    }
+  },
+  {
+    "id": "1936c3fb-be7b-4420-b6a4-5efc57ef943e",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0182",
+    "content": "Love the overall vision, but the mobile ios app fails to sync offline changes made during transit, causing conflicting version overwrites when reconnected. makes it difficult to recommend.",
+    "customer_id": "appstore_user_132",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-16T13:28:00+00:00",
+    "metadata": {
+      "rating": 1,
+      "platform": "ios",
+      "version": "2.2.0"
+    }
+  },
+  {
+    "id": "7920604e-3c13-4a68-a99b-9f930eb25573",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0183",
+    "content": "Love the overall vision, but invoices generated in eur are showing the usd symbol on receipt pdfs, causing compliance headaches with european accounting. makes it difficult to recommend.",
+    "customer_id": "appstore_user_133",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-16T15:15:00+00:00",
+    "metadata": {
+      "rating": 4,
+      "platform": "android",
+      "version": "2.3.0"
+    }
+  },
+  {
+    "id": "05a8ac05-5446-42e5-af24-0fbf9a1a51f3",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0184",
+    "content": "When endpoint returns 503, Motif initiates an exponential retry storm without jitter, taking down our internal webhook receiver. This is creating daily frustration for our team.",
+    "customer_id": "appstore_user_134",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-16T17:20:00+00:00",
+    "metadata": {
+      "rating": 1,
+      "platform": "ios",
+      "version": "2.4.0"
+    }
+  },
+  {
+    "id": "ad8ff6c6-4a00-46c0-b093-511d1f0e16f4",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0185",
+    "content": "Frustrating bug: Dark mode font contrast on secondary table headers is unreadable in bright sunlight. Support ticket filed #REV-1185.",
+    "customer_id": "appstore_user_135",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-16T19:09:00+00:00",
+    "metadata": {
+      "rating": 3,
+      "platform": "android",
+      "version": "2.0.0"
+    }
+  },
+  {
+    "id": "d9413801-2da6-47de-aaaf-288879821209",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0186",
+    "content": "Google Workspace SSO tokens expire after 20 minutes and force users to re-login in the middle of active editing sessions. This is creating daily frustration for our team.",
+    "customer_id": "appstore_user_136",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-16T21:44:00+00:00",
+    "metadata": {
+      "rating": 1,
+      "platform": "ios",
+      "version": "2.1.0"
+    }
+  },
+  {
+    "id": "0cab6edb-751c-4255-9502-479a41796415",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0187",
+    "content": "Frustrating bug: Exporting CSV or Excel reports with more than 10,000 rows silently truncates the output file without throwing an error. Support ticket filed #REV-1187.",
+    "customer_id": "appstore_user_137",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-16T23:04:00+00:00",
+    "metadata": {
+      "rating": 2,
+      "platform": "android",
+      "version": "2.2.0"
+    }
+  },
+  {
+    "id": "288e49b5-f843-47da-a9ea-fcd017ad019a",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0188",
+    "content": "Frustrating bug: The mobile iOS app fails to sync offline changes made during transit, causing conflicting version overwrites when reconnected. Support ticket filed #REV-1188.",
+    "customer_id": "appstore_user_138",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-17T01:21:00+00:00",
+    "metadata": {
+      "rating": 2,
+      "platform": "ios",
+      "version": "2.3.0"
+    }
+  },
+  {
+    "id": "1b2b00bb-87f7-4068-83cb-652666373607",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0189",
+    "content": "Frustrating bug: Invoices generated in EUR are showing the USD symbol on receipt PDFs, causing compliance headaches with European accounting. Support ticket filed #REV-1189.",
+    "customer_id": "appstore_user_139",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-17T03:03:00+00:00",
+    "metadata": {
+      "rating": 3,
+      "platform": "android",
+      "version": "2.4.0"
+    }
+  },
+  {
+    "id": "58be4148-ffbc-4453-beee-ae91187c9e02",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0190",
+    "content": "Frustrating bug: When endpoint returns 503, Motif initiates an exponential retry storm without jitter, taking down our internal webhook receiver. Support ticket filed #REV-1190.",
+    "customer_id": "appstore_user_140",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-17T05:24:00+00:00",
+    "metadata": {
+      "rating": 1,
+      "platform": "ios",
+      "version": "2.0.0"
+    }
+  },
+  {
+    "id": "ca8bec32-cef1-46b2-b242-76c64b0e9c9a",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0191",
+    "content": "Love the overall vision, but dark mode font contrast on secondary table headers is unreadable in bright sunlight. makes it difficult to recommend.",
+    "customer_id": "appstore_user_141",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-17T07:30:00+00:00",
+    "metadata": {
+      "rating": 3,
+      "platform": "android",
+      "version": "2.1.0"
+    }
+  },
+  {
+    "id": "dc148c80-f0cb-41b8-a61f-480e418619ff",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0192",
+    "content": "Frustrating bug: Google Workspace SSO tokens expire after 20 minutes and force users to re-login in the middle of active editing sessions. Support ticket filed #REV-1192.",
+    "customer_id": "appstore_user_142",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-17T09:19:00+00:00",
+    "metadata": {
+      "rating": 2,
+      "platform": "ios",
+      "version": "2.2.0"
+    }
+  },
+  {
+    "id": "1f72ddbe-87d2-4241-9569-f983ee28766f",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0193",
+    "content": "Frustrating bug: Exporting CSV or Excel reports with more than 10,000 rows silently truncates the output file without throwing an error. Support ticket filed #REV-1193.",
+    "customer_id": "appstore_user_143",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-17T11:34:00+00:00",
+    "metadata": {
+      "rating": 1,
+      "platform": "android",
+      "version": "2.3.0"
+    }
+  },
+  {
+    "id": "3bc8144b-31f8-4d53-b362-0c260dc2eb04",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0194",
+    "content": "Frustrating bug: The mobile iOS app fails to sync offline changes made during transit, causing conflicting version overwrites when reconnected. Support ticket filed #REV-1194.",
+    "customer_id": "appstore_user_144",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-17T13:14:00+00:00",
+    "metadata": {
+      "rating": 2,
+      "platform": "ios",
+      "version": "2.4.0"
+    }
+  },
+  {
+    "id": "e27a5379-329e-4dbe-b881-cd48af4cda4a",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0195",
+    "content": "Frustrating bug: Invoices generated in EUR are showing the USD symbol on receipt PDFs, causing compliance headaches with European accounting. Support ticket filed #REV-1195.",
+    "customer_id": "appstore_user_145",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-17T15:31:00+00:00",
+    "metadata": {
+      "rating": 3,
+      "platform": "android",
+      "version": "2.0.0"
+    }
+  },
+  {
+    "id": "8bde6f26-17f8-4f9b-8535-0c348278e80f",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0196",
+    "content": "When endpoint returns 503, Motif initiates an exponential retry storm without jitter, taking down our internal webhook receiver. This is creating daily frustration for our team.",
+    "customer_id": "appstore_user_146",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-17T17:21:00+00:00",
+    "metadata": {
+      "rating": 2,
+      "platform": "ios",
+      "version": "2.1.0"
+    }
+  },
+  {
+    "id": "32f082a6-56e0-4c54-a675-15261ae053f2",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0197",
+    "content": "Dark mode font contrast on secondary table headers is unreadable in bright sunlight. This is creating daily frustration for our team.",
+    "customer_id": "appstore_user_147",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-17T19:53:00+00:00",
+    "metadata": {
+      "rating": 4,
+      "platform": "android",
+      "version": "2.2.0"
+    }
+  },
+  {
+    "id": "23bd6fcb-5f9d-47d3-90c9-0eb2711752a6",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0198",
+    "content": "Frustrating bug: Google Workspace SSO tokens expire after 20 minutes and force users to re-login in the middle of active editing sessions. Support ticket filed #REV-1198.",
+    "customer_id": "appstore_user_148",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-17T21:39:00+00:00",
+    "metadata": {
+      "rating": 1,
+      "platform": "ios",
+      "version": "2.3.0"
+    }
+  },
+  {
+    "id": "78db4510-8d98-43f5-8998-5322cfc0e47d",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0199",
+    "content": "Rating 1/5: Exporting CSV or Excel reports with more than 10,000 rows silently truncates the output file without throwing an error.",
+    "customer_id": "appstore_user_149",
+    "customer_tier": "free",
+    "arr_value": 0.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-17T23:37:00+00:00",
+    "metadata": {
+      "rating": 1,
+      "platform": "android",
+      "version": "2.4.0"
+    }
+  },
+  {
+    "id": "8f6fcd6f-c119-406d-88b8-510efeb4d618",
+    "source_type": "app_store",
+    "external_id": "appstore_review_0200",
+    "content": "The mobile iOS app fails to sync offline changes made during transit, causing conflicting version overwrites when reconnected. This is creating daily frustration for our team.",
+    "customer_id": "appstore_user_100",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-18T01:41:00+00:00",
+    "metadata": {
+      "rating": 2,
+      "platform": "ios",
+      "version": "2.0.0"
+    }
+  },
+  {
+    "id": "32e4ddba-ffb5-4d27-accb-c1e655084800",
+    "source_type": "email",
+    "external_id": "email_ticket_2001",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: Exporting CSV or Excel reports with more than 10,000 rows silently truncates the output file without throwing an error.\n\nThis has impacted our workflows for 8 members of our organization.\nBest regards,\nCyberdyne Systems IT Administration",
+    "customer_id": "cust_cyberdyne",
+    "customer_tier": "growth",
+    "arr_value": 18000.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-02T10:21:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Export Truncation",
+      "sender_email": "it-support@cyberdyne.com",
+      "priority": "P2"
+    }
+  },
+  {
+    "id": "ab5de69a-3db1-4477-9881-a88fd3310e75",
+    "source_type": "email",
+    "external_id": "email_ticket_2002",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: The mobile iOS app fails to sync offline changes made during transit, causing conflicting version overwrites when reconnected.\n\nThis has impacted our workflows for 25 members of our organization.\nBest regards,\nSoylent Tech IT Administration",
+    "customer_id": "cust_soylent_ind",
+    "customer_tier": "growth",
+    "arr_value": 36000.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-03T11:34:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Mobile Offline Sync",
+      "sender_email": "it-support@soylent_ind.com",
+      "priority": "P2"
+    }
+  },
+  {
+    "id": "315666e7-7a80-4f7b-b7ff-00f4c22769c0",
+    "source_type": "email",
+    "external_id": "email_ticket_2003",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: Invoices generated in EUR are showing the USD symbol on receipt PDFs, causing compliance headaches with European accounting.\n\nThis has impacted our workflows for 25 members of our organization.\nBest regards,\nUmbrella Corp IT Administration",
+    "customer_id": "cust_umbrella_bio",
+    "customer_tier": "enterprise",
+    "arr_value": 140000.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-04T12:39:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Billing Currency Bug",
+      "sender_email": "it-support@umbrella_bio.com",
+      "priority": "P2"
+    }
+  },
+  {
+    "id": "f1497d06-8117-403b-9a9e-76b990b727ab",
+    "source_type": "email",
+    "external_id": "email_ticket_2004",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: When endpoint returns 503, Motif initiates an exponential retry storm without jitter, taking down our internal webhook receiver.\n\nThis has impacted our workflows for 22 members of our organization.\nBest regards,\nStark Dynamics IT Administration",
+    "customer_id": "cust_stark_labs",
+    "customer_tier": "growth",
+    "arr_value": 24000.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-05T13:34:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Webhook Retry Storm",
+      "sender_email": "it-support@stark_labs.com",
+      "priority": "P2"
+    }
+  },
+  {
+    "id": "28f5bc53-0a83-4f5e-877d-5a66a5f01fce",
+    "source_type": "email",
+    "external_id": "email_ticket_2005",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: Dark mode font contrast on secondary table headers is unreadable in bright sunlight.\n\nThis has impacted our workflows for 10 members of our organization.\nBest regards,\nWayne Enterprises IT Administration",
+    "customer_id": "cust_wayne_sec",
+    "customer_tier": "growth",
+    "arr_value": 48000.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-06T14:26:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Ui Dark Mode Contrast",
+      "sender_email": "it-support@wayne_sec.com",
+      "priority": "P2"
+    }
+  },
+  {
+    "id": "98389ae5-8546-462d-9484-e6c5c07ac808",
+    "source_type": "email",
+    "external_id": "email_ticket_2006",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: Google Workspace SSO tokens expire after 20 minutes and force users to re-login in the middle of active editing sessions.\n\nThis has impacted our workflows for 39 members of our organization.\nBest regards,\nCyberdyne Systems IT Administration",
+    "customer_id": "cust_cyberdyne",
+    "customer_tier": "growth",
+    "arr_value": 18000.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-07T15:11:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Sso Desync",
+      "sender_email": "it-support@cyberdyne.com",
+      "priority": "P2"
+    }
+  },
+  {
+    "id": "96230aed-23a4-4c3e-ba88-58320c7a4b80",
+    "source_type": "email",
+    "external_id": "email_ticket_2007",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: Exporting CSV or Excel reports with more than 10,000 rows silently truncates the output file without throwing an error. Our financial audit failed because quarterly revenue reports generated by the tool truncated 4,000 transactions.\n\nThis has impacted our workflows for 19 members of our organization.\nBest regards,\nAcme Global IT Administration",
+    "customer_id": "cust_acme_corp",
+    "customer_tier": "enterprise",
+    "arr_value": 120000.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-08T16:32:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Export Truncation",
+      "sender_email": "it-support@acme_corp.com",
+      "priority": "P1"
+    }
+  },
+  {
+    "id": "146e2943-7bee-48b8-9297-02e03aeb7c5d",
+    "source_type": "email",
+    "external_id": "email_ticket_2008",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: The mobile iOS app fails to sync offline changes made during transit, causing conflicting version overwrites when reconnected. Our field engineering agents lost three hours of customer inspection logs today. Considering switching to an alternative solution.\n\nThis has impacted our workflows for 6 members of our organization.\nBest regards,\nGlobex Systems IT Administration",
+    "customer_id": "cust_globex_tech",
+    "customer_tier": "enterprise",
+    "arr_value": 85000.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-09T17:12:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Mobile Offline Sync",
+      "sender_email": "it-support@globex_tech.com",
+      "priority": "P1"
+    }
+  },
+  {
+    "id": "4254114a-12ed-4359-8df7-77ead61900f0",
+    "source_type": "email",
+    "external_id": "email_ticket_2009",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: Invoices generated in EUR are showing the USD symbol on receipt PDFs, causing compliance headaches with European accounting.\n\nThis has impacted our workflows for 6 members of our organization.\nBest regards,\nUmbrella Corp IT Administration",
+    "customer_id": "cust_umbrella_bio",
+    "customer_tier": "enterprise",
+    "arr_value": 140000.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-10T18:22:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Billing Currency Bug",
+      "sender_email": "it-support@umbrella_bio.com",
+      "priority": "P2"
+    }
+  },
+  {
+    "id": "e44e144e-0c9a-4330-a889-2f92af303e1a",
+    "source_type": "email",
+    "external_id": "email_ticket_2010",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: When endpoint returns 503, Motif initiates an exponential retry storm without jitter, taking down our internal webhook receiver. Your webhook delivery caused a complete outage of our production ingestion server over the weekend.\n\nThis has impacted our workflows for 13 members of our organization.\nBest regards,\nInitech Corp IT Administration",
+    "customer_id": "cust_initech_llc",
+    "customer_tier": "enterprise",
+    "arr_value": 65000.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-11T19:25:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Webhook Retry Storm",
+      "sender_email": "it-support@initech_llc.com",
+      "priority": "P1"
+    }
+  },
+  {
+    "id": "285f4cd9-f932-4587-b71f-7920d07d5e6b",
+    "source_type": "email",
+    "external_id": "email_ticket_2011",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: Dark mode font contrast on secondary table headers is unreadable in bright sunlight.\n\nThis has impacted our workflows for 41 members of our organization.\nBest regards,\nCyberdyne Systems IT Administration",
+    "customer_id": "cust_cyberdyne",
+    "customer_tier": "growth",
+    "arr_value": 18000.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-12T20:17:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Ui Dark Mode Contrast",
+      "sender_email": "it-support@cyberdyne.com",
+      "priority": "P2"
+    }
+  },
+  {
+    "id": "4121fa72-fe03-4a8e-9272-26e6e20ddf1a",
+    "source_type": "email",
+    "external_id": "email_ticket_2012",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: Google Workspace SSO tokens expire after 20 minutes and force users to re-login in the middle of active editing sessions. Our IT department has flagged this as an SLA violation. If SSO session persistence isn't resolved by next month we are cancelling our 200-seat contract.\n\nThis has impacted our workflows for 49 members of our organization.\nBest regards,\nUmbrella Corp IT Administration",
+    "customer_id": "cust_umbrella_bio",
+    "customer_tier": "enterprise",
+    "arr_value": 140000.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-13T09:39:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Sso Desync",
+      "sender_email": "it-support@umbrella_bio.com",
+      "priority": "P1"
+    }
+  },
+  {
+    "id": "f9265d5e-888c-40e8-8a05-bdb885a9bba4",
+    "source_type": "email",
+    "external_id": "email_ticket_2013",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: Exporting CSV or Excel reports with more than 10,000 rows silently truncates the output file without throwing an error.\n\nThis has impacted our workflows for 15 members of our organization.\nBest regards,\nSoylent Tech IT Administration",
+    "customer_id": "cust_soylent_ind",
+    "customer_tier": "growth",
+    "arr_value": 36000.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-14T10:33:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Export Truncation",
+      "sender_email": "it-support@soylent_ind.com",
+      "priority": "P2"
+    }
+  },
+  {
+    "id": "1a498015-c836-4516-8e0e-f0ce5c2518cf",
+    "source_type": "email",
+    "external_id": "email_ticket_2014",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: The mobile iOS app fails to sync offline changes made during transit, causing conflicting version overwrites when reconnected. Our field engineering agents lost three hours of customer inspection logs today. Considering switching to an alternative solution.\n\nThis has impacted our workflows for 24 members of our organization.\nBest regards,\nGlobex Systems IT Administration",
+    "customer_id": "cust_globex_tech",
+    "customer_tier": "enterprise",
+    "arr_value": 85000.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-15T11:20:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Mobile Offline Sync",
+      "sender_email": "it-support@globex_tech.com",
+      "priority": "P1"
+    }
+  },
+  {
+    "id": "41c7df56-c0b4-4228-95ba-83d8f7fe27dc",
+    "source_type": "email",
+    "external_id": "email_ticket_2015",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: Invoices generated in EUR are showing the USD symbol on receipt PDFs, causing compliance headaches with European accounting.\n\nThis has impacted our workflows for 6 members of our organization.\nBest regards,\nGlobex Systems IT Administration",
+    "customer_id": "cust_globex_tech",
+    "customer_tier": "enterprise",
+    "arr_value": 85000.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-16T12:47:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Billing Currency Bug",
+      "sender_email": "it-support@globex_tech.com",
+      "priority": "P2"
+    }
+  },
+  {
+    "id": "56169282-bb98-407e-9e16-0ace63711dad",
+    "source_type": "email",
+    "external_id": "email_ticket_2016",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: When endpoint returns 503, Motif initiates an exponential retry storm without jitter, taking down our internal webhook receiver.\n\nThis has impacted our workflows for 48 members of our organization.\nBest regards,\nSoylent Tech IT Administration",
+    "customer_id": "cust_soylent_ind",
+    "customer_tier": "growth",
+    "arr_value": 36000.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-17T13:46:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Webhook Retry Storm",
+      "sender_email": "it-support@soylent_ind.com",
+      "priority": "P2"
+    }
+  },
+  {
+    "id": "575d5630-5152-4b9c-a2fb-70dd3d469947",
+    "source_type": "email",
+    "external_id": "email_ticket_2017",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: Dark mode font contrast on secondary table headers is unreadable in bright sunlight.\n\nThis has impacted our workflows for 50 members of our organization.\nBest regards,\nWayne Enterprises IT Administration",
+    "customer_id": "cust_wayne_sec",
+    "customer_tier": "growth",
+    "arr_value": 48000.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-18T14:35:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Ui Dark Mode Contrast",
+      "sender_email": "it-support@wayne_sec.com",
+      "priority": "P2"
+    }
+  },
+  {
+    "id": "a15509d7-ccf3-4086-92d4-b1fb43b838a3",
+    "source_type": "email",
+    "external_id": "email_ticket_2018",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: Google Workspace SSO tokens expire after 20 minutes and force users to re-login in the middle of active editing sessions. Our IT department has flagged this as an SLA violation. If SSO session persistence isn't resolved by next month we are cancelling our 200-seat contract.\n\nThis has impacted our workflows for 42 members of our organization.\nBest regards,\nUmbrella Corp IT Administration",
+    "customer_id": "cust_umbrella_bio",
+    "customer_tier": "enterprise",
+    "arr_value": 140000.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-19T15:14:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Sso Desync",
+      "sender_email": "it-support@umbrella_bio.com",
+      "priority": "P1"
+    }
+  },
+  {
+    "id": "86826107-830e-4c91-b184-d7d8173a9a8a",
+    "source_type": "email",
+    "external_id": "email_ticket_2019",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: Exporting CSV or Excel reports with more than 10,000 rows silently truncates the output file without throwing an error. Our financial audit failed because quarterly revenue reports generated by the tool truncated 4,000 transactions.\n\nThis has impacted our workflows for 49 members of our organization.\nBest regards,\nUmbrella Corp IT Administration",
+    "customer_id": "cust_umbrella_bio",
+    "customer_tier": "enterprise",
+    "arr_value": 140000.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-20T16:16:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Export Truncation",
+      "sender_email": "it-support@umbrella_bio.com",
+      "priority": "P1"
+    }
+  },
+  {
+    "id": "e5ab7124-6bf2-40e3-93a2-7d874ec885f3",
+    "source_type": "email",
+    "external_id": "email_ticket_2020",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: The mobile iOS app fails to sync offline changes made during transit, causing conflicting version overwrites when reconnected.\n\nThis has impacted our workflows for 12 members of our organization.\nBest regards,\nSoylent Tech IT Administration",
+    "customer_id": "cust_soylent_ind",
+    "customer_tier": "growth",
+    "arr_value": 36000.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-01T17:48:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Mobile Offline Sync",
+      "sender_email": "it-support@soylent_ind.com",
+      "priority": "P2"
+    }
+  },
+  {
+    "id": "9f1f1677-bad8-401c-bd2d-7bc78fbb1ace",
+    "source_type": "email",
+    "external_id": "email_ticket_2021",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: Invoices generated in EUR are showing the USD symbol on receipt PDFs, causing compliance headaches with European accounting.\n\nThis has impacted our workflows for 39 members of our organization.\nBest regards,\nAcme Global IT Administration",
+    "customer_id": "cust_acme_corp",
+    "customer_tier": "enterprise",
+    "arr_value": 120000.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-02T18:32:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Billing Currency Bug",
+      "sender_email": "it-support@acme_corp.com",
+      "priority": "P2"
+    }
+  },
+  {
+    "id": "e4c0f074-28cb-447a-aac5-487530f412b2",
+    "source_type": "email",
+    "external_id": "email_ticket_2022",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: When endpoint returns 503, Motif initiates an exponential retry storm without jitter, taking down our internal webhook receiver.\n\nThis has impacted our workflows for 9 members of our organization.\nBest regards,\nWayne Enterprises IT Administration",
+    "customer_id": "cust_wayne_sec",
+    "customer_tier": "growth",
+    "arr_value": 48000.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-03T19:33:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Webhook Retry Storm",
+      "sender_email": "it-support@wayne_sec.com",
+      "priority": "P2"
+    }
+  },
+  {
+    "id": "e1010050-b860-4268-9710-5bde3cf80812",
+    "source_type": "email",
+    "external_id": "email_ticket_2023",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: Dark mode font contrast on secondary table headers is unreadable in bright sunlight.\n\nThis has impacted our workflows for 31 members of our organization.\nBest regards,\nStark Dynamics IT Administration",
+    "customer_id": "cust_stark_labs",
+    "customer_tier": "growth",
+    "arr_value": 24000.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-04T20:10:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Ui Dark Mode Contrast",
+      "sender_email": "it-support@stark_labs.com",
+      "priority": "P2"
+    }
+  },
+  {
+    "id": "9bdf7979-a65c-4168-b701-dc9c4a3e0fc0",
+    "source_type": "email",
+    "external_id": "email_ticket_2024",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: Google Workspace SSO tokens expire after 20 minutes and force users to re-login in the middle of active editing sessions.\n\nThis has impacted our workflows for 32 members of our organization.\nBest regards,\nCyberdyne Systems IT Administration",
+    "customer_id": "cust_cyberdyne",
+    "customer_tier": "growth",
+    "arr_value": 18000.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-05T09:16:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Sso Desync",
+      "sender_email": "it-support@cyberdyne.com",
+      "priority": "P2"
+    }
+  },
+  {
+    "id": "0fc6aa07-45ee-449c-9a93-f4fcb4040292",
+    "source_type": "email",
+    "external_id": "email_ticket_2025",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: Exporting CSV or Excel reports with more than 10,000 rows silently truncates the output file without throwing an error.\n\nThis has impacted our workflows for 34 members of our organization.\nBest regards,\nStark Dynamics IT Administration",
+    "customer_id": "cust_stark_labs",
+    "customer_tier": "growth",
+    "arr_value": 24000.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-06T10:50:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Export Truncation",
+      "sender_email": "it-support@stark_labs.com",
+      "priority": "P2"
+    }
+  },
+  {
+    "id": "35bf09f7-39dc-4c3d-a391-95be673c6a11",
+    "source_type": "email",
+    "external_id": "email_ticket_2026",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: The mobile iOS app fails to sync offline changes made during transit, causing conflicting version overwrites when reconnected. Our field engineering agents lost three hours of customer inspection logs today. Considering switching to an alternative solution.\n\nThis has impacted our workflows for 16 members of our organization.\nBest regards,\nInitech Corp IT Administration",
+    "customer_id": "cust_initech_llc",
+    "customer_tier": "enterprise",
+    "arr_value": 65000.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-07T11:37:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Mobile Offline Sync",
+      "sender_email": "it-support@initech_llc.com",
+      "priority": "P1"
+    }
+  },
+  {
+    "id": "7cf8f1ee-7832-4e81-879b-95d9009e00c1",
+    "source_type": "email",
+    "external_id": "email_ticket_2027",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: Invoices generated in EUR are showing the USD symbol on receipt PDFs, causing compliance headaches with European accounting.\n\nThis has impacted our workflows for 39 members of our organization.\nBest regards,\nSoylent Tech IT Administration",
+    "customer_id": "cust_soylent_ind",
+    "customer_tier": "growth",
+    "arr_value": 36000.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-08T12:49:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Billing Currency Bug",
+      "sender_email": "it-support@soylent_ind.com",
+      "priority": "P2"
+    }
+  },
+  {
+    "id": "bf6ffa73-a0e6-4355-9154-d3a1a4e0a5af",
+    "source_type": "email",
+    "external_id": "email_ticket_2028",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: When endpoint returns 503, Motif initiates an exponential retry storm without jitter, taking down our internal webhook receiver.\n\nThis has impacted our workflows for 32 members of our organization.\nBest regards,\nCyberdyne Systems IT Administration",
+    "customer_id": "cust_cyberdyne",
+    "customer_tier": "growth",
+    "arr_value": 18000.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-09T13:39:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Webhook Retry Storm",
+      "sender_email": "it-support@cyberdyne.com",
+      "priority": "P2"
+    }
+  },
+  {
+    "id": "d9d17efe-118a-49c0-91ea-09a49bde8746",
+    "source_type": "email",
+    "external_id": "email_ticket_2029",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: Dark mode font contrast on secondary table headers is unreadable in bright sunlight.\n\nThis has impacted our workflows for 20 members of our organization.\nBest regards,\nSoylent Tech IT Administration",
+    "customer_id": "cust_soylent_ind",
+    "customer_tier": "growth",
+    "arr_value": 36000.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-10T14:30:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Ui Dark Mode Contrast",
+      "sender_email": "it-support@soylent_ind.com",
+      "priority": "P2"
+    }
+  },
+  {
+    "id": "a4689dc1-46a8-4e0c-9110-626bd19d3c08",
+    "source_type": "email",
+    "external_id": "email_ticket_2030",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: Google Workspace SSO tokens expire after 20 minutes and force users to re-login in the middle of active editing sessions. Our IT department has flagged this as an SLA violation. If SSO session persistence isn't resolved by next month we are cancelling our 200-seat contract.\n\nThis has impacted our workflows for 33 members of our organization.\nBest regards,\nGlobex Systems IT Administration",
+    "customer_id": "cust_globex_tech",
+    "customer_tier": "enterprise",
+    "arr_value": 85000.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-11T15:27:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Sso Desync",
+      "sender_email": "it-support@globex_tech.com",
+      "priority": "P1"
+    }
+  },
+  {
+    "id": "56cc043a-e814-44b0-9258-2079efd3ddbe",
+    "source_type": "email",
+    "external_id": "email_ticket_2031",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: Exporting CSV or Excel reports with more than 10,000 rows silently truncates the output file without throwing an error. Our financial audit failed because quarterly revenue reports generated by the tool truncated 4,000 transactions.\n\nThis has impacted our workflows for 41 members of our organization.\nBest regards,\nUmbrella Corp IT Administration",
+    "customer_id": "cust_umbrella_bio",
+    "customer_tier": "enterprise",
+    "arr_value": 140000.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-12T16:39:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Export Truncation",
+      "sender_email": "it-support@umbrella_bio.com",
+      "priority": "P1"
+    }
+  },
+  {
+    "id": "f88d3aca-92ed-4003-955a-67f58d4129e8",
+    "source_type": "email",
+    "external_id": "email_ticket_2032",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: The mobile iOS app fails to sync offline changes made during transit, causing conflicting version overwrites when reconnected.\n\nThis has impacted our workflows for 6 members of our organization.\nBest regards,\nWayne Enterprises IT Administration",
+    "customer_id": "cust_wayne_sec",
+    "customer_tier": "growth",
+    "arr_value": 48000.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-13T17:31:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Mobile Offline Sync",
+      "sender_email": "it-support@wayne_sec.com",
+      "priority": "P2"
+    }
+  },
+  {
+    "id": "4993c1d4-c3c5-4753-9a37-bb362c6ada5c",
+    "source_type": "email",
+    "external_id": "email_ticket_2033",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: Invoices generated in EUR are showing the USD symbol on receipt PDFs, causing compliance headaches with European accounting.\n\nThis has impacted our workflows for 16 members of our organization.\nBest regards,\nCyberdyne Systems IT Administration",
+    "customer_id": "cust_cyberdyne",
+    "customer_tier": "growth",
+    "arr_value": 18000.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-14T18:30:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Billing Currency Bug",
+      "sender_email": "it-support@cyberdyne.com",
+      "priority": "P2"
+    }
+  },
+  {
+    "id": "880dd82b-be52-4f40-91b0-0b69d57f8eb2",
+    "source_type": "email",
+    "external_id": "email_ticket_2034",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: When endpoint returns 503, Motif initiates an exponential retry storm without jitter, taking down our internal webhook receiver.\n\nThis has impacted our workflows for 27 members of our organization.\nBest regards,\nCyberdyne Systems IT Administration",
+    "customer_id": "cust_cyberdyne",
+    "customer_tier": "growth",
+    "arr_value": 18000.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-15T19:23:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Webhook Retry Storm",
+      "sender_email": "it-support@cyberdyne.com",
+      "priority": "P2"
+    }
+  },
+  {
+    "id": "28e7c3b2-5f7e-4e99-9609-210a9a61e359",
+    "source_type": "email",
+    "external_id": "email_ticket_2035",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: Dark mode font contrast on secondary table headers is unreadable in bright sunlight.\n\nThis has impacted our workflows for 22 members of our organization.\nBest regards,\nSoylent Tech IT Administration",
+    "customer_id": "cust_soylent_ind",
+    "customer_tier": "growth",
+    "arr_value": 36000.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-16T20:31:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Ui Dark Mode Contrast",
+      "sender_email": "it-support@soylent_ind.com",
+      "priority": "P2"
+    }
+  },
+  {
+    "id": "f797e690-5253-4c54-a95b-332f79e22d49",
+    "source_type": "email",
+    "external_id": "email_ticket_2036",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: Google Workspace SSO tokens expire after 20 minutes and force users to re-login in the middle of active editing sessions.\n\nThis has impacted our workflows for 5 members of our organization.\nBest regards,\nSoylent Tech IT Administration",
+    "customer_id": "cust_soylent_ind",
+    "customer_tier": "growth",
+    "arr_value": 36000.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-17T09:45:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Sso Desync",
+      "sender_email": "it-support@soylent_ind.com",
+      "priority": "P2"
+    }
+  },
+  {
+    "id": "4aaba107-8ee3-48c9-8416-3476081f83bd",
+    "source_type": "email",
+    "external_id": "email_ticket_2037",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: Exporting CSV or Excel reports with more than 10,000 rows silently truncates the output file without throwing an error. Our financial audit failed because quarterly revenue reports generated by the tool truncated 4,000 transactions.\n\nThis has impacted our workflows for 20 members of our organization.\nBest regards,\nUmbrella Corp IT Administration",
+    "customer_id": "cust_umbrella_bio",
+    "customer_tier": "enterprise",
+    "arr_value": 140000.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-18T10:15:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Export Truncation",
+      "sender_email": "it-support@umbrella_bio.com",
+      "priority": "P1"
+    }
+  },
+  {
+    "id": "43ca3f0c-1f29-4e28-95f4-c84c51d8cfa1",
+    "source_type": "email",
+    "external_id": "email_ticket_2038",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: The mobile iOS app fails to sync offline changes made during transit, causing conflicting version overwrites when reconnected.\n\nThis has impacted our workflows for 40 members of our organization.\nBest regards,\nWayne Enterprises IT Administration",
+    "customer_id": "cust_wayne_sec",
+    "customer_tier": "growth",
+    "arr_value": 48000.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-19T11:41:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Mobile Offline Sync",
+      "sender_email": "it-support@wayne_sec.com",
+      "priority": "P2"
+    }
+  },
+  {
+    "id": "1593c4bc-b4f5-41e4-b0ae-98ff7d72674d",
+    "source_type": "email",
+    "external_id": "email_ticket_2039",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: Invoices generated in EUR are showing the USD symbol on receipt PDFs, causing compliance headaches with European accounting.\n\nThis has impacted our workflows for 46 members of our organization.\nBest regards,\nUmbrella Corp IT Administration",
+    "customer_id": "cust_umbrella_bio",
+    "customer_tier": "enterprise",
+    "arr_value": 140000.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-20T12:40:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Billing Currency Bug",
+      "sender_email": "it-support@umbrella_bio.com",
+      "priority": "P2"
+    }
+  },
+  {
+    "id": "99cb620b-4ade-4265-8a75-fe564ab4d302",
+    "source_type": "email",
+    "external_id": "email_ticket_2040",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: When endpoint returns 503, Motif initiates an exponential retry storm without jitter, taking down our internal webhook receiver.\n\nThis has impacted our workflows for 6 members of our organization.\nBest regards,\nCyberdyne Systems IT Administration",
+    "customer_id": "cust_cyberdyne",
+    "customer_tier": "growth",
+    "arr_value": 18000.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-01T13:38:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Webhook Retry Storm",
+      "sender_email": "it-support@cyberdyne.com",
+      "priority": "P2"
+    }
+  },
+  {
+    "id": "d269ff33-887e-47d4-9c85-01bb36f104d1",
+    "source_type": "email",
+    "external_id": "email_ticket_2041",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: Dark mode font contrast on secondary table headers is unreadable in bright sunlight.\n\nThis has impacted our workflows for 19 members of our organization.\nBest regards,\nGlobex Systems IT Administration",
+    "customer_id": "cust_globex_tech",
+    "customer_tier": "enterprise",
+    "arr_value": 85000.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-02T14:28:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Ui Dark Mode Contrast",
+      "sender_email": "it-support@globex_tech.com",
+      "priority": "P2"
+    }
+  },
+  {
+    "id": "f7ef7b77-30d3-413f-81d8-27fe06d45de7",
+    "source_type": "email",
+    "external_id": "email_ticket_2042",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: Google Workspace SSO tokens expire after 20 minutes and force users to re-login in the middle of active editing sessions.\n\nThis has impacted our workflows for 24 members of our organization.\nBest regards,\nWayne Enterprises IT Administration",
+    "customer_id": "cust_wayne_sec",
+    "customer_tier": "growth",
+    "arr_value": 48000.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-03T15:25:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Sso Desync",
+      "sender_email": "it-support@wayne_sec.com",
+      "priority": "P2"
+    }
+  },
+  {
+    "id": "6932f1b0-0290-47e9-b9c5-17ca55252dcd",
+    "source_type": "email",
+    "external_id": "email_ticket_2043",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: Exporting CSV or Excel reports with more than 10,000 rows silently truncates the output file without throwing an error.\n\nThis has impacted our workflows for 40 members of our organization.\nBest regards,\nStark Dynamics IT Administration",
+    "customer_id": "cust_stark_labs",
+    "customer_tier": "growth",
+    "arr_value": 24000.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-04T16:40:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Export Truncation",
+      "sender_email": "it-support@stark_labs.com",
+      "priority": "P2"
+    }
+  },
+  {
+    "id": "351b423c-c96c-4317-be33-41a6bd3e3c57",
+    "source_type": "email",
+    "external_id": "email_ticket_2044",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: The mobile iOS app fails to sync offline changes made during transit, causing conflicting version overwrites when reconnected.\n\nThis has impacted our workflows for 40 members of our organization.\nBest regards,\nStark Dynamics IT Administration",
+    "customer_id": "cust_stark_labs",
+    "customer_tier": "growth",
+    "arr_value": 24000.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-05T17:37:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Mobile Offline Sync",
+      "sender_email": "it-support@stark_labs.com",
+      "priority": "P2"
+    }
+  },
+  {
+    "id": "ef69dd1c-258c-4ed7-8ea5-77c4fb7f33e3",
+    "source_type": "email",
+    "external_id": "email_ticket_2045",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: Invoices generated in EUR are showing the USD symbol on receipt PDFs, causing compliance headaches with European accounting.\n\nThis has impacted our workflows for 49 members of our organization.\nBest regards,\nStark Dynamics IT Administration",
+    "customer_id": "cust_stark_labs",
+    "customer_tier": "growth",
+    "arr_value": 24000.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-06T18:32:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Billing Currency Bug",
+      "sender_email": "it-support@stark_labs.com",
+      "priority": "P2"
+    }
+  },
+  {
+    "id": "a5a7e78c-71c9-4910-8b9f-79479de593ef",
+    "source_type": "email",
+    "external_id": "email_ticket_2046",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: When endpoint returns 503, Motif initiates an exponential retry storm without jitter, taking down our internal webhook receiver.\n\nThis has impacted our workflows for 24 members of our organization.\nBest regards,\nCyberdyne Systems IT Administration",
+    "customer_id": "cust_cyberdyne",
+    "customer_tier": "growth",
+    "arr_value": 18000.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-07T19:27:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Webhook Retry Storm",
+      "sender_email": "it-support@cyberdyne.com",
+      "priority": "P2"
+    }
+  },
+  {
+    "id": "b2f1443e-fdf7-4977-ae28-6f3636a0d413",
+    "source_type": "email",
+    "external_id": "email_ticket_2047",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: Dark mode font contrast on secondary table headers is unreadable in bright sunlight.\n\nThis has impacted our workflows for 12 members of our organization.\nBest regards,\nSoylent Tech IT Administration",
+    "customer_id": "cust_soylent_ind",
+    "customer_tier": "growth",
+    "arr_value": 36000.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-08T20:24:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Ui Dark Mode Contrast",
+      "sender_email": "it-support@soylent_ind.com",
+      "priority": "P2"
+    }
+  },
+  {
+    "id": "bda0d048-3e62-4842-bc64-d879eb5ffda2",
+    "source_type": "email",
+    "external_id": "email_ticket_2048",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: Google Workspace SSO tokens expire after 20 minutes and force users to re-login in the middle of active editing sessions. Our IT department has flagged this as an SLA violation. If SSO session persistence isn't resolved by next month we are cancelling our 200-seat contract.\n\nThis has impacted our workflows for 12 members of our organization.\nBest regards,\nUmbrella Corp IT Administration",
+    "customer_id": "cust_umbrella_bio",
+    "customer_tier": "enterprise",
+    "arr_value": 140000.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-09T09:30:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Sso Desync",
+      "sender_email": "it-support@umbrella_bio.com",
+      "priority": "P1"
+    }
+  },
+  {
+    "id": "9d4536a0-acc2-4adc-a401-910eae7c0a99",
+    "source_type": "email",
+    "external_id": "email_ticket_2049",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: Exporting CSV or Excel reports with more than 10,000 rows silently truncates the output file without throwing an error. Our financial audit failed because quarterly revenue reports generated by the tool truncated 4,000 transactions.\n\nThis has impacted our workflows for 18 members of our organization.\nBest regards,\nInitech Corp IT Administration",
+    "customer_id": "cust_initech_llc",
+    "customer_tier": "enterprise",
+    "arr_value": 65000.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-10T10:22:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Export Truncation",
+      "sender_email": "it-support@initech_llc.com",
+      "priority": "P1"
+    }
+  },
+  {
+    "id": "5bdfefcb-f20c-4d88-9ba6-5707947d13c7",
+    "source_type": "email",
+    "external_id": "email_ticket_2050",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: The mobile iOS app fails to sync offline changes made during transit, causing conflicting version overwrites when reconnected.\n\nThis has impacted our workflows for 42 members of our organization.\nBest regards,\nCyberdyne Systems IT Administration",
+    "customer_id": "cust_cyberdyne",
+    "customer_tier": "growth",
+    "arr_value": 18000.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-11T11:27:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Mobile Offline Sync",
+      "sender_email": "it-support@cyberdyne.com",
+      "priority": "P2"
+    }
+  },
+  {
+    "id": "e218d1f0-eb0b-47ff-9436-4bb28d8648f6",
+    "source_type": "email",
+    "external_id": "email_ticket_2051",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: Invoices generated in EUR are showing the USD symbol on receipt PDFs, causing compliance headaches with European accounting.\n\nThis has impacted our workflows for 43 members of our organization.\nBest regards,\nStarter Biz #51 IT Administration",
+    "customer_id": "starter_biz_51",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-12T12:43:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Billing Currency Bug",
+      "sender_email": "it-support@starter_biz_51.com",
+      "priority": "P2"
+    }
+  },
+  {
+    "id": "91c59d97-ba2f-4131-a0f1-2b409f45afdd",
+    "source_type": "email",
+    "external_id": "email_ticket_2052",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: When endpoint returns 503, Motif initiates an exponential retry storm without jitter, taking down our internal webhook receiver.\n\nThis has impacted our workflows for 11 members of our organization.\nBest regards,\nStarter Biz #52 IT Administration",
+    "customer_id": "starter_biz_52",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-13T13:28:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Webhook Retry Storm",
+      "sender_email": "it-support@starter_biz_52.com",
+      "priority": "P2"
+    }
+  },
+  {
+    "id": "17ce7fd0-e667-4dcf-b98b-a444697a7ab0",
+    "source_type": "email",
+    "external_id": "email_ticket_2053",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: Dark mode font contrast on secondary table headers is unreadable in bright sunlight.\n\nThis has impacted our workflows for 23 members of our organization.\nBest regards,\nStarter Biz #53 IT Administration",
+    "customer_id": "starter_biz_53",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-14T14:22:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Ui Dark Mode Contrast",
+      "sender_email": "it-support@starter_biz_53.com",
+      "priority": "P2"
+    }
+  },
+  {
+    "id": "d703be1e-6951-4e87-bd2d-415b0c892848",
+    "source_type": "email",
+    "external_id": "email_ticket_2054",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: Google Workspace SSO tokens expire after 20 minutes and force users to re-login in the middle of active editing sessions.\n\nThis has impacted our workflows for 28 members of our organization.\nBest regards,\nStarter Biz #54 IT Administration",
+    "customer_id": "starter_biz_54",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-15T15:24:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Sso Desync",
+      "sender_email": "it-support@starter_biz_54.com",
+      "priority": "P2"
+    }
+  },
+  {
+    "id": "afcf8aa6-46ca-4a93-8d86-fa052c3f6fc2",
+    "source_type": "email",
+    "external_id": "email_ticket_2055",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: Exporting CSV or Excel reports with more than 10,000 rows silently truncates the output file without throwing an error.\n\nThis has impacted our workflows for 24 members of our organization.\nBest regards,\nStarter Biz #55 IT Administration",
+    "customer_id": "starter_biz_55",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-16T16:21:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Export Truncation",
+      "sender_email": "it-support@starter_biz_55.com",
+      "priority": "P2"
+    }
+  },
+  {
+    "id": "8261db00-182e-471b-922c-dea956969adc",
+    "source_type": "email",
+    "external_id": "email_ticket_2056",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: The mobile iOS app fails to sync offline changes made during transit, causing conflicting version overwrites when reconnected.\n\nThis has impacted our workflows for 50 members of our organization.\nBest regards,\nStarter Biz #56 IT Administration",
+    "customer_id": "starter_biz_56",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-17T17:10:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Mobile Offline Sync",
+      "sender_email": "it-support@starter_biz_56.com",
+      "priority": "P2"
+    }
+  },
+  {
+    "id": "52a36cf1-caca-48e8-a343-d711fd0e53f3",
+    "source_type": "email",
+    "external_id": "email_ticket_2057",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: Invoices generated in EUR are showing the USD symbol on receipt PDFs, causing compliance headaches with European accounting.\n\nThis has impacted our workflows for 13 members of our organization.\nBest regards,\nStarter Biz #57 IT Administration",
+    "customer_id": "starter_biz_57",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-18T18:44:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Billing Currency Bug",
+      "sender_email": "it-support@starter_biz_57.com",
+      "priority": "P2"
+    }
+  },
+  {
+    "id": "0ddf7086-0af2-4f27-a142-6d9f2da4e985",
+    "source_type": "email",
+    "external_id": "email_ticket_2058",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: When endpoint returns 503, Motif initiates an exponential retry storm without jitter, taking down our internal webhook receiver.\n\nThis has impacted our workflows for 7 members of our organization.\nBest regards,\nStarter Biz #58 IT Administration",
+    "customer_id": "starter_biz_58",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-19T19:27:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Webhook Retry Storm",
+      "sender_email": "it-support@starter_biz_58.com",
+      "priority": "P2"
+    }
+  },
+  {
+    "id": "fa8b7910-cef9-4803-9e98-c3af5d06b271",
+    "source_type": "email",
+    "external_id": "email_ticket_2059",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: Dark mode font contrast on secondary table headers is unreadable in bright sunlight.\n\nThis has impacted our workflows for 40 members of our organization.\nBest regards,\nStarter Biz #59 IT Administration",
+    "customer_id": "starter_biz_59",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-20T20:13:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Ui Dark Mode Contrast",
+      "sender_email": "it-support@starter_biz_59.com",
+      "priority": "P2"
+    }
+  },
+  {
+    "id": "4f6c1c44-ff19-4213-9195-8c7e0d722648",
+    "source_type": "email",
+    "external_id": "email_ticket_2060",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: Google Workspace SSO tokens expire after 20 minutes and force users to re-login in the middle of active editing sessions.\n\nThis has impacted our workflows for 49 members of our organization.\nBest regards,\nStarter Biz #60 IT Administration",
+    "customer_id": "starter_biz_60",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-01T09:28:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Sso Desync",
+      "sender_email": "it-support@starter_biz_60.com",
+      "priority": "P2"
+    }
+  },
+  {
+    "id": "d383cad4-9e4e-4c6f-9e07-eec92990e758",
+    "source_type": "email",
+    "external_id": "email_ticket_2061",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: Exporting CSV or Excel reports with more than 10,000 rows silently truncates the output file without throwing an error.\n\nThis has impacted our workflows for 45 members of our organization.\nBest regards,\nStarter Biz #61 IT Administration",
+    "customer_id": "starter_biz_61",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-02T10:18:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Export Truncation",
+      "sender_email": "it-support@starter_biz_61.com",
+      "priority": "P2"
+    }
+  },
+  {
+    "id": "6a33ed97-7e4c-4713-9760-539e5e2e5aa1",
+    "source_type": "email",
+    "external_id": "email_ticket_2062",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: The mobile iOS app fails to sync offline changes made during transit, causing conflicting version overwrites when reconnected.\n\nThis has impacted our workflows for 11 members of our organization.\nBest regards,\nStarter Biz #62 IT Administration",
+    "customer_id": "starter_biz_62",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-03T11:41:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Mobile Offline Sync",
+      "sender_email": "it-support@starter_biz_62.com",
+      "priority": "P2"
+    }
+  },
+  {
+    "id": "029f2917-1de5-4cf0-938f-807731a44cd1",
+    "source_type": "email",
+    "external_id": "email_ticket_2063",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: Invoices generated in EUR are showing the USD symbol on receipt PDFs, causing compliance headaches with European accounting.\n\nThis has impacted our workflows for 41 members of our organization.\nBest regards,\nStarter Biz #63 IT Administration",
+    "customer_id": "starter_biz_63",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-04T12:10:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Billing Currency Bug",
+      "sender_email": "it-support@starter_biz_63.com",
+      "priority": "P2"
+    }
+  },
+  {
+    "id": "2d54fed7-9064-4f56-8c44-bb82eae2ba83",
+    "source_type": "email",
+    "external_id": "email_ticket_2064",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: When endpoint returns 503, Motif initiates an exponential retry storm without jitter, taking down our internal webhook receiver.\n\nThis has impacted our workflows for 35 members of our organization.\nBest regards,\nStarter Biz #64 IT Administration",
+    "customer_id": "starter_biz_64",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-05T13:28:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Webhook Retry Storm",
+      "sender_email": "it-support@starter_biz_64.com",
+      "priority": "P2"
+    }
+  },
+  {
+    "id": "603a0aaf-93da-43c5-b90d-8ab5d714d243",
+    "source_type": "email",
+    "external_id": "email_ticket_2065",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: Dark mode font contrast on secondary table headers is unreadable in bright sunlight.\n\nThis has impacted our workflows for 33 members of our organization.\nBest regards,\nStarter Biz #65 IT Administration",
+    "customer_id": "starter_biz_65",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-06T14:40:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Ui Dark Mode Contrast",
+      "sender_email": "it-support@starter_biz_65.com",
+      "priority": "P2"
+    }
+  },
+  {
+    "id": "247f20fb-1759-4c21-8b4c-33124eced093",
+    "source_type": "email",
+    "external_id": "email_ticket_2066",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: Google Workspace SSO tokens expire after 20 minutes and force users to re-login in the middle of active editing sessions.\n\nThis has impacted our workflows for 16 members of our organization.\nBest regards,\nStarter Biz #66 IT Administration",
+    "customer_id": "starter_biz_66",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-07T15:31:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Sso Desync",
+      "sender_email": "it-support@starter_biz_66.com",
+      "priority": "P2"
+    }
+  },
+  {
+    "id": "c9d11ea1-26c9-4d93-bd48-09c4396ba54c",
+    "source_type": "email",
+    "external_id": "email_ticket_2067",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: Exporting CSV or Excel reports with more than 10,000 rows silently truncates the output file without throwing an error.\n\nThis has impacted our workflows for 21 members of our organization.\nBest regards,\nStarter Biz #67 IT Administration",
+    "customer_id": "starter_biz_67",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-08T16:13:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Export Truncation",
+      "sender_email": "it-support@starter_biz_67.com",
+      "priority": "P2"
+    }
+  },
+  {
+    "id": "2046ef92-5202-40ff-981b-4cf729bed167",
+    "source_type": "email",
+    "external_id": "email_ticket_2068",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: The mobile iOS app fails to sync offline changes made during transit, causing conflicting version overwrites when reconnected.\n\nThis has impacted our workflows for 12 members of our organization.\nBest regards,\nStarter Biz #68 IT Administration",
+    "customer_id": "starter_biz_68",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-09T17:40:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Mobile Offline Sync",
+      "sender_email": "it-support@starter_biz_68.com",
+      "priority": "P2"
+    }
+  },
+  {
+    "id": "0171020f-a021-4a27-b827-3b7af646857e",
+    "source_type": "email",
+    "external_id": "email_ticket_2069",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: Invoices generated in EUR are showing the USD symbol on receipt PDFs, causing compliance headaches with European accounting.\n\nThis has impacted our workflows for 30 members of our organization.\nBest regards,\nStarter Biz #69 IT Administration",
+    "customer_id": "starter_biz_69",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-10T18:14:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Billing Currency Bug",
+      "sender_email": "it-support@starter_biz_69.com",
+      "priority": "P2"
+    }
+  },
+  {
+    "id": "a49ec56b-c12a-40b7-b7df-ae7c04104728",
+    "source_type": "email",
+    "external_id": "email_ticket_2070",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: When endpoint returns 503, Motif initiates an exponential retry storm without jitter, taking down our internal webhook receiver.\n\nThis has impacted our workflows for 9 members of our organization.\nBest regards,\nStarter Biz #70 IT Administration",
+    "customer_id": "starter_biz_70",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-11T19:41:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Webhook Retry Storm",
+      "sender_email": "it-support@starter_biz_70.com",
+      "priority": "P2"
+    }
+  },
+  {
+    "id": "212788ed-1305-41ce-a731-716d2e1d9294",
+    "source_type": "email",
+    "external_id": "email_ticket_2071",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: Dark mode font contrast on secondary table headers is unreadable in bright sunlight.\n\nThis has impacted our workflows for 45 members of our organization.\nBest regards,\nStarter Biz #71 IT Administration",
+    "customer_id": "starter_biz_71",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-12T20:46:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Ui Dark Mode Contrast",
+      "sender_email": "it-support@starter_biz_71.com",
+      "priority": "P2"
+    }
+  },
+  {
+    "id": "4de86e98-cd86-4466-ab10-4f3b96ec6167",
+    "source_type": "email",
+    "external_id": "email_ticket_2072",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: Google Workspace SSO tokens expire after 20 minutes and force users to re-login in the middle of active editing sessions.\n\nThis has impacted our workflows for 14 members of our organization.\nBest regards,\nStarter Biz #72 IT Administration",
+    "customer_id": "starter_biz_72",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-13T09:13:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Sso Desync",
+      "sender_email": "it-support@starter_biz_72.com",
+      "priority": "P2"
+    }
+  },
+  {
+    "id": "55b82560-52ef-4e96-abaf-a870d8783859",
+    "source_type": "email",
+    "external_id": "email_ticket_2073",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: Exporting CSV or Excel reports with more than 10,000 rows silently truncates the output file without throwing an error.\n\nThis has impacted our workflows for 41 members of our organization.\nBest regards,\nStarter Biz #73 IT Administration",
+    "customer_id": "starter_biz_73",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-14T10:19:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Export Truncation",
+      "sender_email": "it-support@starter_biz_73.com",
+      "priority": "P2"
+    }
+  },
+  {
+    "id": "cd1629f7-8066-4fa6-9a50-b48788f713db",
+    "source_type": "email",
+    "external_id": "email_ticket_2074",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: The mobile iOS app fails to sync offline changes made during transit, causing conflicting version overwrites when reconnected.\n\nThis has impacted our workflows for 10 members of our organization.\nBest regards,\nStarter Biz #74 IT Administration",
+    "customer_id": "starter_biz_74",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-15T11:29:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Mobile Offline Sync",
+      "sender_email": "it-support@starter_biz_74.com",
+      "priority": "P2"
+    }
+  },
+  {
+    "id": "71107fcd-075a-428b-aecf-b281ac7ef18f",
+    "source_type": "email",
+    "external_id": "email_ticket_2075",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: Invoices generated in EUR are showing the USD symbol on receipt PDFs, causing compliance headaches with European accounting.\n\nThis has impacted our workflows for 12 members of our organization.\nBest regards,\nStarter Biz #75 IT Administration",
+    "customer_id": "starter_biz_75",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-16T12:25:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Billing Currency Bug",
+      "sender_email": "it-support@starter_biz_75.com",
+      "priority": "P2"
+    }
+  },
+  {
+    "id": "27aa7ee4-be0a-48df-88df-5d0e703fb60b",
+    "source_type": "email",
+    "external_id": "email_ticket_2076",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: When endpoint returns 503, Motif initiates an exponential retry storm without jitter, taking down our internal webhook receiver.\n\nThis has impacted our workflows for 31 members of our organization.\nBest regards,\nStarter Biz #76 IT Administration",
+    "customer_id": "starter_biz_76",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-17T13:45:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Webhook Retry Storm",
+      "sender_email": "it-support@starter_biz_76.com",
+      "priority": "P2"
+    }
+  },
+  {
+    "id": "88292597-e485-432d-b34b-1b048a376fd9",
+    "source_type": "email",
+    "external_id": "email_ticket_2077",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: Dark mode font contrast on secondary table headers is unreadable in bright sunlight.\n\nThis has impacted our workflows for 43 members of our organization.\nBest regards,\nStarter Biz #77 IT Administration",
+    "customer_id": "starter_biz_77",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-18T14:48:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Ui Dark Mode Contrast",
+      "sender_email": "it-support@starter_biz_77.com",
+      "priority": "P2"
+    }
+  },
+  {
+    "id": "df788216-7d1a-4742-9dd6-26e1e69dd460",
+    "source_type": "email",
+    "external_id": "email_ticket_2078",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: Google Workspace SSO tokens expire after 20 minutes and force users to re-login in the middle of active editing sessions.\n\nThis has impacted our workflows for 19 members of our organization.\nBest regards,\nStarter Biz #78 IT Administration",
+    "customer_id": "starter_biz_78",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-19T15:49:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Sso Desync",
+      "sender_email": "it-support@starter_biz_78.com",
+      "priority": "P2"
+    }
+  },
+  {
+    "id": "525b1bf7-a97d-4752-b7ad-bbd26c324d75",
+    "source_type": "email",
+    "external_id": "email_ticket_2079",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: Exporting CSV or Excel reports with more than 10,000 rows silently truncates the output file without throwing an error.\n\nThis has impacted our workflows for 29 members of our organization.\nBest regards,\nStarter Biz #79 IT Administration",
+    "customer_id": "starter_biz_79",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-20T16:43:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Export Truncation",
+      "sender_email": "it-support@starter_biz_79.com",
+      "priority": "P2"
+    }
+  },
+  {
+    "id": "9d989966-fe1b-4972-8217-036f38831fe0",
+    "source_type": "email",
+    "external_id": "email_ticket_2080",
+    "content": "Hi Support Team,\n\nWe are encountering a critical operational issue with your product: The mobile iOS app fails to sync offline changes made during transit, causing conflicting version overwrites when reconnected.\n\nThis has impacted our workflows for 33 members of our organization.\nBest regards,\nStarter Biz #80 IT Administration",
+    "customer_id": "starter_biz_80",
+    "customer_tier": "starter",
+    "arr_value": 1200.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-01T17:38:00+00:00",
+    "metadata": {
+      "subject": "URGENT: Issue regarding Mobile Offline Sync",
+      "sender_email": "it-support@starter_biz_80.com",
+      "priority": "P2"
+    }
+  },
+  {
+    "id": "85c7e300-73c6-4633-beaa-075a64d91faf",
+    "source_type": "transcript",
+    "external_id": "call_transcript_acme_q3_turn_01",
+    "content": "[CSM]: Good morning Marcus, thank you for joining our Q3 executive account check-in for Acme Global.",
+    "customer_id": "cust_acme_corp",
+    "customer_tier": "enterprise",
+    "arr_value": 120000.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-20T14:00:00+00:00",
+    "metadata": {
+      "call_id": "call_acme_q3_renewal_2026",
+      "call_title": "Acme Global ($120k ARR) Executive Renewal & Friction Review",
+      "speaker": "CSM",
+      "turn_index": 1
+    }
+  },
+  {
+    "id": "1849e788-d798-450c-a495-709200143777",
+    "source_type": "transcript",
+    "external_id": "call_transcript_acme_q3_turn_02",
+    "content": "[Customer_VP]: Thanks for having me Sarah. I have to be blunt right out of the gate: our team is currently in crisis mode.",
+    "customer_id": "cust_acme_corp",
+    "customer_tier": "enterprise",
+    "arr_value": 120000.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-20T14:02:00+00:00",
+    "metadata": {
+      "call_id": "call_acme_q3_renewal_2026",
+      "call_title": "Acme Global ($120k ARR) Executive Renewal & Friction Review",
+      "speaker": "Customer_VP",
+      "turn_index": 2
+    }
+  },
+  {
+    "id": "850df589-96cf-44ff-b070-a57f15ef33ef",
+    "source_type": "transcript",
+    "external_id": "call_transcript_acme_q3_turn_03",
+    "content": "[CSM]: I'm sorry to hear that Marcus. Can you walk me through what's happening?",
+    "customer_id": "cust_acme_corp",
+    "customer_tier": "enterprise",
+    "arr_value": 120000.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-20T14:04:00+00:00",
+    "metadata": {
+      "call_id": "call_acme_q3_renewal_2026",
+      "call_title": "Acme Global ($120k ARR) Executive Renewal & Friction Review",
+      "speaker": "CSM",
+      "turn_index": 3
+    }
+  },
+  {
+    "id": "6d921ad1-816d-43f1-92d1-265634112091",
+    "source_type": "transcript",
+    "external_id": "call_transcript_acme_q3_turn_04",
+    "content": "[Customer_VP]: It's the Google Workspace SSO authentication desync. Our users get forcibly logged out every 20 minutes mid-session.",
+    "customer_id": "cust_acme_corp",
+    "customer_tier": "enterprise",
+    "arr_value": 120000.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-20T14:06:00+00:00",
+    "metadata": {
+      "call_id": "call_acme_q3_renewal_2026",
+      "call_title": "Acme Global ($120k ARR) Executive Renewal & Friction Review",
+      "speaker": "Customer_VP",
+      "turn_index": 4
+    }
+  },
+  {
+    "id": "38baabb3-cce4-4b63-afee-1ee906cb77b9",
+    "source_type": "transcript",
+    "external_id": "call_transcript_acme_q3_turn_05",
+    "content": "[CSM]: Understood. Has this been happening across all 200 seats in your enterprise workspace?",
+    "customer_id": "cust_acme_corp",
+    "customer_tier": "enterprise",
+    "arr_value": 120000.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-20T14:08:00+00:00",
+    "metadata": {
+      "call_id": "call_acme_q3_renewal_2026",
+      "call_title": "Acme Global ($120k ARR) Executive Renewal & Friction Review",
+      "speaker": "CSM",
+      "turn_index": 5
+    }
+  },
+  {
+    "id": "fb4ea868-2507-42f1-9c00-d72ece696f0d",
+    "source_type": "transcript",
+    "external_id": "call_transcript_acme_q3_turn_06",
+    "content": "[Customer_VP]: Yes, across all 200 engineering and product seats. It's destroying sprint momentum and wiping out draft pull requests.",
+    "customer_id": "cust_acme_corp",
+    "customer_tier": "enterprise",
+    "arr_value": 120000.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-20T14:10:00+00:00",
+    "metadata": {
+      "call_id": "call_acme_q3_renewal_2026",
+      "call_title": "Acme Global ($120k ARR) Executive Renewal & Friction Review",
+      "speaker": "Customer_VP",
+      "turn_index": 6
+    }
+  },
+  {
+    "id": "8623ab71-6f80-4843-b5da-dbb7d52a7031",
+    "source_type": "transcript",
+    "external_id": "call_transcript_acme_q3_turn_07",
+    "content": "[Customer_VP]: Google Workspace SSO tokens expire after 20 minutes and force users to re-login in the middle of active editing sessions.",
+    "customer_id": "cust_acme_corp",
+    "customer_tier": "enterprise",
+    "arr_value": 120000.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-20T14:12:00+00:00",
+    "metadata": {
+      "call_id": "call_acme_q3_renewal_2026",
+      "call_title": "Acme Global ($120k ARR) Executive Renewal & Friction Review",
+      "speaker": "Customer_VP",
+      "turn_index": 7
+    }
+  },
+  {
+    "id": "3f9f7d0a-b6a3-450f-8b71-d32841c362cc",
+    "source_type": "transcript",
+    "external_id": "call_transcript_acme_q3_turn_08",
+    "content": "[CSM]: That is unacceptable. Let me check the ticket logs from our engineering team on that.",
+    "customer_id": "cust_acme_corp",
+    "customer_tier": "enterprise",
+    "arr_value": 120000.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-20T14:14:00+00:00",
+    "metadata": {
+      "call_id": "call_acme_q3_renewal_2026",
+      "call_title": "Acme Global ($120k ARR) Executive Renewal & Friction Review",
+      "speaker": "CSM",
+      "turn_index": 8
+    }
+  },
+  {
+    "id": "f2f44c64-6096-4d30-afe1-2c4b176fd7b6",
+    "source_type": "transcript",
+    "external_id": "call_transcript_acme_q3_turn_09",
+    "content": "[Customer_VP]: I raised this ticket three weeks ago. We haven't had a single concrete timeline or hotfix.",
+    "customer_id": "cust_acme_corp",
+    "customer_tier": "enterprise",
+    "arr_value": 120000.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-20T14:16:00+00:00",
+    "metadata": {
+      "call_id": "call_acme_q3_renewal_2026",
+      "call_title": "Acme Global ($120k ARR) Executive Renewal & Friction Review",
+      "speaker": "Customer_VP",
+      "turn_index": 9
+    }
+  },
+  {
+    "id": "6d450920-9297-4457-af0d-fe8602771099",
+    "source_type": "transcript",
+    "external_id": "call_transcript_acme_q3_turn_10",
+    "content": "[Customer_VP]: Our IT department has flagged this as an SLA violation. If SSO session persistence isn't resolved by next month we are cancelling our 200-seat contract.",
+    "customer_id": "cust_acme_corp",
+    "customer_tier": "enterprise",
+    "arr_value": 120000.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-20T14:18:00+00:00",
+    "metadata": {
+      "call_id": "call_acme_q3_renewal_2026",
+      "call_title": "Acme Global ($120k ARR) Executive Renewal & Friction Review",
+      "speaker": "Customer_VP",
+      "turn_index": 10
+    }
+  },
+  {
+    "id": "28f541b8-68bd-440d-9303-d2029378568b",
+    "source_type": "transcript",
+    "external_id": "call_transcript_acme_q3_turn_11",
+    "content": "[CSM]: I hear you Marcus. Acme Global is a $120k ARR anchor account for us, and I will personally escalate this to our VP of Engineering today.",
+    "customer_id": "cust_acme_corp",
+    "customer_tier": "enterprise",
+    "arr_value": 120000.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-20T14:20:00+00:00",
+    "metadata": {
+      "call_id": "call_acme_q3_renewal_2026",
+      "call_title": "Acme Global ($120k ARR) Executive Renewal & Friction Review",
+      "speaker": "CSM",
+      "turn_index": 11
+    }
+  },
+  {
+    "id": "161298d0-7266-4fbe-b81d-3fd4fdf4d16f",
+    "source_type": "transcript",
+    "external_id": "call_transcript_acme_q3_turn_12",
+    "content": "[Customer_VP]: I appreciate that Sarah, but we've already initiated conversations with Okta and a competing vendor.",
+    "customer_id": "cust_acme_corp",
+    "customer_tier": "enterprise",
+    "arr_value": 120000.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-20T14:22:00+00:00",
+    "metadata": {
+      "call_id": "call_acme_q3_renewal_2026",
+      "call_title": "Acme Global ($120k ARR) Executive Renewal & Friction Review",
+      "speaker": "Customer_VP",
+      "turn_index": 12
+    }
+  },
+  {
+    "id": "fb08c512-0f80-4101-a5d9-a88476d13343",
+    "source_type": "transcript",
+    "external_id": "call_transcript_acme_q3_turn_13",
+    "content": "[CSM]: May I ask which specific OAuth flow settings your IT team has enabled in Google Workspace?",
+    "customer_id": "cust_acme_corp",
+    "customer_tier": "enterprise",
+    "arr_value": 120000.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-20T14:24:00+00:00",
+    "metadata": {
+      "call_id": "call_acme_q3_renewal_2026",
+      "call_title": "Acme Global ($120k ARR) Executive Renewal & Friction Review",
+      "speaker": "CSM",
+      "turn_index": 13
+    }
+  },
+  {
+    "id": "e9ffdbec-5061-4b61-bfb7-c824c2629f96",
+    "source_type": "transcript",
+    "external_id": "call_transcript_acme_q3_turn_14",
+    "content": "[Customer_VP]: We enforce strict PKCE with hourly token refreshes, but your application server refuses the refresh token and crashes with 401 Unauthorized.",
+    "customer_id": "cust_acme_corp",
+    "customer_tier": "enterprise",
+    "arr_value": 120000.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-20T14:26:00+00:00",
+    "metadata": {
+      "call_id": "call_acme_q3_renewal_2026",
+      "call_title": "Acme Global ($120k ARR) Executive Renewal & Friction Review",
+      "speaker": "Customer_VP",
+      "turn_index": 14
+    }
+  },
+  {
+    "id": "c4b57684-0c7c-4e92-afe8-33597e9fbfab",
+    "source_type": "transcript",
+    "external_id": "call_transcript_acme_q3_turn_15",
+    "content": "[CSM]: Got it. So it's failing on silent token refresh rather than the initial login.",
+    "customer_id": "cust_acme_corp",
+    "customer_tier": "enterprise",
+    "arr_value": 120000.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-20T14:28:00+00:00",
+    "metadata": {
+      "call_id": "call_acme_q3_renewal_2026",
+      "call_title": "Acme Global ($120k ARR) Executive Renewal & Friction Review",
+      "speaker": "CSM",
+      "turn_index": 15
+    }
+  },
+  {
+    "id": "0e0a5abe-c194-4b1c-9b5f-cbd3824a6346",
+    "source_type": "transcript",
+    "external_id": "call_transcript_acme_q3_turn_16",
+    "content": "[Customer_VP]: Exactly. If the user is actively typing, the modal pops up and loses unsaved form state.",
+    "customer_id": "cust_acme_corp",
+    "customer_tier": "enterprise",
+    "arr_value": 120000.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-20T14:30:00+00:00",
+    "metadata": {
+      "call_id": "call_acme_q3_renewal_2026",
+      "call_title": "Acme Global ($120k ARR) Executive Renewal & Friction Review",
+      "speaker": "Customer_VP",
+      "turn_index": 16
+    }
+  },
+  {
+    "id": "71918189-1131-4b66-bb2b-fac3fc5d508b",
+    "source_type": "transcript",
+    "external_id": "call_transcript_acme_q3_turn_17",
+    "content": "[CSM]: I have documented this exact failure mode. I will commit an engineering team to a patch branch by Friday.",
+    "customer_id": "cust_acme_corp",
+    "customer_tier": "enterprise",
+    "arr_value": 120000.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-20T14:32:00+00:00",
+    "metadata": {
+      "call_id": "call_acme_q3_renewal_2026",
+      "call_title": "Acme Global ($120k ARR) Executive Renewal & Friction Review",
+      "speaker": "CSM",
+      "turn_index": 17
+    }
+  },
+  {
+    "id": "15183b10-8597-43cb-bbf5-178cb0b8a689",
+    "source_type": "transcript",
+    "external_id": "call_transcript_acme_q3_turn_18",
+    "content": "[Customer_VP]: If we don't have a verified fix in staging by Friday 5 PM EST, we are withholding our renewal wire.",
+    "customer_id": "cust_acme_corp",
+    "customer_tier": "enterprise",
+    "arr_value": 120000.0,
+    "churn_risk_flag": true,
+    "created_at": "2026-09-20T14:34:00+00:00",
+    "metadata": {
+      "call_id": "call_acme_q3_renewal_2026",
+      "call_title": "Acme Global ($120k ARR) Executive Renewal & Friction Review",
+      "speaker": "Customer_VP",
+      "turn_index": 18
+    }
+  },
+  {
+    "id": "f21f93a2-fcb9-411b-a28a-5f5fb5b12348",
+    "source_type": "transcript",
+    "external_id": "call_transcript_acme_q3_turn_19",
+    "content": "[CSM]: Understood. I will send you a daily update at 10 AM EST until this is deployed.",
+    "customer_id": "cust_acme_corp",
+    "customer_tier": "enterprise",
+    "arr_value": 120000.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-20T14:36:00+00:00",
+    "metadata": {
+      "call_id": "call_acme_q3_renewal_2026",
+      "call_title": "Acme Global ($120k ARR) Executive Renewal & Friction Review",
+      "speaker": "CSM",
+      "turn_index": 19
+    }
+  },
+  {
+    "id": "600b8aab-5bce-413e-80d4-e21b014f2d75",
+    "source_type": "transcript",
+    "external_id": "call_transcript_acme_q3_turn_20",
+    "content": "[Customer_VP]: Thank you Sarah. We want this partnership to work, but reliability is non-negotiable for enterprise.",
+    "customer_id": "cust_acme_corp",
+    "customer_tier": "enterprise",
+    "arr_value": 120000.0,
+    "churn_risk_flag": false,
+    "created_at": "2026-09-20T14:38:00+00:00",
+    "metadata": {
+      "call_id": "call_acme_q3_renewal_2026",
+      "call_title": "Acme Global ($120k ARR) Executive Renewal & Friction Review",
+      "speaker": "Customer_VP",
+      "turn_index": 20
+    }
+  }
+]

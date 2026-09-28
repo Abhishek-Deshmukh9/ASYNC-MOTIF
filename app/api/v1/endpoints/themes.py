@@ -43,40 +43,46 @@ async def list_themes(
     themes = result.scalars().all()
 
     response: List[ThemeResponse] = []
-    for t in themes:
-        # Fetch cited quotes for this theme
-        assoc_query = (
-            select(
-                theme_feedback_associations.c.quote_text,
-                theme_feedback_associations.c.feedback_item_id,
-                FeedbackItem.customer_id,
-                FeedbackItem.arr_value,
-                FeedbackItem.customer_tier,
-            )
-            .join(
-                FeedbackItem,
-                theme_feedback_associations.c.feedback_item_id == FeedbackItem.id,
-            )
-            .where(
-                theme_feedback_associations.c.theme_id == t.id,
-                theme_feedback_associations.c.is_cited_quote.is_(True),
-            )
+    if not themes:
+        return response
+
+    theme_ids = [t.id for t in themes]
+    assoc_query = (
+        select(
+            theme_feedback_associations.c.theme_id,
+            theme_feedback_associations.c.quote_text,
+            theme_feedback_associations.c.feedback_item_id,
+            FeedbackItem.customer_id,
+            FeedbackItem.arr_value,
+            FeedbackItem.customer_tier,
         )
-        assoc_res = await db.execute(assoc_query)
-        assoc_rows = assoc_res.all()
+        .join(
+            FeedbackItem,
+            theme_feedback_associations.c.feedback_item_id == FeedbackItem.id,
+        )
+        .where(
+            theme_feedback_associations.c.theme_id.in_(theme_ids),
+            theme_feedback_associations.c.is_cited_quote.is_(True),
+        )
+    )
+    assoc_res = await db.execute(assoc_query)
+    assoc_rows = assoc_res.all()
 
-        quotes = [
-            CitedQuote(
-                quote_text=row.quote_text or "",
-                feedback_item_id=row.feedback_item_id,
-                customer_id=row.customer_id,
-                arr_value=float(row.arr_value or 0.0),
-                customer_tier=row.customer_tier,
+    quotes_by_theme: Dict[UUID, List[CitedQuote]] = {t.id: [] for t in themes}
+    for row in assoc_rows:
+        if row.quote_text:
+            quotes_by_theme[row.theme_id].append(
+                CitedQuote(
+                    quote_text=row.quote_text,
+                    feedback_item_id=row.feedback_item_id,
+                    customer_id=row.customer_id,
+                    arr_value=float(row.arr_value or 0.0),
+                    customer_tier=row.customer_tier,
+                )
             )
-            for row in assoc_rows
-            if row.quote_text
-        ]
 
+    for t in themes:
+        quotes = quotes_by_theme.get(t.id, [])
         response.append(
             ThemeResponse(
                 id=t.id,

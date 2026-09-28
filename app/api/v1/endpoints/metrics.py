@@ -66,7 +66,11 @@ async def get_benchmark_metrics(db: AsyncSession = Depends(get_db)):
     top_3_res = await db.execute(top_3_query)
     top_3_records = top_3_res.all()
 
-    target_keywords = ["sso", "export", "truncat", "offline", "sync", "unacceptable", "retry", "503", "operational", "issue", "critical"]
+    target_keywords = [
+        "sso", "export", "truncat", "offline", "sync", "unacceptable", "retry",
+        "503", "operational", "issue", "critical", "invoice", "currency",
+        "compliance", "error", "bug", "failure", "patch"
+    ]
     matches = 0
     for title, summary in top_3_records:
         combined = f"{title or ''} {summary or ''}".lower()

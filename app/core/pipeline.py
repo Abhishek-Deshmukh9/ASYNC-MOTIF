@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import uuid
 from typing import Any, Dict, List, Optional
@@ -29,6 +30,9 @@ async def run_ai_pipeline(
     5. Compute Revenue-at-Risk scoring and persist themes & associations.
     """
     logger.info(">>> Starting Motif AI Pipeline (Phase 3) <<<")
+    batch_size = batch_size or 50
+    min_cluster_size = min_cluster_size or 4
+    min_samples = min_samples or 2
 
     # Step 1: Embed any un-embedded feedback items
     embedded_count = await embed_all_unembedded_items(batch_size=batch_size)
@@ -77,7 +81,31 @@ async def run_ai_pipeline(
         f"{cluster_res.total_noise_count} noise items."
     )
 
-    # Step 4: Synthesize Themes & Compute Revenue-at-Risk
+    # Step 4: Synthesize Themes Concurrently (avoiding long DB session locks)
+    logger.info(f"Step 3: Synthesizing themes for {len(cluster_res.clusters)} clusters concurrently...")
+    semaphore = asyncio.Semaphore(3)
+
+    async def _process_cluster(cluster_id: int, c_items: List[Dict[str, Any]]):
+        async with semaphore:
+            cohesion = cluster_res.cohesion_scores.get(cluster_id, 1.0)
+            exemplars = cluster_res.exemplars.get(cluster_id, c_items[:5])
+            try:
+                synthesized = await synthesize_cluster_theme(c_items, exemplars=exemplars)
+            except Exception as e:
+                logger.error(f"Cluster {cluster_id} theme synthesis failed ({e}), using fallback.")
+                from app.core.llm_labeler import _synthesize_offline_grounded_theme
+                source_texts = [it.get("content", "") for it in c_items] + [it.get("clean_content", "") for it in c_items]
+                synthesized = _synthesize_offline_grounded_theme(exemplars, source_texts)
+            risk_metrics = calculate_revenue_at_risk(c_items, cohesion_score=cohesion)
+            return cluster_id, c_items, synthesized, risk_metrics
+
+    tasks = [
+        _process_cluster(cid, c_items)
+        for cid, c_items in cluster_res.clusters.items()
+    ]
+    cluster_payloads = await asyncio.gather(*tasks)
+
+    # Step 5: Fast atomic persistence to database
     created_themes: List[Dict[str, Any]] = []
 
     async with AsyncSessionLocal() as session:
@@ -85,18 +113,9 @@ async def run_ai_pipeline(
         await session.execute(
             delete(Theme).where(Theme.status == "pending_review")
         )
-        await session.commit()
 
-        for cluster_id, c_items in cluster_res.clusters.items():
-            cohesion = cluster_res.cohesion_scores.get(cluster_id, 1.0)
-            exemplars = cluster_res.exemplars.get(cluster_id, c_items[:5])
-
-            # LLM Theme Synthesis with Quote Grounding
-            synthesized = await synthesize_cluster_theme(c_items, exemplars=exemplars)
-
-            # Revenue at Risk Ranking
-            risk_metrics = calculate_revenue_at_risk(c_items, cohesion_score=cohesion)
-
+        theme_id_map: Dict[int, uuid.UUID] = {}
+        for cluster_id, c_items, synthesized, risk_metrics in cluster_payloads:
             theme_id = uuid.uuid4()
             theme_record = Theme(
                 id=theme_id,
@@ -108,11 +127,16 @@ async def run_ai_pipeline(
                 status="pending_review",
             )
             session.add(theme_record)
-            await session.flush()
+            theme_id_map[cluster_id] = theme_id
 
-            # Associate feedback items and flag cited quotes
+        # Flush all themes to database so foreign key constraint is satisfied
+        await session.flush()
+
+        # Collect all association rows and batch insert in a single query
+        assoc_rows: List[Dict[str, Any]] = []
+        for cluster_id, c_items, synthesized, risk_metrics in cluster_payloads:
+            theme_id = theme_id_map[cluster_id]
             for c_item in c_items:
-                # Check if this item matches any cited quote
                 item_text = (c_item.get("content") or "") + (c_item.get("clean_content") or "")
                 matched_quote = None
                 for q in synthesized.cited_quotes:
@@ -120,14 +144,12 @@ async def run_ai_pipeline(
                         matched_quote = q
                         break
 
-                await session.execute(
-                    theme_feedback_associations.insert().values(
-                        theme_id=theme_id,
-                        feedback_item_id=c_item["id"],
-                        is_cited_quote=(matched_quote is not None),
-                        quote_text=matched_quote,
-                    )
-                )
+                assoc_rows.append({
+                    "theme_id": theme_id,
+                    "feedback_item_id": c_item["id"],
+                    "is_cited_quote": (matched_quote is not None),
+                    "quote_text": matched_quote,
+                })
 
             created_themes.append({
                 "theme_id": str(theme_id),
@@ -137,6 +159,9 @@ async def run_ai_pipeline(
                 "affected_accounts": risk_metrics["affected_accounts_count"],
                 "cited_quotes": synthesized.cited_quotes,
             })
+
+        if assoc_rows:
+            await session.execute(theme_feedback_associations.insert(), assoc_rows)
 
         await session.commit()
 

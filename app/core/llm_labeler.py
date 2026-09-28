@@ -83,16 +83,15 @@ async def _call_groq(prompt: str, api_key: str) -> str:
         "Content-Type": "application/json",
     }
 
-    # Priority list of models: configured model first, followed by active Groq free-tier models
+    # Priority list of models: configured model first, followed by active Groq models
     candidate_models: List[str] = []
     if settings.GROQ_MODEL:
         candidate_models.append(settings.GROQ_MODEL)
     for model_name in [
-        "openai/gpt-oss-20b",
         "openai/gpt-oss-120b",
+        "openai/gpt-oss-20b",
         "qwen/qwen3.8-27b",
         "llama-3.3-70b-versatile",
-        "llama-3.1-8b-instant",
     ]:
         if model_name not in candidate_models:
             candidate_models.append(model_name)
@@ -116,10 +115,17 @@ async def _call_groq(prompt: str, api_key: str) -> str:
                     logger.info(f"Groq synthesis succeeded using model: '{model}'")
                     return data["choices"][0]["message"]["content"]
                 elif resp.status_code == 429:
+                    retry_after = 2.0
+                    try:
+                        hdr = resp.headers.get("retry-after")
+                        if hdr:
+                            retry_after = max(float(hdr), 1.0)
+                    except Exception:
+                        pass
                     logger.warning(
-                        f"Groq model '{model}' rate-limited (HTTP 429). Backing off briefly and trying next candidate..."
+                        f"Groq model '{model}' rate-limited (HTTP 429). Backing off {retry_after}s before fallback..."
                     )
-                    await asyncio.sleep(1.0)
+                    await asyncio.sleep(retry_after)
                 else:
                     logger.warning(
                         f"Groq model '{model}' returned HTTP {resp.status_code}: {resp.text[:150]}. Trying next fallback..."
@@ -241,16 +247,18 @@ async def synthesize_cluster_theme(
     # 2. Parse and validate LLM output via Pydantic schema
     if raw_response_text:
         try:
-            # Strip markdown json code fences if present
             cleaned_json = raw_response_text.strip()
-            if "```" in cleaned_json:
-                cleaned_json = re.sub(r"^```(?:json)?\s*", "", cleaned_json, flags=re.IGNORECASE)
-                cleaned_json = re.sub(r"\s*```$", "", cleaned_json)
-            # Find bounds of JSON object
+            # Strip markdown json code fences if present anywhere
+            cleaned_json = re.sub(r"```(?:json)?\s*", "", cleaned_json, flags=re.IGNORECASE)
+            cleaned_json = cleaned_json.replace("```", "")
+            # Find bounds of outermost JSON object
             first_brace = cleaned_json.find('{')
             last_brace = cleaned_json.rfind('}')
             if first_brace != -1 and last_brace != -1:
                 cleaned_json = cleaned_json[first_brace:last_brace+1]
+
+            # Remove trailing commas before closing braces or brackets
+            cleaned_json = re.sub(r',\s*([}\]])', r'\1', cleaned_json)
 
             parsed_data = json.loads(cleaned_json)
             # Normalize non-breaking hyphens and unicode punctuation

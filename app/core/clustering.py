@@ -35,10 +35,8 @@ def cluster_feedback_embeddings(
     min_cluster_size: int = 4,
     min_samples: int = 2,
 ) -> ClusterResult:
-    """
-    Executes density-based unsupervised clustering via scikit-learn HDBSCAN.
-    Rule 1.2 Compliance: No predefined taxonomies; outliers are tagged as label -1 (Noise).
-    """
+    min_cluster_size = min_cluster_size or 4
+    min_samples = min_samples or 2
     if not items_with_embeddings:
         return ClusterResult(clusters={}, noise_items=[], cohesion_scores={}, exemplars={})
 

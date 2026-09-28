@@ -12,9 +12,12 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 export const fetchThemes = (projectId?: string) => request<Theme[]>(`/themes${projectId ? `?project_id=${encodeURIComponent(projectId)}` : ''}`);
 const scopeQuery = (projectId?: string) => (projectId ? `?project_id=${encodeURIComponent(projectId)}` : '');
 // projectId undefined = the labelled demo corpus loaded by seed.py
-export const runPipeline = (projectId?: string) => request<{ themes_created?: number; [key: string]: unknown }>('/pipeline/run', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ batch_size: 100, project_id: projectId ?? null }) });
+export type PipelineResult = { themes_created?: number; duration_seconds?: number; project_id?: string | null; [key: string]: unknown };
+export const runPipeline = (projectId?: string) => request<PipelineResult>('/pipeline/run', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ batch_size: 100, project_id: projectId ?? null }) });
 export const fetchMetrics = (projectId?: string) => request<EvalMetrics>(`/metrics/eval${scopeQuery(projectId)}`);
-export const approveTheme = (id: string, title?: string, repo?: string) => request<ApprovalResult>(`/themes/${id}/approve`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pm_user_id: 'workspace_user', ...(title ? { final_title: title } : {}), ...(repo ? { github_repo: repo } : {}) }) });
+export const approveTheme = (id: string, title?: string, repo?: string, summary?: string) => request<ApprovalResult>(`/themes/${id}/approve`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pm_user_id: 'workspace_user', ...(title ? { final_title: title } : {}), ...(summary ? { final_summary: summary } : {}), ...(repo ? { github_repo: repo } : {}) }) });
+export const rejectTheme = (id: string) => request<{ status: string }>(`/themes/${id}/reject?pm_user_id=workspace_user`, { method: 'POST' });
+export const fetchPipelineStatus = () => request<{ status: string; last_result?: PipelineResult | null }>('/pipeline/status');
 
 export async function ingestSource(source: ProjectSource, projectId: string) {
   const file = new File([JSON.stringify([{

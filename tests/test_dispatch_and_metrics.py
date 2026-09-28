@@ -39,7 +39,10 @@ def test_mini_prd_generation():
 
 
 @pytest.mark.anyio
-async def test_github_dispatch_module():
+async def test_github_dispatch_without_token_creates_no_fake_link(monkeypatch):
+    from app.config import settings
+
+    monkeypatch.setattr(settings, "GITHUB_TOKEN", None)
     receipt = await dispatch_github_issue(
         title="[MOTIF] Test Issue",
         body="## PRD Test Body",
@@ -48,19 +51,28 @@ async def test_github_dispatch_module():
         repo="test-repo",
     )
 
-    assert receipt["issue_number"] > 0
-    assert "github.com/test-org/test-repo/issues/" in receipt["issue_url"]
+    assert receipt["is_live"] is False
+    assert receipt["issue_url"] is None
+    assert receipt["issue_number"] is None
+    assert "GITHUB_TOKEN" in receipt["message"]
 
 
 def test_metrics_evaluation_endpoint():
+    """Needs a running database (docker compose up -d postgres). Checks shape, not fixed values."""
     response = client.get("/api/v1/metrics/eval")
     assert response.status_code == 200
     data = response.json()
 
-    assert "precision_at_3" in data
-    assert data["precision_at_3"] >= 90.0
-    assert "acceptance_rate" in data
-    assert data["acceptance_rate"] >= 70.0
-    assert data["citation_validity"] == 100.0
-    assert "total_feedback_items" in data
-    assert "total_themes_discovered" in data
+    for key in (
+        "precision_at_3",
+        "acceptance_rate",
+        "citation_validity",
+        "ground_truth_top_3",
+        "total_feedback_items",
+        "total_themes_discovered",
+        "total_revenue_at_risk",
+    ):
+        assert key in data
+    # Metrics are measured, so they are either null (nothing to measure yet) or a percentage
+    for key in ("precision_at_3", "acceptance_rate", "citation_validity"):
+        assert data[key] is None or 0.0 <= data[key] <= 100.0

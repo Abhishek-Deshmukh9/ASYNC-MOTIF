@@ -309,7 +309,10 @@ async def approve_and_dispatch_theme(
     await db.commit()
     await db.refresh(theme)
 
-    logger.info(f"Theme {theme.id} approved by PM '{pm_id}' -> GitHub issue created: {theme.github_issue_url}")
+    if theme.github_issue_url:
+        logger.info(f"Theme {theme.id} approved by PM '{pm_id}' -> GitHub issue created: {theme.github_issue_url}")
+    else:
+        logger.info(f"Theme {theme.id} approved by PM '{pm_id}' -> no GitHub issue ({gh_receipt.get('message')})")
 
     return {
         "status": "approved",
@@ -318,6 +321,8 @@ async def approve_and_dispatch_theme(
         "revenue_at_risk": float(theme.revenue_at_risk),
         "github_issue_url": theme.github_issue_url,
         "github_issue_number": theme.github_issue_number,
+        "github_dispatch": "live" if gh_receipt.get("is_live") else "simulated",
+        "github_message": gh_receipt.get("message"),
         "prd_markdown": theme.prd_markdown,
         "audit_logged": True,
     }

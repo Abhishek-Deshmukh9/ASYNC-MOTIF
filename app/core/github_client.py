@@ -1,5 +1,4 @@
 import logging
-import random
 from typing import Any, Dict, List, Optional
 import httpx
 from app.config import settings
@@ -17,12 +16,22 @@ async def dispatch_github_issue(
     """
     Dispatches a structured issue to GitHub REST API v3 (POST /repos/{owner}/{repo}/issues).
     If GITHUB_TOKEN is configured, sends to real GitHub API.
-    Otherwise, generates simulated issue receipt with verifiable issue number & URL.
+    Otherwise (or if the API call fails) no issue is created: the receipt says so
+    plainly and carries no URL, so the UI never shows a link to an issue that doesn't exist.
     """
-    repo_owner = owner or settings.GITHUB_REPO_OWNER or "acme-corp"
-    repo_name = repo or settings.GITHUB_REPO_NAME or "core-platform"
+    repo_owner = owner or settings.GITHUB_REPO_OWNER
+    repo_name = repo or settings.GITHUB_REPO_NAME
     token = settings.GITHUB_TOKEN
     issue_labels = labels or ["motif-approved", "theme", "revenue-risk:critical"]
+
+    if token and not (repo_owner and repo_name):
+        logger.warning("GITHUB_TOKEN is set but GITHUB_REPO_OWNER / GITHUB_REPO_NAME are not; no issue created.")
+        return {
+            "issue_number": None,
+            "issue_url": None,
+            "is_live": False,
+            "message": "No GitHub issue was created: set GITHUB_REPO_OWNER and GITHUB_REPO_NAME in .env.",
+        }
 
     if token:
         url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/issues"
@@ -51,16 +60,19 @@ async def dispatch_github_issue(
                     "is_live": True,
                 }
         except Exception as e:
-            logger.warning(f"GitHub API call failed ({e}); falling back to simulated dispatch receipt.")
+            logger.warning(f"GitHub API call failed ({e}); no issue was created.")
+            return {
+                "issue_number": None,
+                "issue_url": None,
+                "is_live": False,
+                "message": f"GitHub API call failed, so no issue was created: {e}",
+            }
 
-    # Simulated fallback for hackathon demo without requiring external GitHub write-scope token
-    simulated_number = random.randint(101, 999)
-    simulated_url = f"https://github.com/{repo_owner}/{repo_name}/issues/{simulated_number}"
-    logger.info(f"Generated simulated GitHub issue: {simulated_url}")
-
+    # No token configured: the PRD is still generated, but nothing is sent to GitHub.
+    logger.info("GITHUB_TOKEN not set; skipping GitHub issue creation (simulated mode).")
     return {
-        "issue_number": simulated_number,
-        "issue_url": simulated_url,
+        "issue_number": None,
+        "issue_url": None,
         "is_live": False,
-        "message": f"Issue #{simulated_number} successfully registered for {repo_owner}/{repo_name}.",
+        "message": "Simulated mode: PRD generated, but no GitHub issue was created because GITHUB_TOKEN is not set.",
     }

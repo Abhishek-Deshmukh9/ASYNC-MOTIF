@@ -1,5 +1,4 @@
 import logging
-import random
 from typing import Any, Dict, List, Optional
 import httpx
 from app.config import settings
@@ -14,53 +13,40 @@ async def dispatch_github_issue(
     owner: Optional[str] = None,
     repo: Optional[str] = None,
 ) -> Dict[str, Any]:
-    """
-    Dispatches a structured issue to GitHub REST API v3 (POST /repos/{owner}/{repo}/issues).
-    If GITHUB_TOKEN is configured, sends to real GitHub API.
-    Otherwise, generates simulated issue receipt with verifiable issue number & URL.
-    """
-    repo_owner = owner or settings.GITHUB_REPO_OWNER or "acme-corp"
-    repo_name = repo or settings.GITHUB_REPO_NAME or "core-platform"
+    """Create a real issue via GitHub REST API; never fabricate an issue receipt."""
+    repo_owner = owner or settings.GITHUB_REPO_OWNER
+    repo_name = repo or settings.GITHUB_REPO_NAME
     token = settings.GITHUB_TOKEN
-    issue_labels = labels or ["motif-approved", "theme", "revenue-risk:critical"]
+    if not token:
+        raise RuntimeError("GITHUB_TOKEN is not configured; no GitHub issue was created.")
+    if not repo_owner or not repo_name:
+        raise RuntimeError("No GitHub repository was configured for this project.")
 
-    if token:
-        url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/issues"
-        headers = {
-            "Authorization": f"Bearer {token}",
-            "Accept": "application/vnd.github.v3+json",
-            "Content-Type": "application/json",
-            "User-Agent": "Motif-Autonomous-Pipeline/1.0",
-        }
-        payload = {
-            "title": title,
-            "body": body,
-            "labels": issue_labels,
-        }
+    url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/issues"
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Accept": "application/vnd.github.v3+json",
+        "Content-Type": "application/json",
+        "User-Agent": "Motif-Feedback-Intelligence/1.0",
+    }
+    payload = {
+        "title": title,
+        "body": body,
+        "labels": labels or ["motif-approved", "theme", "revenue-risk:critical"],
+    }
+    try:
+        logger.info("Dispatching issue to GitHub repository %s/%s", repo_owner, repo_name)
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            response = await client.post(url, headers=headers, json=payload)
+            response.raise_for_status()
+            data = response.json()
+    except Exception as exc:
+        logger.exception("GitHub issue creation failed for %s/%s", repo_owner, repo_name)
+        raise RuntimeError(f"GitHub issue creation failed: {exc}") from exc
 
-        try:
-            logger.info(f"Dispatching issue to GitHub repository: {repo_owner}/{repo_name}...")
-            async with httpx.AsyncClient(timeout=15.0) as client:
-                resp = await client.post(url, headers=headers, json=payload)
-                resp.raise_for_status()
-                data = resp.json()
-                logger.info(f"GitHub issue created: {data.get('html_url')} (#{data.get('number')})")
-                return {
-                    "issue_number": data.get("number"),
-                    "issue_url": data.get("html_url"),
-                    "is_live": True,
-                }
-        except Exception as e:
-            logger.warning(f"GitHub API call failed ({e}); falling back to simulated dispatch receipt.")
-
-    # Simulated fallback for hackathon demo without requiring external GitHub write-scope token
-    simulated_number = random.randint(101, 999)
-    simulated_url = f"https://github.com/{repo_owner}/{repo_name}/issues/{simulated_number}"
-    logger.info(f"Generated simulated GitHub issue: {simulated_url}")
-
+    logger.info("Created GitHub issue %s (number %s)", data.get("html_url"), data.get("number"))
     return {
-        "issue_number": simulated_number,
-        "issue_url": simulated_url,
-        "is_live": False,
-        "message": f"Issue #{simulated_number} successfully registered for {repo_owner}/{repo_name}.",
+        "issue_number": data.get("number"),
+        "issue_url": data.get("html_url"),
+        "is_live": True,
     }

@@ -92,7 +92,27 @@ Human PM Approves ──► Automated PRD Generation & GitHub Issue Creation
 
 ---
 
-## 6. MVP Scope (ASYNC 2026 Deliverable)
+## 6. Project workspaces and intake
+
+The web workspace now supports named project spaces, project-scoped document uploads, live browser meeting transcription, a source library, project-filtered theme analysis, evidence review, and a human-approved GitHub issue launch. Project/source metadata is stored in the browser; uploaded content is sent to the API and tagged with its project ID. Meeting transcripts are saved to the project library and downloaded as Markdown; captured audio is also downloaded as a WebM file. Live transcription uses the browser's SpeechRecognition implementation (Chrome/Edge support is recommended).
+
+For a local setup, run the database/API/UI with Docker Compose, then apply the project scoping migration:
+
+```bash
+docker compose up -d
+docker compose exec backend alembic stamp 001_initial_schema
+docker compose exec backend alembic upgrade head
+```
+
+The `stamp` step is for databases that were initialized by the app's existing `create_all()` startup path and have no Alembic version recorded. If your database is already tracked by Alembic, skip `stamp` and run only `alembic upgrade head`.
+
+Configure your LLM and GitHub integration in `.env` (`GROQ_API_KEY` or another configured LLM provider, plus `GITHUB_TOKEN`, `GITHUB_REPO_OWNER`, and `GITHUB_REPO_NAME`). Set `GITHUB_TOKEN` on the backend. A project can target its own `owner/repo`; if none is set, the backend falls back to `GITHUB_REPO_OWNER` and `GITHUB_REPO_NAME`. Issue launch is disabled by an explicit API error until the token and destination are configured—Motif no longer invents simulated issue URLs.
+
+**Google Drive note:** The current UI records a folder scope locally but does not yet authenticate to Google or sync Drive contents. `GoogleDriveConnector` is still a stub; Google OAuth credentials, token handling, folder listing/export, and a sync endpoint must be implemented before using this as a real Drive connection. The interface explicitly reports this rather than claiming files were imported. Uploaded files are currently parsed as text; binary Office/PDF extraction is not included.
+
+---
+
+## 7. MVP Scope (ASYNC 2026 Deliverable)
 
 - **Single-tenant** setup targeting one GitHub repository.
 - **Three core feedback sources** via one unified connector interface:

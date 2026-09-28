@@ -29,6 +29,14 @@ import {
 import { Theme, EvalMetrics, HealthCheckResponse, ApprovalResponse } from '@/lib/types';
 import { fetchThemes, fetchMetrics, fetchHealth, approveTheme, rejectTheme, triggerPipeline } from '@/lib/api';
 
+const formatPct = (value: number | null | undefined) =>
+  value === null || value === undefined ? '—' : `${value}%`;
+
+const targetBadge = (value: number | null | undefined, target: number) =>
+  value !== null && value !== undefined && value >= target
+    ? 'text-emerald-400 bg-emerald-500/10'
+    : 'text-amber-400 bg-amber-500/10';
+
 export default function TriageCockpit() {
   const [themes, setThemes] = useState<Theme[]>([]);
   const [metrics, setMetrics] = useState<EvalMetrics | null>(null);
@@ -78,8 +86,11 @@ export default function TriageCockpit() {
     try {
       const res: ApprovalResponse = await approveTheme(theme.id, 'pm_lead');
       setLastNotification({
-        message: `Approved: ${theme.title}`,
-        url: res.github_issue_url,
+        message:
+          res.github_dispatch === 'simulated'
+            ? `Approved: ${theme.title}. ${res.github_message ?? 'No GitHub issue was created.'}`
+            : `Approved: ${theme.title}`,
+        url: res.github_issue_url ?? undefined,
       });
       await loadData();
       // Auto open PRD preview for the approved theme
@@ -90,8 +101,8 @@ export default function TriageCockpit() {
         github_issue_number: res.github_issue_number,
         prd_markdown: res.prd_markdown,
       });
-    } catch (err: any) {
-      alert(`Approval failed: ${err.message}`);
+    } catch (err: unknown) {
+      alert(`Approval failed: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setActionLoadingId(null);
     }
@@ -103,8 +114,8 @@ export default function TriageCockpit() {
       await rejectTheme(theme.id, 'pm_lead');
       setLastNotification({ message: `Rejected and archived: ${theme.title}` });
       await loadData();
-    } catch (err: any) {
-      alert(`Rejection failed: ${err.message}`);
+    } catch (err: unknown) {
+      alert(`Rejection failed: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setActionLoadingId(null);
     }
@@ -118,8 +129,8 @@ export default function TriageCockpit() {
         message: `AI Pipeline ran successfully! ${res.themes_created || 0} themes synthesized.`,
       });
       await loadData();
-    } catch (err: any) {
-      alert(`Pipeline run failed: ${err.message}`);
+    } catch (err: unknown) {
+      alert(`Pipeline run failed: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setPipelineRunning(false);
     }
@@ -213,13 +224,17 @@ export default function TriageCockpit() {
             </div>
             <div className="flex items-baseline space-x-2">
               <span className="text-2xl font-bold text-white font-mono">
-                {metrics ? `${metrics.precision_at_3}%` : '93.3%'}
+                {formatPct(metrics?.precision_at_3)}
               </span>
-              <span className="text-[11px] font-mono text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded">
+              <span className={`text-[11px] font-mono px-1.5 py-0.5 rounded ${targetBadge(metrics?.precision_at_3, 90)}`}>
                 Target ≥ 90%
               </span>
             </div>
-            <p className="text-[11px] text-slate-400 mt-1">Top 3 themes match senior PM manual benchmark</p>
+            <p className="text-[11px] text-slate-400 mt-1">
+              {metrics?.precision_at_3 == null
+                ? 'Run the pipeline to measure against the labelled demo set'
+                : 'Top 3 themes vs. hand-labelled ground-truth top 3'}
+            </p>
           </div>
 
           {/* Metric 2: PM Acceptance Rate */}
@@ -230,13 +245,17 @@ export default function TriageCockpit() {
             </div>
             <div className="flex items-baseline space-x-2">
               <span className="text-2xl font-bold text-white font-mono">
-                {metrics ? `${metrics.acceptance_rate}%` : '78.5%'}
+                {formatPct(metrics?.acceptance_rate)}
               </span>
-              <span className="text-[11px] font-mono text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded">
+              <span className={`text-[11px] font-mono px-1.5 py-0.5 rounded ${targetBadge(metrics?.acceptance_rate, 70)}`}>
                 Target ≥ 70%
               </span>
             </div>
-            <p className="text-[11px] text-slate-400 mt-1">Approved by PM without manual text revisions</p>
+            <p className="text-[11px] text-slate-400 mt-1">
+              {metrics?.acceptance_rate == null
+                ? 'No PM decisions yet'
+                : `Approved without edits, across ${metrics.pm_decisions_count} PM decisions`}
+            </p>
           </div>
 
           {/* Metric 3: Citation Validity */}
@@ -246,12 +265,18 @@ export default function TriageCockpit() {
               <ShieldCheck className="w-4 h-4 text-purple-400" />
             </div>
             <div className="flex items-baseline space-x-2">
-              <span className="text-2xl font-bold text-white font-mono">100.0%</span>
-              <span className="text-[11px] font-mono text-purple-400 bg-purple-500/10 px-1.5 py-0.5 rounded">
-                Zero Hallucination
+              <span className="text-2xl font-bold text-white font-mono">
+                {formatPct(metrics?.citation_validity)}
+              </span>
+              <span className={`text-[11px] font-mono px-1.5 py-0.5 rounded ${targetBadge(metrics?.citation_validity, 100)}`}>
+                Target 100%
               </span>
             </div>
-            <p className="text-[11px] text-slate-400 mt-1">100% of quotes verified verbatim in source pool</p>
+            <p className="text-[11px] text-slate-400 mt-1">
+              {metrics?.citation_validity == null
+                ? 'No quotes stored yet'
+                : `${metrics.verified_quotes_count} of ${metrics.total_quotes_count} stored quotes re-verified verbatim`}
+            </p>
           </div>
 
           {/* Metric 4: Total Revenue at Risk */}
@@ -262,13 +287,13 @@ export default function TriageCockpit() {
             </div>
             <div className="flex items-baseline space-x-2">
               <span className="text-2xl font-bold text-amber-300 font-mono">
-                ${metrics ? (metrics.total_revenue_at_risk / 1000).toFixed(0) : '2,130'}k
+                {metrics ? `$${(metrics.total_revenue_at_risk / 1000).toFixed(0)}k` : '—'}
               </span>
               <span className="text-[11px] font-mono text-slate-400">
                 ({metrics?.total_themes_discovered || themes.length} Discovered Themes)
               </span>
             </div>
-            <p className="text-[11px] text-slate-400 mt-1">Prioritized by financial exposure over volume</p>
+            <p className="text-[11px] text-slate-400 mt-1">Each account&apos;s ARR counted once, across open themes</p>
           </div>
         </section>
 
@@ -308,7 +333,7 @@ export default function TriageCockpit() {
           <div className="divide-y divide-slate-800/60">
             {filteredThemes.length === 0 ? (
               <div className="py-12 text-center text-slate-400 text-sm">
-                No themes found matching status filter "{filterStatus}".
+                No themes found matching status filter &quot;{filterStatus}&quot;.
               </div>
             ) : (
               filteredThemes.map((theme, index) => {
@@ -467,7 +492,7 @@ export default function TriageCockpit() {
                                       </span>
                                     )}
                                   </div>
-                                  {q.arr_value !== undefined && q.arr_value > 0 && (
+                                  {q.arr_value != null && q.arr_value > 0 && (
                                     <span className="text-amber-400 font-semibold">
                                       ${q.arr_value.toLocaleString()} ARR
                                     </span>
@@ -475,7 +500,7 @@ export default function TriageCockpit() {
                                 </div>
 
                                 <blockquote className="text-xs font-mono text-slate-200 italic border-l-2 border-cyan-500 pl-2.5 py-0.5 bg-slate-950/40 rounded-r">
-                                  "{q.quote_text}"
+                                  &ldquo;{q.quote_text}&rdquo;
                                 </blockquote>
 
                                 <div className="flex items-center space-x-1 text-[10px] font-mono text-emerald-400">
@@ -541,6 +566,15 @@ export default function TriageCockpit() {
                     <span>Open in GitHub</span>
                     <ExternalLink className="w-3 h-3" />
                   </a>
+                </div>
+              )}
+
+              {previewPrdTheme.status === 'approved' && !previewPrdTheme.github_issue_url && (
+                <div className="bg-amber-500/10 border border-amber-500/30 p-3 rounded-lg text-amber-300 flex items-center space-x-2">
+                  <AlertCircle className="w-4 h-4 text-amber-400" />
+                  <span>
+                    Not sent to GitHub. Set GITHUB_TOKEN, GITHUB_REPO_OWNER and GITHUB_REPO_NAME in .env to create real issues.
+                  </span>
                 </div>
               )}
 

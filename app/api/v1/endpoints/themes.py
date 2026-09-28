@@ -252,8 +252,19 @@ async def approve_and_dispatch_theme(
     original_title = theme.title
     if request and request.final_title:
         theme.title = request.final_title
-    if request and request.final_summary:
+    if request and request.final_summary and request.final_summary != theme.summary:
         theme.summary = request.final_summary
+        # A summary edit is still an edit: record it so the acceptance rate doesn't count it as "as-is"
+        db.add(
+            ApprovalAuditLog(
+                id=uuid.uuid4(),
+                theme_id=theme.id,
+                pm_user_id=pm_id,
+                action="edited",
+                original_title=original_title,
+                final_title=theme.title,
+            )
+        )
 
     # Fetch quotes for this theme
     assoc_query = (

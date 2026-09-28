@@ -14,6 +14,7 @@ from app.models.audit import ApprovalAuditLog
 from app.schemas.theme import ThemeResponse, ThemeUpdate, ThemeApprovalRequest, CitedQuote
 from app.core.prd_generator import generate_mini_prd
 from app.core.github_client import dispatch_github_issue
+from app.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +24,7 @@ router = APIRouter(prefix="/themes", tags=["Themes"])
 @router.get("", response_model=List[ThemeResponse])
 async def list_themes(
     status_filter: Optional[str] = None,
+    project_id: Optional[str] = None,
     limit: int = 50,
     offset: int = 0,
     db: AsyncSession = Depends(get_db),
@@ -38,6 +40,7 @@ async def list_themes(
     )
     if status_filter:
         query = query.where(Theme.status == status_filter)
+    query = query.where(Theme.project_id == project_id if project_id is not None else Theme.project_id.is_(None))
 
     result = await db.execute(query)
     themes = result.scalars().all()
@@ -237,6 +240,15 @@ async def approve_and_dispatch_theme(
             detail=f"Theme {theme_id} not found",
         )
 
+    # A project can target its own repository; otherwise use the backend's configured one.
+    # Without a GITHUB_TOKEN the theme is still approved and its PRD generated, and the
+    # response says plainly that no issue was created (see dispatch_github_issue).
+    selected_repo = request.github_repo if request else None
+    if selected_repo:
+        repo_owner, repo_name = selected_repo.split("/", 1)
+    else:
+        repo_owner, repo_name = settings.GITHUB_REPO_OWNER, settings.GITHUB_REPO_NAME
+
     original_title = theme.title
     if request and request.final_title:
         theme.title = request.final_title
@@ -290,6 +302,8 @@ async def approve_and_dispatch_theme(
         title=f"[MOTIF-THEME] {theme.title}",
         body=prd_markdown,
         labels=["motif-approved", "theme", "revenue-risk:critical"],
+        owner=repo_owner,
+        repo=repo_name,
     )
 
     theme.status = "approved"

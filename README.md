@@ -8,7 +8,7 @@
 
 Motif is an automated feedback-to-backlog pipeline that ingests customer feedback across fragmented communication channels, discovers emergent themes using density clustering, ranks themes strictly by **"revenue at risk"**, and enforces a human Product Manager approval gate before automatically compiling a PRD and creating ready-to-sprint GitHub issues.
 
-**Jump to:** [Setup & Installation](#11-setup--installation) · [Built Before vs. During ASYNC 2026](#12-built-before-vs-during-async-2026) · [Third-Party Code, Assets & AI Disclosure](#13-third-party-code-assets--ai-disclosure) · [License](#14-license)
+**Jump to:** [Setup & Installation](#12-setup--installation) · [Built Before vs. During ASYNC 2026](#13-built-before-vs-during-async-2026) · [Third-Party Code, Assets & AI Disclosure](#14-third-party-code-assets--ai-disclosure) · [License](#15-license)
 
 ---
 
@@ -40,7 +40,7 @@ Motif does not just summarize—**it decides and ships**.
 ## 3. How MOTIF Works
 
 ```text
-Load Sources (App store reviews, Support emails, Call transcripts)
+Load Sources (Reviews, Support emails, Call transcripts, Uploaded docs, Recorded meetings)
        │
        ▼
 Normalize & Deduplicate into one unified table (enriched with customer ARR/tier)
@@ -74,6 +74,7 @@ Human PM Approves ──► Automated PRD Generation & GitHub Issue Creation
 - **Noise Handling:** Outliers and irrelevant feedback are isolated as noise rather than forced into artificial categories.
 - **Verified Citations:** Every quote shown is checked word-for-word against the feedback it came from; the dashboard re-checks all stored quotes live.
 - **Revenue at Risk Prioritization:** Prioritizes financial impact over complaint count.
+- **Project Workspaces:** Separate project spaces with their own uploads, recorded meeting transcripts and themes, plus a pinned Demo benchmark workspace (see section 6).
 - **PM Approval Gate:** The system proposes; the human PM decides. Nothing reaches GitHub without sign-off.
 - **Backlog Delivery:** Approval produces a structured PRD and, when a GitHub token is configured, a real GitHub issue. Without a token the PRD is still generated and the UI states clearly that no issue was created.
 - **Graceful Offline Mode:** Without any LLM API key, a deterministic offline labeler (which only quotes source text) is used so the pipeline still runs end to end.
@@ -95,9 +96,32 @@ Human PM Approves ──► Automated PRD Generation & GitHub Issue Creation
 
 ---
 
-## 6. MVP Scope (ASYNC 2026 Deliverable)
+## 6. Project Workspaces and Intake
 
-- **Single-tenant** setup targeting one GitHub repository.
+The triage UI has two kinds of workspace:
+
+- **Demo benchmark** (pinned in the sidebar, opened by default on a first visit): the 300 labelled items loaded by `seed.py`, with the live quality metrics (P@3, acceptance rate, citation validity, ARR at risk). This is the workspace to use for judging and the demo.
+- **Your own projects:** named project spaces with project-scoped document uploads, live browser meeting transcription, a source library, project-filtered theme analysis, evidence review, and a human-approved GitHub issue launch. Project and source metadata is stored in the browser; uploaded content is sent to the API and tagged with its project ID, and each analysis only clusters that project's feedback. Meeting transcripts are saved to the project library and downloaded as Markdown; captured audio is also downloaded as a WebM file. Live transcription uses the browser's SpeechRecognition implementation (Chrome or Edge recommended).
+
+A project can target its own GitHub `owner/repo`; if none is set, the backend uses `GITHUB_REPO_OWNER` and `GITHUB_REPO_NAME`. Without `GITHUB_TOKEN`, approving a theme still generates its PRD and the UI states that no issue was created — Motif never invents issue URLs.
+
+**Existing databases:** a fresh setup needs no extra step, because `scripts/init-db.sql` already includes the project columns. If your database was created before project workspaces were added, either reset it with `docker compose down -v` (this deletes its data), or add the columns with:
+
+```bash
+docker compose exec backend alembic stamp 001_initial_schema
+```
+
+```bash
+docker compose exec backend alembic upgrade head
+```
+
+**Google Drive note:** The UI records a folder scope locally but does not yet authenticate to Google or sync Drive contents. `GoogleDriveConnector` is still a stub; Google OAuth credentials, token handling, folder listing/export, and a sync endpoint must be implemented before using this as a real Drive connection. The interface says so rather than claiming files were imported. Uploaded files are currently parsed as text; binary Office/PDF extraction is not included.
+
+---
+
+## 7. MVP Scope (ASYNC 2026 Deliverable)
+
+- **Single-tenant** setup: issues go to the configured GitHub repository, or to a repository chosen per project.
 - **Three core feedback sources** via one unified connector interface:
   1. Public app store reviews
   2. Sample customer support emails
@@ -109,9 +133,9 @@ Human PM Approves ──► Automated PRD Generation & GitHub Issue Creation
 
 ---
 
-## 7. Success Metrics & Target KPIs
+## 8. Success Metrics & Target KPIs
 
-All four metrics are computed live from the database by `GET /api/v1/metrics/eval` and shown on the dashboard. A metric shows "—" until there is something to measure.
+All four metrics are computed live from the database by `GET /api/v1/metrics/eval` and shown in the **Demo benchmark** workspace. A metric shows "—" until there is something to measure.
 
 | Metric | Target | How it is measured |
 | :--- | :---: | :--- |
@@ -122,19 +146,19 @@ All four metrics are computed live from the database by `GET /api/v1/metrics/eva
 
 ---
 
-## 8. Demo Flow
+## 9. Demo Flow
 
 1. **Ingest Unseen Data:** Load 300 customer feedback items.
 2. **Real-Time Processing:** The pipeline normalizes, embeds, clusters, labels, and ranks the items.
 3. **Revenue at Risk Triage:** Present the ranked queue showing why Theme #1 is top-priority, with source quotes and customer ARR values.
-4. **Live Validation Display:** On-screen metrics showing $P@3$ against the ground-truth labels, acceptance rate and citation validity.
+4. **Live Validation Display:** The Demo benchmark workspace shows on-screen metrics: $P@3$ against the ground-truth labels, acceptance rate and citation validity.
 5. **One-Click Ship:** The PM approves Theme #1; with `GITHUB_TOKEN` configured, a structured GitHub issue with the generated PRD, quotes, and acceptance criteria appears in the target repository.
 
 ---
 
-## 9. Project Documentation
+## 10. Project Documentation
 
-These planning documents were written **before** the hackathon (see [section 12](#12-built-before-vs-during-async-2026)). They describe the plan; where the implementation differs (for example, the LLM provider is Groq rather than GPT-4o-mini), this README is up to date.
+These planning documents were written **before** the hackathon (see [section 13](#13-built-before-vs-during-async-2026)). They describe the plan; where the implementation differs (for example, the LLM provider is Groq rather than GPT-4o-mini), this README is up to date.
 
 - [Product Requirements Document (PRD)](./PRD.md) — Feature specifications, user personas, and acceptance benchmarks.
 - [System Architecture](./Architecture.md) — Component diagrams, directory layout, data schema, and API contracts.
@@ -145,7 +169,7 @@ These planning documents were written **before** the hackathon (see [section 12]
 
 ---
 
-## 10. Future Scope
+## 11. Future Scope
 
 - **Live Slack, Notion and Google Drive connectors** (the interfaces exist as stubs today).
 - **Multi-Tenant Enterprise Workspaces:** Multi-organization support with role-based access control (RBAC) and SSO.
@@ -155,7 +179,7 @@ These planning documents were written **before** the hackathon (see [section 12]
 
 ---
 
-## 11. Setup & Installation
+## 12. Setup & Installation
 
 ### Prerequisites
 
@@ -190,7 +214,7 @@ docker compose up -d --build
 docker compose exec backend python seed.py
 ```
 
-Then open **http://localhost:3000** and click **Run AI Pipeline**. The API docs are at **http://localhost:8000/docs**.
+Then open **http://localhost:3000**. The **Demo benchmark** workspace opens on the first visit; click **Analyze demo feedback**. The API docs are at **http://localhost:8000/docs**.
 
 ### Option B — Local development (database in Docker, app on your machine)
 
@@ -220,7 +244,7 @@ npm install
 npm run dev
 ```
 
-Open **http://localhost:3000** and click **Run AI Pipeline** (or call `POST /api/v1/pipeline/run` from http://localhost:8000/docs).
+Open **http://localhost:3000**, select **Demo benchmark** in the sidebar (it opens by default on a first visit) and click **Analyze demo feedback** (or call `POST /api/v1/pipeline/run` from http://localhost:8000/docs).
 
 ### Verify
 
@@ -246,16 +270,16 @@ pytest
 
 ---
 
-## 12. Built Before vs. During ASYNC 2026
+## 13. Built Before vs. During ASYNC 2026
 
 | When | What | Commits |
 | :--- | :--- | :--- |
 | **Before the event** | Planning documents only: `PRD.md`, `Architecture.md`, `Rules.md`, `Phases.md`, `Design.md`, `Memory.md` and a first draft of this README. **No code was written before the event.** | `01b2e54` (24 Sep 2026) |
-| **During the event** | All code: FastAPI backend, database schema and migrations, ingestion and normalization, embedding + HDBSCAN pipeline, LLM labelling with quote verification, revenue-at-risk ranking, PRD generator and GitHub dispatch, synthetic seed corpus, Next.js triage UI, tests, Docker setup, and this README's setup, disclosure and license sections. | `22ef724` onwards |
+| **During the event** | All code: FastAPI backend, database schema and migrations, ingestion and normalization, embedding + HDBSCAN pipeline, LLM labelling with quote verification, revenue-at-risk ranking, PRD generator and GitHub dispatch, synthetic seed corpus, Next.js triage UI with project workspaces and meeting transcription, benchmark metrics, tests, Docker setup, and this README's setup, disclosure and license sections. | `22ef724` onwards |
 
 ---
 
-## 13. Third-Party Code, Assets & AI Disclosure
+## 14. Third-Party Code, Assets & AI Disclosure
 
 **Starter code and generated files**
 - `triage-ui/` was scaffolded with `create-next-app` (MIT). The config files, `public/*.svg`, `src/app/favicon.ico` and `triage-ui/README.md` come from that template. `triage-ui/AGENTS.md` and `CLAUDE.md` are generated automatically by `next dev`.
@@ -277,7 +301,7 @@ pytest
 
 ---
 
-## 14. License
+## 15. License
 
 Released under the [MIT License](LICENSE).
 

@@ -14,6 +14,7 @@ class PipelineRunRequest(BaseModel):
     batch_size: Optional[int] = Field(default=50, ge=1, le=500)
     min_cluster_size: Optional[int] = Field(default=4, ge=2)
     min_samples: Optional[int] = Field(default=2, ge=1)
+    project_id: Optional[str] = Field(default=None, max_length=255)
 
 
 # Simple in-memory tracker for pipeline run status
@@ -58,6 +59,7 @@ async def trigger_pipeline(
             batch_size=eff_batch_size,
             min_cluster_size=eff_min_cluster_size,
             min_samples=eff_min_samples,
+            project_id=payload.project_id if payload else None,
         )
         _pipeline_status["status"] = "idle"
         _pipeline_status["last_result"] = result

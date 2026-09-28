@@ -25,7 +25,10 @@ router = APIRouter(prefix="/metrics", tags=["Metrics"])
 
 
 @router.get("/eval", response_model=Dict[str, Any])
-async def get_benchmark_metrics(db: AsyncSession = Depends(get_db)):
+async def get_benchmark_metrics(
+    project_id: Optional[str] = None,
+    db: AsyncSession = Depends(get_db),
+):
     """
     Live benchmark metrics, all computed from the database on every call:
     - Theme Precision @ 3 (P@3) against the seed corpus' ground-truth labels. Target >= 90%
@@ -34,18 +37,26 @@ async def get_benchmark_metrics(db: AsyncSession = Depends(get_db)):
     - Total revenue at risk across open and approved themes (each account counted once)
 
     A metric is null when there is nothing to measure yet (e.g. no PM decisions).
+    Scope: one project workspace, or (no project_id) the labelled demo corpus from seed.py.
+    P@3 needs ground-truth labels, so it is only available for the demo corpus.
     """
+    def in_scope(column):
+        return column == project_id if project_id is not None else column.is_(None)
+
+    theme_scope = in_scope(Theme.project_id)
+    item_scope = in_scope(FeedbackItem.project_id)
+
     # 1. Counts
-    total_feedback = await db.scalar(select(func.count(FeedbackItem.id))) or 0
-    total_themes = await db.scalar(select(func.count(Theme.id))) or 0
+    total_feedback = await db.scalar(select(func.count(FeedbackItem.id)).where(item_scope)) or 0
+    total_themes = await db.scalar(select(func.count(Theme.id)).where(theme_scope)) or 0
     approved_themes = await db.scalar(
-        select(func.count(Theme.id)).where(Theme.status == "approved")
+        select(func.count(Theme.id)).where(theme_scope, Theme.status == "approved")
     ) or 0
     rejected_themes = await db.scalar(
-        select(func.count(Theme.id)).where(Theme.status == "rejected")
+        select(func.count(Theme.id)).where(theme_scope, Theme.status == "rejected")
     ) or 0
     pending_themes = await db.scalar(
-        select(func.count(Theme.id)).where(Theme.status == "pending_review")
+        select(func.count(Theme.id)).where(theme_scope, Theme.status == "pending_review")
     ) or 0
 
     # 2. Theme membership: which feedback items (with ground-truth labels and ARR) belong to which theme
@@ -61,6 +72,7 @@ async def get_benchmark_metrics(db: AsyncSession = Depends(get_db)):
             )
             .join(Theme, Theme.id == theme_feedback_associations.c.theme_id)
             .join(FeedbackItem, FeedbackItem.id == theme_feedback_associations.c.feedback_item_id)
+            .where(theme_scope)
         )
     ).all()
 
@@ -95,7 +107,7 @@ async def get_benchmark_metrics(db: AsyncSession = Depends(get_db)):
                     FeedbackItem.arr_value,
                     FeedbackItem.churn_risk_flag,
                     FeedbackItem.metadata_,
-                )
+                ).where(item_scope)
             )
         ).all()
     ]
@@ -105,7 +117,7 @@ async def get_benchmark_metrics(db: AsyncSession = Depends(get_db)):
     # (e.g. after the corpus was re-seeded) cannot be evaluated, so they are skipped.
     ranked_themes = (
         await db.execute(
-            select(Theme.id, Theme.title).order_by(Theme.revenue_at_risk.desc())
+            select(Theme.id, Theme.title).where(theme_scope).order_by(Theme.revenue_at_risk.desc())
         )
     ).all()
     top_3_themes = [(tid, title) for tid, title in ranked_themes if labels_by_theme.get(tid)][:3]
@@ -133,6 +145,8 @@ async def get_benchmark_metrics(db: AsyncSession = Depends(get_db)):
                 ApprovalAuditLog.original_title,
                 ApprovalAuditLog.final_title,
             )
+            .join(Theme, Theme.id == ApprovalAuditLog.theme_id)
+            .where(theme_scope)
         )
     ).all()
     edited_theme_ids = {r.theme_id for r in audit_rows if r.action == "edited"}
@@ -155,7 +169,8 @@ async def get_benchmark_metrics(db: AsyncSession = Depends(get_db)):
                 FeedbackItem.clean_content,
             )
             .join(FeedbackItem, FeedbackItem.id == theme_feedback_associations.c.feedback_item_id)
-            .where(theme_feedback_associations.c.is_cited_quote.is_(True))
+            .join(Theme, Theme.id == theme_feedback_associations.c.theme_id)
+            .where(theme_feedback_associations.c.is_cited_quote.is_(True), theme_scope)
         )
     ).all()
     citation_validity, verified_quotes, total_quotes = compute_citation_validity(
@@ -163,6 +178,7 @@ async def get_benchmark_metrics(db: AsyncSession = Depends(get_db)):
     )
 
     return {
+        "project_id": project_id,
         "precision_at_3": precision_at_3,
         "target_precision_at_3": 90.0,
         "ground_truth_top_3": gt_top_3,

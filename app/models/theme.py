@@ -13,6 +13,7 @@ class Theme(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     cluster_id = Column(Integer, nullable=False)
+    project_id = Column(String(255), nullable=True, index=True)
     title = Column(String(255), nullable=False)
     summary = Column(Text, nullable=False)
     revenue_at_risk = Column(Numeric(12, 2), default=0.00)

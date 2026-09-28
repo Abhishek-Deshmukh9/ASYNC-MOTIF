@@ -63,6 +63,7 @@ async def upload_feedback_file(
     for item in canonical_items:
         db_item = FeedbackItem(
             id=uuid.uuid4(),
+            project_id=item.metadata.get("project_id"),
             source_type=item.source_type,
             external_id=item.external_id,
             content=item.content,

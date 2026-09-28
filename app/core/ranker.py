@@ -15,22 +15,29 @@ def calculate_revenue_at_risk(
     """
     Computes theme financial priority score (FR-4.1):
     Score = sum(Account ARR * Churn Intent Weight) * Cluster Cohesion Score
+
+    ARR is counted once per account, not once per message: an account that
+    complains 20 times still only has its own ARR at risk. If any of an
+    account's messages carries churn intent, that account gets the churn weight.
+    Items without a customer_id are treated as separate anonymous accounts.
     """
-    total_raw_arr = 0.0
-    weighted_score = 0.0
-    affected_accounts = set()
+    accounts: Dict[str, Dict[str, Any]] = {}
 
-    for item in items:
-        arr = float(item.get("arr_value", 0.0))
+    for idx, item in enumerate(items):
+        arr = float(item.get("arr_value", 0.0) or 0.0)
         is_churn = bool(item.get("churn_risk_flag", False))
-        customer_id = item.get("customer_id")
+        key = item.get("customer_id") or f"__anonymous_{idx}"
 
-        if customer_id:
-            affected_accounts.add(customer_id)
+        account = accounts.setdefault(key, {"arr": 0.0, "churn": False})
+        account["arr"] = max(account["arr"], arr)
+        account["churn"] = account["churn"] or is_churn
 
-        weight = CHURN_URGENCY_WEIGHT if is_churn else STANDARD_URGENCY_WEIGHT
-        total_raw_arr += arr
-        weighted_score += (arr * weight)
+    total_raw_arr = sum(a["arr"] for a in accounts.values())
+    weighted_score = sum(
+        a["arr"] * (CHURN_URGENCY_WEIGHT if a["churn"] else STANDARD_URGENCY_WEIGHT)
+        for a in accounts.values()
+    )
+    affected_accounts = [k for k in accounts if not k.startswith("__anonymous_")]
 
     # Scale with cluster cohesion (normalized between 0.5 and 1.5)
     clamped_cohesion = max(0.5, min(1.5, cohesion_score))

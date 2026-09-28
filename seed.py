@@ -16,6 +16,14 @@ from typing import Any, Dict, List
 SEED_DIR = Path(__file__).resolve().parent / "data" / "seed"
 SEED_FILE = SEED_DIR / "corpus_300.json"
 
+# Stable IDs derived from each item's external_id, so re-running this script
+# produces an identical corpus file (no spurious git diffs) and identical DB rows.
+SEED_NAMESPACE = uuid.UUID("6f1c2a52-8d3e-4b7a-9c1d-2e5f7a9b0c11")
+
+
+def _stable_id(external_id: str) -> str:
+    return str(uuid.uuid5(SEED_NAMESPACE, external_id))
+
 
 def generate_seed_corpus() -> List[Dict[str, Any]]:
     """
@@ -88,12 +96,16 @@ def generate_seed_corpus() -> List[Dict[str, Any]]:
         star_rating = random.choice([1, 2]) if point["urgency"] else random.choice([3, 4])
 
         # Mix with duplicate candidates for deduplication testing
+        # Ground-truth theme label (used only by the P@3 benchmark, never shown to the AI pipeline)
+        ground_truth_theme = point["category"]
         if i in [15, 30, 45, 60, 75]:
             # Exact duplicate of preceding item
             content = corpus[i - 2]["content"]
+            ground_truth_theme = corpus[i - 2]["metadata"]["ground_truth_theme"]
         elif i in [22, 55, 88, 120]:
             # Near duplicate with minor typo
             content = corpus[i - 2]["content"] + " Please fix this ASAP!"
+            ground_truth_theme = corpus[i - 2]["metadata"]["ground_truth_theme"]
         else:
             variations = [
                 f"Rating {star_rating}/5: {point['phrase']}",
@@ -104,7 +116,7 @@ def generate_seed_corpus() -> List[Dict[str, Any]]:
             content = random.choice(variations)
 
         item = {
-            "id": str(uuid.uuid4()),
+            "id": _stable_id(f"appstore_review_{i:04d}"),
             "source_type": "app_store",
             "external_id": f"appstore_review_{i:04d}",
             "content": content,
@@ -117,6 +129,7 @@ def generate_seed_corpus() -> List[Dict[str, Any]]:
                 "rating": star_rating,
                 "platform": "ios" if i % 2 == 0 else "android",
                 "version": f"2.{i % 5}.0",
+                "ground_truth_theme": ground_truth_theme,
             },
         }
         corpus.append(item)
@@ -146,7 +159,7 @@ def generate_seed_corpus() -> List[Dict[str, Any]]:
         )
 
         item = {
-            "id": str(uuid.uuid4()),
+            "id": _stable_id(f"email_ticket_{2000 + j}"),
             "source_type": "email",
             "external_id": f"email_ticket_{2000 + j}",
             "content": email_body,
@@ -159,6 +172,7 @@ def generate_seed_corpus() -> List[Dict[str, Any]]:
                 "subject": f"URGENT: Issue regarding {point['category'].replace('_', ' ').title()}",
                 "sender_email": f"it-support@{account['id'].replace('cust_', '')}.com",
                 "priority": "P1" if is_churn else "P2",
+                "ground_truth_theme": point["category"],
             },
         }
         corpus.append(item)
@@ -195,7 +209,7 @@ def generate_seed_corpus() -> List[Dict[str, Any]]:
         is_churn = "cancelling" in speech.lower() or "withholding" in speech.lower() or "sla violation" in speech.lower()
 
         item = {
-            "id": str(uuid.uuid4()),
+            "id": _stable_id(f"call_transcript_acme_q3_turn_{idx + 1:02d}"),
             "source_type": "transcript",
             "external_id": f"call_transcript_acme_q3_turn_{idx + 1:02d}",
             "content": f"[{speaker}]: {speech}",
@@ -209,6 +223,7 @@ def generate_seed_corpus() -> List[Dict[str, Any]]:
                 "call_title": "Acme Global ($120k ARR) Executive Renewal & Friction Review",
                 "speaker": speaker,
                 "turn_index": idx + 1,
+                "ground_truth_theme": "sso_desync",
             },
         }
         corpus.append(item)

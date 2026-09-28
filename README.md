@@ -8,11 +8,13 @@
 
 Motif is an automated feedback-to-backlog pipeline that ingests customer feedback across fragmented communication channels, discovers emergent themes using density clustering, ranks themes strictly by **"revenue at risk"**, and enforces a human Product Manager approval gate before automatically compiling a PRD and creating ready-to-sprint GitHub issues.
 
+**Jump to:** [Setup & Installation](#11-setup--installation) · [Built Before vs. During ASYNC 2026](#12-built-before-vs-during-async-2026) · [Third-Party Code, Assets & AI Disclosure](#13-third-party-code-assets--ai-disclosure) · [License](#14-license)
+
 ---
 
 ## 1. Problem Statement
 
-Product teams collect far more feedback than they can ever process—app store reviews, support emails, sales-call recordings, customer Slack channels, and interview/call notes scattered across Notion and Google Drive. Nothing consolidates it into one place. 
+Product teams collect far more feedback than they can ever process—app store reviews, support emails, sales-call recordings, customer Slack channels, and interview/call notes scattered across Notion and Google Drive. Nothing consolidates it into one place.
 
 As a result:
 - **Prioritization collapses to recency and volume** rather than true value.
@@ -26,19 +28,19 @@ As a result:
 
 Motif does not just summarize—**it decides and ships**.
 
-1. **Centralizes Feedback:** Ingests reviews, emails, call transcripts, Slack messages, and docs into a unified data store.
+1. **Centralizes Feedback:** Ingests reviews, emails and call transcripts into a unified data store.
 2. **Discovers Unsupervised Themes:** Uses vector embeddings and HDBSCAN so themes emerge organically from data without human-biased pre-set taxonomies. Off-topic items are isolated as noise.
-3. **Strict Quote Attribution:** Employs an LLM (GPT-4o-mini) to label each cluster with strict schema adherence, citing exact verbatim source quotes.
-4. **Ranks by Revenue at Risk:** One enterprise cancellation threat outranks 50 minor complaints.
-5. **Human Approval Gate:** A human PM reviews, modifies, or rejects proposed themes in a dedicated triage cockpit.
-6. **Automated Shipping:** Approved themes automatically become engineering-ready PRDs with acceptance criteria filed as GitHub issues.
+3. **Strict Quote Attribution:** An LLM (served by Groq, default `llama-3.3-70b-versatile`) labels each cluster against a strict Pydantic schema and must cite exact verbatim source quotes. Any quote that is not found word-for-word in the source feedback is discarded.
+4. **Ranks by Revenue at Risk:** Each affected account's ARR is counted once, so one enterprise cancellation threat outranks 50 minor complaints from free users.
+5. **Human Approval Gate:** A human PM reviews, approves or rejects proposed themes in a dedicated triage cockpit.
+6. **Automated Shipping:** Approved themes become engineering-ready PRDs with Gherkin acceptance criteria, filed as GitHub issues.
 
 ---
 
 ## 3. How MOTIF Works
 
 ```text
-Connect Sources (Reviews, Support Inboxes, Transcripts, Slack, Notion, Drive)
+Load Sources (App store reviews, Support emails, Call transcripts)
        │
        ▼
 Normalize & Deduplicate into one unified table (enriched with customer ARR/tier)
@@ -47,16 +49,16 @@ Normalize & Deduplicate into one unified table (enriched with customer ARR/tier)
 Generate Embeddings (all-MiniLM-L6-v2) & Cluster with HDBSCAN (outliers -> noise)
        │
        ▼
-LLM Theme Synthesis & Strict Quote Attribution (GPT-4o-mini + Pydantic Schema)
+LLM Theme Synthesis & Strict Quote Attribution (Groq LLM + Pydantic schema)
        │
        ▼
-Deterministic Verification (100% Quote Check against source records)
+Deterministic Verification (every quote must appear verbatim in its source)
        │
        ▼
-Rank Discovered Themes by Estimated Revenue at Risk
+Rank Discovered Themes by Revenue at Risk (each account counted once)
        │
        ▼
-PM Triage Review Queue (PM edits, adjusts, or rejects)
+PM Triage Review Queue (PM approves or rejects)
        │
        ▼
 Human PM Approves ──► Automated PRD Generation & GitHub Issue Creation
@@ -66,14 +68,15 @@ Human PM Approves ──► Automated PRD Generation & GitHub Issue Creation
 
 ## 4. Key Features
 
-- **Plug-in Connectors:** Standardized connector interface ingestion across reviews, emails, transcripts, Slack, Notion, and Drive.
-- **Opt-in Privacy Scope:** Only team-selected channels and folders are read; personal DMs and private folders are strictly excluded.
-- **Discovered Themes (Zero Predefined Categories):** Mathematical density clustering surfaces true user friction without preconceived buckets.
+- **Unified Connector Interface:** A standard connector base class. The MVP ingests app store reviews, support emails and call transcripts (JSON/CSV upload or the seed corpus). Slack, Notion and Google Drive connectors exist as **interface stubs only** — they enforce the privacy rules below but do not fetch live data yet.
+- **Opt-in Privacy Scope:** Connectors only accept team-selected channels and folders; personal DMs and private folders are rejected.
+- **Discovered Themes (Zero Predefined Categories):** Density clustering surfaces user friction without preconceived buckets.
 - **Noise Handling:** Outliers and irrelevant feedback are isolated as noise rather than forced into artificial categories.
-- **100% Verified Citations:** Every claim links directly to a real source quote; hallucination is detectable by script.
+- **Verified Citations:** Every quote shown is checked word-for-word against the feedback it came from; the dashboard re-checks all stored quotes live.
 - **Revenue at Risk Prioritization:** Prioritizes financial impact over complaint count.
-- **PM Approval Gate:** System proposes; the human PM decides. Nothing touches the production backlog without human sign-off.
-- **Instant Backlog Delivery:** Output is a complete GitHub issue with a structured PRD and Gherkin acceptance criteria.
+- **PM Approval Gate:** The system proposes; the human PM decides. Nothing reaches GitHub without sign-off.
+- **Backlog Delivery:** Approval produces a structured PRD and, when a GitHub token is configured, a real GitHub issue. Without a token the PRD is still generated and the UI states clearly that no issue was created.
+- **Graceful Offline Mode:** Without any LLM API key, a deterministic offline labeler (which only quotes source text) is used so the pipeline still runs end to end.
 
 ---
 
@@ -81,14 +84,14 @@ Human PM Approves ──► Automated PRD Generation & GitHub Issue Creation
 
 | Layer | Technology |
 | :--- | :--- |
-| **Backend** | Python, FastAPI |
-| **Database & Vector Search** | PostgreSQL + `pgvector` |
-| **Embeddings** | `all-MiniLM-L6-v2` (Sentence Transformers) |
-| **Clustering** | HDBSCAN (`scikit-learn` / `hdbscan`) |
-| **LLM Synthesis** | OpenAI `GPT-4o-mini` with Pydantic / JSON Schema |
-| **Frontend Triage UI** | Next.js + Tailwind CSS |
+| **Backend** | Python 3.11+, FastAPI |
+| **Database & Vector Search** | PostgreSQL 16 + `pgvector` |
+| **Embeddings** | `all-MiniLM-L6-v2` (Sentence Transformers, runs locally) |
+| **Clustering** | HDBSCAN (`scikit-learn`) |
+| **LLM Synthesis** | Groq API (default `llama-3.3-70b-versatile`, with automatic fallback to other Groq-hosted models); Gemini and OpenAI also supported; offline fallback |
+| **Frontend Triage UI** | Next.js 16 + React 19 + Tailwind CSS 4 |
 | **Infrastructure** | Docker Compose |
-| **Integrations** | Slack, Notion, Google Drive APIs, GitHub REST API |
+| **Integrations** | GitHub REST API (live when a token is set). Slack, Notion, Google Drive: planned (stubs) |
 
 ---
 
@@ -100,78 +103,183 @@ Human PM Approves ──► Automated PRD Generation & GitHub Issue Creation
   2. Sample customer support emails
   3. Sales/CS call transcripts
   *(Slack public channel connector as stretch goal).*
-- **Demo Corpus:** 300 curated feedback items with account metadata (ARR and customer tier).
+- **Demo Corpus:** 300 synthetic feedback items with account metadata (ARR and customer tier), generated by `seed.py`.
 - **End-to-End Pipeline:** Ingest $\rightarrow$ Dedupe $\rightarrow$ Embed $\rightarrow$ Cluster $\rightarrow$ Label with Evidence $\rightarrow$ Rank by Revenue $\rightarrow$ Human PM Review $\rightarrow$ PRD + GitHub Issue.
-- **Quality Benchmark:** Seeded 300-item evaluation benchmark with hand-labeled ground-truth themes and deduplication sets.
+- **Quality Benchmark:** Every item in the demo corpus carries a ground-truth theme label (`metadata.ground_truth_theme`), assigned by `seed.py` from the problem template the item was generated from. The label is never shown to the embedding, clustering or LLM steps.
 
 ---
 
 ## 7. Success Metrics & Target KPIs
 
-| Metric | Target | Description |
+All four metrics are computed live from the database by `GET /api/v1/metrics/eval` and shown on the dashboard. A metric shows "—" until there is something to measure.
+
+| Metric | Target | How it is measured |
 | :--- | :---: | :--- |
-| **$P@3$ (Theme Precision at 3)** | $\ge 90\%$ | Top 3 discovered themes match a human reviewer's manual top 3 on the same corpus. |
-| **As-is % (Acceptance Rate)** | $\ge 70\%$ | Share of proposed PRD tickets accepted by a PM without manual editing. |
-| **Pipeline Latency** | $< 90\text{s}$ | End-to-end processing time for 300 input items. |
-| **Citation Validity** | $100\%$ | Every generated claim cites a real input row—verified by script. |
+| **$P@3$ (Theme Precision at 3)** | $\ge 90\%$ | The 3 themes with the highest revenue at risk are each matched to the most common ground-truth label among their feedback items. $P@3$ is the share of those that match a *distinct* theme in the ground-truth top 3 (ground-truth themes ranked with the same revenue formula). |
+| **As-is % (Acceptance Rate)** | $\ge 70\%$ | Share of PM decisions (approve/reject) that approved a theme without editing it. |
+| **Pipeline Latency** | $< 90\text{s}$ | End-to-end processing time for 300 input items (target; depends on hardware and LLM provider). |
+| **Citation Validity** | $100\%$ | Every stored quote is re-checked word-for-word against the feedback item it is attached to. |
 
 ---
 
 ## 8. Demo Flow
 
-1. **Ingest Unseen Data:** Ingest 300 unread customer feedback items live on stage.
-2. **Real-Time Processing:** The pipeline normalizes, embeds, clusters, labels, and ranks the items in under 90 seconds.
-3. **Revenue at Risk Triage:** Present the ranked queue showing why Theme #1 is top-priority, with clickable source quotes and customer ARR values.
-4. **Live Validation Display:** Real-time on-screen metrics showing clustering precision ($P@3$) against hand-labeled ground truth and acceptance rate.
-5. **One-Click Ship:** The PM approves Theme #1 on stage; a structured GitHub issue with the generated PRD, quotes, and acceptance criteria appears immediately in the target repository.
+1. **Ingest Unseen Data:** Load 300 customer feedback items.
+2. **Real-Time Processing:** The pipeline normalizes, embeds, clusters, labels, and ranks the items.
+3. **Revenue at Risk Triage:** Present the ranked queue showing why Theme #1 is top-priority, with source quotes and customer ARR values.
+4. **Live Validation Display:** On-screen metrics showing $P@3$ against the ground-truth labels, acceptance rate and citation validity.
+5. **One-Click Ship:** The PM approves Theme #1; with `GITHUB_TOKEN` configured, a structured GitHub issue with the generated PRD, quotes, and acceptance criteria appears in the target repository.
 
 ---
 
 ## 9. Project Documentation
 
-Comprehensive documentation is available in the project documentation directory:
+These planning documents were written **before** the hackathon (see [section 12](#12-built-before-vs-during-async-2026)). They describe the plan; where the implementation differs (for example, the LLM provider is Groq rather than GPT-4o-mini), this README is up to date.
 
-- [Product Requirements Document (PRD)](./PRD.md) — Detailed feature specifications, user personas, and acceptance benchmarks.
-- [System Architecture](./Architecture.md) — Component diagrams, monorepo directory layout, data schema, and API contracts.
+- [Product Requirements Document (PRD)](./PRD.md) — Feature specifications, user personas, and acceptance benchmarks.
+- [System Architecture](./Architecture.md) — Component diagrams, directory layout, data schema, and API contracts.
 - [Development Rules & Axioms](./Rules.md) — Zero-hallucination policy, emergent discovery, and stack boundaries.
-- [Implementation Roadmap & Phases](./Phases.md) — 5-phase breakdown from infrastructure setup to live demo execution.
-- [Design System & UI Specs](./Design.md) — Triage cockpit layout, design tokens, monospace quote treatments, and color scales.
-- [Project Memory & Context](./Memory.md) — Living state tracker, engineering log, and immediate sprint tasks.
-
-*(Note: For deployments with dedicated `/docs` hosting, see [docs/](./docs/)).*
+- [Implementation Roadmap & Phases](./Phases.md) — 5-phase breakdown from infrastructure setup to live demo.
+- [Design System & UI Specs](./Design.md) — Triage cockpit layout, design tokens, and color scales.
+- [Project Memory & Context](./Memory.md) — Planning-stage state tracker.
 
 ---
 
 ## 10. Future Scope
 
+- **Live Slack, Notion and Google Drive connectors** (the interfaces exist as stubs today).
 - **Multi-Tenant Enterprise Workspaces:** Multi-organization support with role-based access control (RBAC) and SSO.
-- **Expanded Connector Ecosystem:** Bi-directional Slack bot thread listening, Zendesk, Intercom, Gong, Salesforce, and HubSpot integrations.
+- **Expanded Connector Ecosystem:** Zendesk, Intercom, Gong, Salesforce, and HubSpot integrations.
 - **Bi-Directional Issue Trackers:** Native two-way synchronization with Linear and Jira.
-- **Continuous Background Clustering:** Incremental real-time clustering stream rather than batch-triggered jobs.
+- **Continuous Background Clustering:** Incremental real-time clustering rather than batch-triggered jobs.
 
 ---
 
-## 11. Setup & Installation (Placeholder)
+## 11. Setup & Installation
 
-> *Detailed setup instructions will be finalized in Phase 1 (Infrastructure Setup).*
+### Prerequisites
+
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (for PostgreSQL + pgvector). Open it once after installing, and wait for "Engine running".
+- For local development (Option B): **Python 3.11+** and **Node.js 20.9+**.
+- Internet access on the first pipeline run: the embedding model (~90 MB) is downloaded from Hugging Face.
+
+### 1. Clone and configure
 
 ```bash
-# Clone the repository
-git clone https://github.com/your-org/motif.git
-cd motif
-
-# Setup environment variables
+git clone https://github.com/Abhishek-Deshmukh9/ASYNC-MOTIF.git
+cd ASYNC-MOTIF
 cp .env.example .env
-
-# Spin up local development environment (PostgreSQL + pgvector, FastAPI, Next.js)
-docker compose up -d
-
-# Verify backend health
-curl http://localhost:8000/api/v1/health
-
-# Access PM Triage Cockpit
-open http://localhost:3000
 ```
+
+Everything runs with the defaults in `.env`. Optional settings:
+
+| Variable | What it does |
+| :--- | :--- |
+| `GROQ_API_KEY` | Enables LLM theme labelling (free key at [console.groq.com](https://console.groq.com)). Without it, the deterministic offline labeler is used. |
+| `GROQ_MODEL` | Groq model to try first (default `llama-3.3-70b-versatile`). |
+| `LLM_PROVIDER` | `groq` (default), `gemini` or `openai`, with the matching `*_API_KEY`. |
+| `GITHUB_TOKEN`, `GITHUB_REPO_OWNER`, `GITHUB_REPO_NAME` | Creates real GitHub issues on approval. Use a fine-grained token with **Issues: Read and write** on that one repository. Without all three, approval still generates the PRD, and the UI says no issue was created. |
+
+### Option A — Run everything in Docker (simplest)
+
+```bash
+docker compose up -d --build
+```
+
+```bash
+docker compose exec backend python seed.py
+```
+
+Then open **http://localhost:3000** and click **Run AI Pipeline**. The API docs are at **http://localhost:8000/docs**.
+
+### Option B — Local development (database in Docker, app on your machine)
+
+Terminal 1 — database:
+
+```bash
+docker compose up -d postgres
+```
+
+Terminal 2 — backend (macOS/Linux; on Windows use `.venv\Scripts\activate`):
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+python seed.py
+uvicorn app.main:app --reload --port 8000
+```
+
+`python seed.py` should print `Successfully seeded 300 records`. If it says the database is not available, wait a few seconds for PostgreSQL to start and run it again.
+
+Terminal 3 — frontend:
+
+```bash
+cd triage-ui
+npm install
+npm run dev
+```
+
+Open **http://localhost:3000** and click **Run AI Pipeline** (or call `POST /api/v1/pipeline/run` from http://localhost:8000/docs).
+
+### Verify
+
+```bash
+curl http://localhost:8000/api/v1/health
+```
+
+### Run the tests
+
+With the virtual environment active and the database running:
+
+```bash
+pip install pytest
+pytest
+```
+
+### Troubleshooting
+
+- **`docker: command not found`** — Docker Desktop is not installed or not open yet. Open it, wait for "Engine running", then restart your terminal.
+- **Port 5432 already in use** — another PostgreSQL is running on your machine. Stop it, or change `POSTGRES_PORT` and the port in `DATABASE_URL` / `SYNC_DATABASE_URL` in `.env`.
+- **First pipeline run is slow** — the embedding model is being downloaded; later runs are faster.
+- **`Could not open requirements file`** — run the commands from the `ASYNC-MOTIF` folder (the one containing `requirements.txt`).
+
+---
+
+## 12. Built Before vs. During ASYNC 2026
+
+| When | What | Commits |
+| :--- | :--- | :--- |
+| **Before the event** | Planning documents only: `PRD.md`, `Architecture.md`, `Rules.md`, `Phases.md`, `Design.md`, `Memory.md` and a first draft of this README. **No code was written before the event.** | `01b2e54` (24 Sep 2026) |
+| **During the event** | All code: FastAPI backend, database schema and migrations, ingestion and normalization, embedding + HDBSCAN pipeline, LLM labelling with quote verification, revenue-at-risk ranking, PRD generator and GitHub dispatch, synthetic seed corpus, Next.js triage UI, tests, Docker setup, and this README's setup, disclosure and license sections. | `22ef724` onwards |
+
+---
+
+## 13. Third-Party Code, Assets & AI Disclosure
+
+**Starter code and generated files**
+- `triage-ui/` was scaffolded with `create-next-app` (MIT). The config files, `public/*.svg`, `src/app/favicon.ico` and `triage-ui/README.md` come from that template. `triage-ui/AGENTS.md` and `CLAUDE.md` are generated automatically by `next dev`.
+
+**Libraries** (installed from `requirements.txt` and `triage-ui/package.json`, not copied into the repo)
+- Backend: FastAPI (MIT), SQLAlchemy (MIT), Alembic (MIT), asyncpg (Apache-2.0), pgvector-python (MIT), scikit-learn (BSD-3-Clause), sentence-transformers (Apache-2.0), httpx (BSD-3-Clause), Pydantic (MIT).
+- Frontend: Next.js (MIT), React (MIT), Tailwind CSS (MIT), lucide-react icons (ISC).
+
+**Models, services and images**
+- Embedding model: [`sentence-transformers/all-MiniLM-L6-v2`](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2) (Apache-2.0), downloaded at runtime, not redistributed.
+- LLM: accessed through the Groq API (optionally Gemini or OpenAI); only the generated text is used.
+- Database image: `pgvector/pgvector:pg16` (pgvector is under the PostgreSQL License).
+
+**Dataset**
+- `data/seed/corpus_300.json` is **synthetic**, generated by `seed.py` for this project. Company and person names in it (Acme Global, Globex, Initech, etc.) are fictional placeholders. No real customer data is used.
+
+**AI assistance**
+- Parts of the code and documentation were written with the help of AI coding assistants: **Claude (Anthropic)** and **Gemini (Google Antigravity)**.
+
+---
+
+## 14. License
+
+Released under the [MIT License](LICENSE).
 
 ---
 

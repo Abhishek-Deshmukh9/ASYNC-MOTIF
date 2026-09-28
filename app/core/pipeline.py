@@ -42,8 +42,12 @@ async def run_ai_pipeline(
     # Step 2: Fetch all embedded feedback items for clustering
     async with AsyncSessionLocal() as session:
         query = select(FeedbackItem).where(FeedbackItem.embedding.isnot(None))
+        # Each run covers exactly one scope: a project, or (project_id=None) the unscoped
+        # demo corpus loaded by seed.py. This matches how pending themes are cleared below.
         if project_id is not None:
             query = query.where(FeedbackItem.project_id == project_id)
+        else:
+            query = query.where(FeedbackItem.project_id.is_(None))
         result = await session.execute(query)
         db_items = result.scalars().all()
 

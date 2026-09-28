@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS feedback_items (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     source_type VARCHAR(50) NOT NULL, -- 'app_store', 'email', 'transcript', 'slack', 'notion'
     external_id VARCHAR(255),
+    project_id VARCHAR(255), -- workspace the item belongs to; NULL = demo corpus from seed.py
     content TEXT NOT NULL,
     clean_content TEXT NOT NULL,
     customer_id VARCHAR(255),
@@ -22,6 +23,7 @@ CREATE TABLE IF NOT EXISTS feedback_items (
 CREATE TABLE IF NOT EXISTS themes (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     cluster_id INT NOT NULL,
+    project_id VARCHAR(255), -- NULL = themes discovered from the demo corpus
     title VARCHAR(255) NOT NULL,
     summary TEXT NOT NULL,
     revenue_at_risk NUMERIC(12, 2) DEFAULT 0.00,
@@ -33,6 +35,9 @@ CREATE TABLE IF NOT EXISTS themes (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+CREATE INDEX IF NOT EXISTS ix_feedback_items_project_id ON feedback_items (project_id);
+CREATE INDEX IF NOT EXISTS ix_themes_project_id ON themes (project_id);
 
 -- Association between feedback items and discovered themes
 CREATE TABLE IF NOT EXISTS theme_feedback_associations (

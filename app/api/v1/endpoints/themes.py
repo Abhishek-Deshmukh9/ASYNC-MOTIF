@@ -240,15 +240,14 @@ async def approve_and_dispatch_theme(
             detail=f"Theme {theme_id} not found",
         )
 
+    # A project can target its own repository; otherwise use the backend's configured one.
+    # Without a GITHUB_TOKEN the theme is still approved and its PRD generated, and the
+    # response says plainly that no issue was created (see dispatch_github_issue).
     selected_repo = request.github_repo if request else None
     if selected_repo:
         repo_owner, repo_name = selected_repo.split("/", 1)
     else:
         repo_owner, repo_name = settings.GITHUB_REPO_OWNER, settings.GITHUB_REPO_NAME
-    if not settings.GITHUB_TOKEN:
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Configure GITHUB_TOKEN before launching a GitHub issue.")
-    if not repo_owner or not repo_name:
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Choose a project GitHub repository or configure GITHUB_REPO_OWNER and GITHUB_REPO_NAME.")
 
     original_title = theme.title
     if request and request.final_title:
@@ -299,16 +298,13 @@ async def approve_and_dispatch_theme(
     theme.prd_markdown = prd_markdown
 
     # 2. Dispatch to GitHub REST API (FR-6.2)
-    try:
-        gh_receipt = await dispatch_github_issue(
-            title=f"[MOTIF-THEME] {theme.title}",
-            body=prd_markdown,
-            labels=["motif-approved", "theme", "revenue-risk:critical"],
-            owner=repo_owner,
-            repo=repo_name,
-        )
-    except RuntimeError as exc:
-        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)) from exc
+    gh_receipt = await dispatch_github_issue(
+        title=f"[MOTIF-THEME] {theme.title}",
+        body=prd_markdown,
+        labels=["motif-approved", "theme", "revenue-risk:critical"],
+        owner=repo_owner,
+        repo=repo_name,
+    )
 
     theme.status = "approved"
     theme.github_issue_url = gh_receipt.get("issue_url")
@@ -327,7 +323,10 @@ async def approve_and_dispatch_theme(
     await db.commit()
     await db.refresh(theme)
 
-    logger.info(f"Theme {theme.id} approved by PM '{pm_id}' -> GitHub issue created: {theme.github_issue_url}")
+    if theme.github_issue_url:
+        logger.info(f"Theme {theme.id} approved by PM '{pm_id}' -> GitHub issue created: {theme.github_issue_url}")
+    else:
+        logger.info(f"Theme {theme.id} approved by PM '{pm_id}' -> no GitHub issue ({gh_receipt.get('message')})")
 
     return {
         "status": "approved",
@@ -336,6 +335,8 @@ async def approve_and_dispatch_theme(
         "revenue_at_risk": float(theme.revenue_at_risk),
         "github_issue_url": theme.github_issue_url,
         "github_issue_number": theme.github_issue_number,
+        "github_dispatch": "live" if gh_receipt.get("is_live") else "simulated",
+        "github_message": gh_receipt.get("message"),
         "prd_markdown": theme.prd_markdown,
         "audit_logged": True,
     }

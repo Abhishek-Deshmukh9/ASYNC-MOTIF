@@ -234,7 +234,7 @@ python seed.py
 uvicorn app.main:app --reload --port 8000
 ```
 
-`python seed.py` should print `Successfully seeded 300 records`. If it says the database is not available, wait a few seconds for PostgreSQL to start and run it again.
+`python seed.py` should print `Successfully seeded 300 records`. If it says the database is not available, wait a few seconds for PostgreSQL to start and run it again. Running it again at any time resets the **Demo benchmark** (its feedback, themes and PM decisions) for a clean demo; your own project workspaces are not touched.
 
 Terminal 3 — frontend:
 
@@ -266,6 +266,7 @@ pytest
 - **`docker: command not found`** — Docker Desktop is not installed or not open yet. Open it, wait for "Engine running", then restart your terminal.
 - **Port 5432 already in use** — another PostgreSQL is running on your machine. Stop it, or change `POSTGRES_PORT` and the port in `DATABASE_URL` / `SYNC_DATABASE_URL` in `.env`.
 - **First pipeline run is slow** — the embedding model is being downloaded; later runs are faster.
+- **`column ... project_id does not exist`** — your database was created before project workspaces were added. Run `alembic stamp 001_initial_schema` and then `alembic upgrade head` (with the virtual environment active), then `python seed.py`.
 - **`Could not open requirements file`** — run the commands from the `ASYNC-MOTIF` folder (the one containing `requirements.txt`).
 
 ---

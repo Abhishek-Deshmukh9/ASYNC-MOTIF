@@ -244,19 +244,32 @@ async def seed_database_if_available(corpus: List[Dict[str, Any]]) -> bool:
     try:
         from app.db.session import engine, init_db
         from app.models.feedback import FeedbackItem
+        from app.models.theme import Theme
+        from app.models.audit import ApprovalAuditLog
         from sqlalchemy.ext.asyncio import AsyncSession
-        from sqlalchemy import select, delete
+        from sqlalchemy import select, delete, func
 
         print("Connecting to database to seed feedback items...")
         await init_db()
 
         async with AsyncSession(engine) as session:
-            # Check existing count
-            result = await session.execute(select(FeedbackItem))
-            existing = result.scalars().all()
-            if existing:
-                print(f"Database already contains {len(existing)} feedback items. Replacing with clean 300 benchmark...")
-                await session.execute(delete(FeedbackItem))
+            # Reset only the demo benchmark (rows with no project); project workspaces are left alone.
+            existing = await session.scalar(
+                select(func.count(FeedbackItem.id)).where(FeedbackItem.project_id.is_(None))
+            ) or 0
+            demo_themes = await session.scalar(
+                select(func.count(Theme.id)).where(Theme.project_id.is_(None))
+            ) or 0
+            if existing or demo_themes:
+                print(
+                    f"Resetting the demo benchmark: removing {existing} feedback items, "
+                    f"{demo_themes} themes and their PM decisions..."
+                )
+                demo_theme_ids = select(Theme.id).where(Theme.project_id.is_(None))
+                # Audit rows first: older databases don't cascade these deletes.
+                await session.execute(delete(ApprovalAuditLog).where(ApprovalAuditLog.theme_id.in_(demo_theme_ids)))
+                await session.execute(delete(Theme).where(Theme.project_id.is_(None)))
+                await session.execute(delete(FeedbackItem).where(FeedbackItem.project_id.is_(None)))
                 await session.commit()
 
             feedback_objs = [

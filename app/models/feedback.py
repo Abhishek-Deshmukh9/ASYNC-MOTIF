@@ -44,6 +44,7 @@ class FeedbackItem(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     source_type = Column(String(50), nullable=False)  # 'app_store', 'email', 'transcript', 'slack', 'notion'
     external_id = Column(String(255), nullable=True)
+    project_id = Column(String(255), nullable=True, index=True)
     content = Column(Text, nullable=False)
     clean_content = Column(Text, nullable=False)
     customer_id = Column(String(255), nullable=True)

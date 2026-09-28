@@ -56,7 +56,7 @@ services:
     container_name: motif_triage_ui
     restart: unless-stopped
     environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      - MOTIF_API_URL=http://backend:8000
     volumes:
       - ./triage-ui:/app
       - /app/node_modules

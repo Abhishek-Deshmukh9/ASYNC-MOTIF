@@ -39,17 +39,18 @@ def test_mini_prd_generation():
 
 
 @pytest.mark.anyio
-async def test_github_dispatch_module():
-    receipt = await dispatch_github_issue(
-        title="[MOTIF] Test Issue",
-        body="## PRD Test Body",
-        labels=["motif-approved", "test"],
-        owner="test-org",
-        repo="test-repo",
-    )
+async def test_github_dispatch_requires_real_credentials(monkeypatch):
+    from app.config import settings
 
-    assert receipt["issue_number"] > 0
-    assert "github.com/test-org/test-repo/issues/" in receipt["issue_url"]
+    monkeypatch.setattr(settings, "GITHUB_TOKEN", None)
+    with pytest.raises(RuntimeError, match="no GitHub issue was created"):
+        await dispatch_github_issue(
+            title="[MOTIF] Test Issue",
+            body="## PRD Test Body",
+            labels=["motif-approved", "test"],
+            owner="test-org",
+            repo="test-repo",
+        )
 
 
 def test_metrics_evaluation_endpoint():

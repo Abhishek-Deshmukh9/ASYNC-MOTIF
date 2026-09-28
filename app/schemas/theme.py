@@ -44,3 +44,4 @@ class ThemeApprovalRequest(BaseModel):
     pm_user_id: str = Field(..., description="ID of the PM approving this theme")
     final_title: Optional[str] = None
     final_summary: Optional[str] = None
+    github_repo: Optional[str] = Field(default=None, pattern=r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$", max_length=200)

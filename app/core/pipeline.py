@@ -20,6 +20,7 @@ async def run_ai_pipeline(
     batch_size: int = 50,
     min_cluster_size: int = 4,
     min_samples: int = 2,
+    project_id: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Executes Phase 3 Core AI Processing:
@@ -41,6 +42,8 @@ async def run_ai_pipeline(
     # Step 2: Fetch all embedded feedback items for clustering
     async with AsyncSessionLocal() as session:
         query = select(FeedbackItem).where(FeedbackItem.embedding.isnot(None))
+        if project_id is not None:
+            query = query.where(FeedbackItem.project_id == project_id)
         result = await session.execute(query)
         db_items = result.scalars().all()
 
@@ -110,9 +113,12 @@ async def run_ai_pipeline(
 
     async with AsyncSessionLocal() as session:
         # Clear existing unapproved themes if re-running
-        await session.execute(
-            delete(Theme).where(Theme.status == "pending_review")
-        )
+        pending_query = delete(Theme).where(Theme.status == "pending_review")
+        if project_id is None:
+            pending_query = pending_query.where(Theme.project_id.is_(None))
+        else:
+            pending_query = pending_query.where(Theme.project_id == project_id)
+        await session.execute(pending_query)
 
         theme_id_map: Dict[int, uuid.UUID] = {}
         for cluster_id, c_items, synthesized, risk_metrics in cluster_payloads:
@@ -120,6 +126,7 @@ async def run_ai_pipeline(
             theme_record = Theme(
                 id=theme_id,
                 cluster_id=cluster_id,
+                project_id=project_id,
                 title=synthesized.title,
                 summary=synthesized.problem_statement,
                 revenue_at_risk=risk_metrics["revenue_at_risk"],

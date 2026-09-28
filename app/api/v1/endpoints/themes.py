@@ -14,6 +14,7 @@ from app.models.audit import ApprovalAuditLog
 from app.schemas.theme import ThemeResponse, ThemeUpdate, ThemeApprovalRequest, CitedQuote
 from app.core.prd_generator import generate_mini_prd
 from app.core.github_client import dispatch_github_issue
+from app.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +24,7 @@ router = APIRouter(prefix="/themes", tags=["Themes"])
 @router.get("", response_model=List[ThemeResponse])
 async def list_themes(
     status_filter: Optional[str] = None,
+    project_id: Optional[str] = None,
     limit: int = 50,
     offset: int = 0,
     db: AsyncSession = Depends(get_db),
@@ -38,6 +40,7 @@ async def list_themes(
     )
     if status_filter:
         query = query.where(Theme.status == status_filter)
+    query = query.where(Theme.project_id == project_id if project_id is not None else Theme.project_id.is_(None))
 
     result = await db.execute(query)
     themes = result.scalars().all()
@@ -237,6 +240,16 @@ async def approve_and_dispatch_theme(
             detail=f"Theme {theme_id} not found",
         )
 
+    selected_repo = request.github_repo if request else None
+    if selected_repo:
+        repo_owner, repo_name = selected_repo.split("/", 1)
+    else:
+        repo_owner, repo_name = settings.GITHUB_REPO_OWNER, settings.GITHUB_REPO_NAME
+    if not settings.GITHUB_TOKEN:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Configure GITHUB_TOKEN before launching a GitHub issue.")
+    if not repo_owner or not repo_name:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Choose a project GitHub repository or configure GITHUB_REPO_OWNER and GITHUB_REPO_NAME.")
+
     original_title = theme.title
     if request and request.final_title:
         theme.title = request.final_title
@@ -286,11 +299,16 @@ async def approve_and_dispatch_theme(
     theme.prd_markdown = prd_markdown
 
     # 2. Dispatch to GitHub REST API (FR-6.2)
-    gh_receipt = await dispatch_github_issue(
-        title=f"[MOTIF-THEME] {theme.title}",
-        body=prd_markdown,
-        labels=["motif-approved", "theme", "revenue-risk:critical"],
-    )
+    try:
+        gh_receipt = await dispatch_github_issue(
+            title=f"[MOTIF-THEME] {theme.title}",
+            body=prd_markdown,
+            labels=["motif-approved", "theme", "revenue-risk:critical"],
+            owner=repo_owner,
+            repo=repo_name,
+        )
+    except RuntimeError as exc:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)) from exc
 
     theme.status = "approved"
     theme.github_issue_url = gh_receipt.get("issue_url")

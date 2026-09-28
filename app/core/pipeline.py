@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import time
 import uuid
 from typing import Any, Dict, List, Optional
 from sqlalchemy import select, delete
@@ -31,6 +32,7 @@ async def run_ai_pipeline(
     5. Compute Revenue-at-Risk scoring and persist themes & associations.
     """
     logger.info(">>> Starting Motif AI Pipeline (Phase 3) <<<")
+    started_at = time.perf_counter()
     batch_size = batch_size or 50
     min_cluster_size = min_cluster_size or 4
     min_samples = min_samples or 2
@@ -55,6 +57,8 @@ async def run_ai_pipeline(
             return {
                 "status": "completed",
                 "message": "No feedback items with embeddings found in database.",
+                "project_id": project_id,
+                "duration_seconds": round(time.perf_counter() - started_at, 1),
                 "items_processed": 0,
                 "themes_created": 0,
                 "noise_count": 0,
@@ -181,8 +185,13 @@ async def run_ai_pipeline(
 
     logger.info(f">>> Motif AI Pipeline Finished: {len(created_themes)} themes created and persisted. <<<")
 
+    duration_seconds = round(time.perf_counter() - started_at, 1)
+    logger.info(f"Pipeline run took {duration_seconds}s end to end.")
+
     return {
         "status": "completed",
+        "project_id": project_id,
+        "duration_seconds": duration_seconds,
         "items_processed": len(items_for_clustering),
         "newly_embedded": embedded_count,
         "dense_clusters_count": cluster_res.total_dense_clusters,

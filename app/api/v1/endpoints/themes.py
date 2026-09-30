@@ -9,7 +9,9 @@ from sqlalchemy.orm import selectinload
 
 from app.api.deps import get_db
 from app.core.auth import CurrentUser, get_current_user
+from app.core.issue_target import resolve_issue_target
 from app.core.projects import authorize_project
+from app.models.project import Project
 from app.models.theme import Theme
 from app.models.feedback import FeedbackItem, theme_feedback_associations
 from app.models.audit import ApprovalAuditLog
@@ -283,14 +285,22 @@ async def approve_and_dispatch_theme(
         )
     await authorize_project(db, theme.project_id, user)
 
-    # A project can target its own repository; otherwise use the backend's configured one.
-    # Without a GITHUB_TOKEN the theme is still approved and its PRD generated, and the
-    # response says plainly that no issue was created (see dispatch_github_issue).
-    selected_repo = request.github_repo if request else None
-    if selected_repo:
-        repo_owner, repo_name = selected_repo.split("/", 1)
-    else:
-        repo_owner, repo_name = settings.GITHUB_REPO_OWNER, settings.GITHUB_REPO_NAME
+    # A project's issues go to its own saved repository, else the backend's configured one.
+    # The shared demo never opens real issues for signed-in users, and a request cannot steer
+    # the server's GitHub token to another repo (see resolve_issue_target).
+    project_repo = None
+    if theme.project_id is not None:
+        project_repo = await db.scalar(select(Project.github_repo).where(Project.id == theme.project_id))
+    target = resolve_issue_target(
+        shared_demo=theme.project_id is None,
+        signed_in=user is not None,
+        project_repo=project_repo,
+        requested_repo=request.github_repo if request else None,
+        default_owner=settings.GITHUB_REPO_OWNER,
+        default_repo=settings.GITHUB_REPO_NAME,
+        demo_may_create_issues=settings.DEMO_CREATES_ISSUES,
+    )
+    repo_owner, repo_name = target.owner, target.repo
 
     original_title = theme.title
     if request and request.final_title:
@@ -354,13 +364,16 @@ async def approve_and_dispatch_theme(
     theme.prd_markdown = prd_markdown
 
     # 2. Dispatch to GitHub REST API (FR-6.2)
-    gh_receipt = await dispatch_github_issue(
-        title=f"[MOTIF-THEME] {theme.title}",
-        body=prd_markdown,
-        labels=["motif-approved", "theme", "revenue-risk:critical"],
-        owner=repo_owner,
-        repo=repo_name,
-    )
+    if target.allowed:
+        gh_receipt = await dispatch_github_issue(
+            title=f"[MOTIF-THEME] {theme.title}",
+            body=prd_markdown,
+            labels=["motif-approved", "theme", "revenue-risk:critical"],
+            owner=repo_owner,
+            repo=repo_name,
+        )
+    else:
+        gh_receipt = {"issue_number": None, "issue_url": None, "is_live": False, "message": target.message}
 
     theme.status = "approved"
     theme.github_issue_url = gh_receipt.get("issue_url")

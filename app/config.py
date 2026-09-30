@@ -54,6 +54,8 @@ class Settings(BaseSettings):
     GITHUB_TOKEN: str | None = None
     GITHUB_REPO_OWNER: str | None = None
     GITHUB_REPO_NAME: str | None = None
+    # Let the shared demo benchmark open real GitHub issues for signed-in users (off by default)
+    DEMO_CREATES_ISSUES: bool = False
 
     @field_validator("CORS_ORIGINS", mode="before")
     @classmethod

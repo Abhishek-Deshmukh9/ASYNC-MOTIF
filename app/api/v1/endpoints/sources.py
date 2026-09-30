@@ -21,9 +21,8 @@ from starlette.concurrency import run_in_threadpool
 from app.api.deps import get_db
 from app.core.auth import CurrentUser, get_current_user
 from app.core.projects import authorize_project, ensure_project, project_uuid, validate_project_id
-from app.core.chunking import chunk_text
 from app.core.extraction import MAX_FILE_BYTES, ExtractedDocument, ExtractionError, extract_file
-from app.core.normalization import clean_text, detect_churn_intent, normalize_and_deduplicate
+from app.core.ingest import build_passages as _passages, content_hash as _content_hash
 from app.models.feedback import FeedbackItem
 from app.models.project import Project, Source
 
@@ -34,73 +33,14 @@ router = APIRouter(prefix="/sources", tags=["Sources"])
 MAX_FILES_PER_REQUEST = 100
 MAX_PASSAGES_PER_REQUEST = 10_000
 SOURCE_KINDS = {"document", "note", "meeting", "table"}
-def _content_hash(document: ExtractedDocument) -> str:
-    payload = document.text if not document.rows else json.dumps(document.rows, sort_keys=True, ensure_ascii=False)
-    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
-
-
-def _passages(document: ExtractedDocument, project_id: str, source_id: uuid.UUID, kind: str) -> List[FeedbackItem]:
-    """Build the feedback_items rows for one extracted document."""
-    base_meta = {"project_id": project_id, "source_name": document.title, "source_path": document.path}
-    items: List[FeedbackItem] = []
-
-    if document.rows:
-        # One piece of feedback per table row: customer, tier and ARR columns carry through
-        normalized, _ = normalize_and_deduplicate(
-            [dict(row, metadata=dict(base_meta, row=i + 1)) for i, row in enumerate(document.rows)]
-        )
-        for i, item in enumerate(normalized):
-            items.append(
-                FeedbackItem(
-                    id=uuid.uuid4(),
-                    project_id=project_id,
-                    source_id=source_id,
-                    chunk_index=i,
-                    source_type=item.source_type[:50],
-                    external_id=f"{source_id}:{i}",
-                    content=item.content,
-                    clean_content=item.clean_content,
-                    customer_id=item.customer_id,
-                    customer_tier=item.customer_tier,
-                    arr_value=item.arr_value,
-                    churn_risk_flag=item.churn_risk_flag,
-                    metadata_=item.metadata,
-                )
-            )
-        return items
-
-    source_type = "meeting_transcript" if kind == "meeting" else ("note" if document.kind == "note" else "document")
-    for chunk in chunk_text(document.text):
-        cleaned = clean_text(chunk.text)
-        if len(cleaned) < 3:
-            continue
-        items.append(
-            FeedbackItem(
-                id=uuid.uuid4(),
-                project_id=project_id,
-                source_id=source_id,
-                chunk_index=chunk.index,
-                speaker=(chunk.speaker or None) and chunk.speaker[:255],
-                source_type=source_type,
-                external_id=f"{source_id}:{chunk.index}",
-                content=chunk.text,
-                clean_content=cleaned,
-                customer_id=None,
-                customer_tier="free",
-                arr_value=0,
-                churn_risk_flag=detect_churn_intent(cleaned),
-                metadata_=dict(base_meta, section=chunk.section) if chunk.section else base_meta,
-            )
-        )
-    return items
-
-
 def _source_payload(source: Source, passages: int) -> Dict[str, Any]:
     return {
         "id": str(source.id),
         "title": source.title,
         "path": source.external_id,
         "mime_type": source.mime_type,
+        "connection_id": str(source.connection_id) if source.connection_id else None,
+        "url": source.url,
         "created_at": source.created_at.isoformat() if source.created_at else None,
         "passages": passages,
     }

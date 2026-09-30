@@ -61,7 +61,7 @@ export type ApprovalResult = {
 };
 
 // A source stored on the backend (POST /sources/upload, GET /sources)
-export type UploadedSource = { id: string; title: string; path?: string | null; mime_type?: string | null; created_at?: string | null; passages: number };
+export type UploadedSource = { id: string; title: string; path?: string | null; mime_type?: string | null; created_at?: string | null; passages: number; connection_id?: string | null; url?: string | null };
 export type UploadFileResult = {
   filename: string;
   status: 'imported' | 'duplicate' | 'skipped' | 'failed';
@@ -71,3 +71,14 @@ export type UploadFileResult = {
   skipped: { path: string; reason: string }[];
 };
 export type UploadResult = { project_id: string; files: UploadFileResult[]; sources_created: number; passages_created: number };
+
+export type ProviderId = 'notion' | 'gdrive' | 'slack';
+export type Connection = {
+  id: string; provider: ProviderId; label: string; project_id: string; display_name?: string | null;
+  config: { page_ids?: string[]; folder_id?: string; channel_ids?: string[]; [key: string]: unknown };
+  status: 'active' | 'syncing' | 'error'; last_synced_at?: string | null; last_error?: string | null;
+  last_result?: { imported: number; updated: number; unchanged: number; removed: number; failed: number; passages: number } | null;
+  sources: number;
+};
+export type ConnectionOption = { id: string; name: string; is_member?: boolean };
+export type SyncResult = { imported: number; updated: number; unchanged: number; skipped: number; failed: number; removed: number; passages: number; errors: string[] };

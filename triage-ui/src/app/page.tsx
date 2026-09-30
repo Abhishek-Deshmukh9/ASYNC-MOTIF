@@ -4,13 +4,14 @@ import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Activity, ArrowDown, ArrowRight, AudioLines, Award, Check, CheckCircle2,
-  CircleHelp, Clipboard, Cloud, DollarSign, ExternalLink, FileText, FlaskConical, FolderKanban, FolderOpen, GitBranch, HardDrive, Headphones,
+  CircleHelp, Clipboard, DollarSign, ExternalLink, FileText, FlaskConical, FolderKanban, FolderOpen, GitBranch, HardDrive, Headphones,
   LoaderCircle, LogOut, Mic, MicOff, Plus, Radio, RefreshCw, Search, ShieldCheck, Sparkles, Timer, Trash2,
   Upload, X, Zap,
 } from 'lucide-react';
 import { SIGN_IN_REQUIRED, approveTheme, deleteSource, fetchMetrics, fetchProjects, fetchPipelineStatus, fetchSources, fetchThemes, ingestSource, rejectTheme, runPipeline, saveProject, uploadSources } from '@/utils/api';
 import { authEnabled, getSupabase } from '@/utils/supabase';
 import type { PipelineProgress } from '@/utils/api';
+import Connectors from '@/components/Connectors';
 import type { EvalMetrics, Project, ProjectSource, Theme, UploadFileResult, UploadedSource } from '@/utils/types';
 
 const STORE_KEY = 'motif-project-workspaces-v1';
@@ -40,7 +41,7 @@ const extOf = (name: string) => { const dot = name.lastIndexOf('.'); return dot 
 const relativePath = (file: File) => (file as File & { webkitRelativePath?: string }).webkitRelativePath || file.name;
 const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? '' : 's'}`;
 const fromServer = (source: UploadedSource): ProjectSource => ({
-  id: source.id, serverId: source.id, name: source.path?.split('/').pop() || source.title, kind: 'document',
+  id: source.id, serverId: source.id, name: source.connection_id ? source.title : (source.path?.split('/').pop() || source.title), kind: 'document',
   createdAt: source.created_at || new Date().toISOString(), content: '', syncState: 'synced', passages: source.passages,
 });
 
@@ -98,8 +99,7 @@ export default function Workspace() {
   const [newName, setNewName] = useState('');
   const [newRepo, setNewRepo] = useState('');
   const [showCreate, setShowCreate] = useState(false);
-  const [showDrive, setShowDrive] = useState(false);
-  const [folderUrl, setFolderUrl] = useState('');
+  const [showConnect, setShowConnect] = useState(false);
   const [sourceSearch, setSourceSearch] = useState('');
   const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
@@ -219,6 +219,13 @@ export default function Workspace() {
   const updateProject = (id: string, updater: (project: Project) => Project) => {
     setProjects((current) => current.map((project) => project.id === id ? updater(project) : project));
   };
+
+  // Re-read a project's sources from the server (after a tool sync added, updated or removed some)
+  const refreshServerSources = (projectId: string) => fetchSources(projectId).then((server) => updateProject(projectId, (project) => {
+    const local = new Map(project.sources.filter((source) => source.serverId).map((source) => [source.serverId as string, source]));
+    const synced = server.map((source) => local.get(source.id) ? { ...(local.get(source.id) as ProjectSource), passages: source.passages } : fromServer(source));
+    return { ...project, sources: [...synced, ...project.sources.filter((source) => !source.serverId)] };
+  })).catch(() => undefined);
 
   const createProject = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -439,12 +446,6 @@ export default function Workspace() {
     catch { setError('Could not copy to the clipboard. Select the text and copy it instead.'); }
   };
 
-  const saveDriveScope = (event: React.FormEvent) => {
-    event.preventDefault();
-    if (activeProject) updateProject(activeProject.id, (project) => ({ ...project, driveFolder: folderUrl.trim() }));
-    setShowDrive(false);
-    setNotice('Drive folder scope recorded in this browser. To securely sync it, configure Google OAuth on the Motif backend; no Drive files are read until that connector is enabled.');
-  };
 
   const downloadSource = (source: ProjectSource) => {
     const blob = new Blob([source.content], { type: 'text/markdown' }); const url = URL.createObjectURL(blob);
@@ -540,7 +541,7 @@ export default function Workspace() {
         </div> : <>
           <div className="mb-8 flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
             <div><div className="mb-3 flex items-center gap-2 text-[11px] text-slate-500"><span>Projects</span><span>/</span><span className="text-slate-700">{activeProject.name}</span></div><h1 className="text-[28px] font-semibold tracking-[-.045em] text-slate-900 sm:text-[34px]">{activeProject.name}<span className="ml-3 align-middle text-sm font-normal tracking-normal text-slate-400">workspace</span></h1><p className="mt-2 max-w-xl text-[13px] leading-5 text-slate-600">Bring the evidence together. Motif will map recurring needs into themes you can inspect, prioritize, and launch.</p></div>
-            <div className="flex flex-wrap items-center gap-2"><button onClick={() => setShowDrive(true)} className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100"><HardDrive size={14}/> Add Drive folder</button><button onClick={() => folderInput.current?.click()} disabled={working === 'upload'} title="Import an Obsidian vault or any folder of notes and documents" className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100 disabled:opacity-50"><FolderOpen size={14}/> Import folder</button><button onClick={() => fileInput.current?.click()} disabled={working === 'upload'} title="PDF, Word, PowerPoint, Excel, Markdown, text, CSV, JSON or .zip" className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100 disabled:opacity-50">{working === 'upload' ? <LoaderCircle size={14} className="animate-spin"/> : <Upload size={14}/>} Upload files</button><button onClick={runAnalysis} disabled={working === 'pipeline' || !sources.length} className="flex items-center gap-2 rounded-lg bg-[#0f766e] px-3.5 py-2.5 text-xs font-semibold text-white transition hover:bg-[#115e59] disabled:cursor-not-allowed disabled:opacity-40">{working === 'pipeline' ? <LoaderCircle size={14} className="animate-spin"/> : <Sparkles size={14}/>} Analyze feedback</button></div>
+            <div className="flex flex-wrap items-center gap-2"><button onClick={() => setShowConnect(true)} className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100"><HardDrive size={14}/> Connect a tool</button><button onClick={() => folderInput.current?.click()} disabled={working === 'upload'} title="Import an Obsidian vault or any folder of notes and documents" className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100 disabled:opacity-50"><FolderOpen size={14}/> Import folder</button><button onClick={() => fileInput.current?.click()} disabled={working === 'upload'} title="PDF, Word, PowerPoint, Excel, Markdown, text, CSV, JSON or .zip" className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100 disabled:opacity-50">{working === 'upload' ? <LoaderCircle size={14} className="animate-spin"/> : <Upload size={14}/>} Upload files</button><button onClick={runAnalysis} disabled={working === 'pipeline' || !sources.length} className="flex items-center gap-2 rounded-lg bg-[#0f766e] px-3.5 py-2.5 text-xs font-semibold text-white transition hover:bg-[#115e59] disabled:cursor-not-allowed disabled:opacity-40">{working === 'pipeline' ? <LoaderCircle size={14} className="animate-spin"/> : <Sparkles size={14}/>} Analyze feedback</button></div>
             <input ref={fileInput} type="file" multiple accept={UPLOAD_ACCEPT} className="hidden" onChange={onFiles}/>
             <input ref={(element) => { folderInput.current = element; element?.setAttribute('webkitdirectory', ''); }} type="file" multiple className="hidden" onChange={onFiles}/>
           </div>
@@ -553,7 +554,7 @@ export default function Workspace() {
               <div className="mt-5 flex flex-col gap-2 sm:flex-row"><input value={meetingName} onChange={(event) => setMeetingName(event.target.value)} className="field flex-1" aria-label="Meeting name" placeholder="Give this conversation a name"/><button onClick={recording ? stopMeeting : startMeeting} className={`flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-xs font-semibold transition ${recording ? 'bg-rose-600 text-white hover:bg-rose-700' : 'bg-[#0f766e] text-white hover:bg-[#115e59]'}`}>{recording ? <><MicOff size={14}/> Stop & save transcript</> : <><Mic size={14}/> Start recording</>}</button></div>
               {(transcribing || transcript) && <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3.5"><div className="mb-2 flex items-center gap-2 text-[10px] uppercase tracking-[.17em] text-slate-500"><Radio size={12} className={transcribing ? 'text-rose-600' : 'text-slate-500'}/>{transcribing ? 'Live transcript' : 'Transcript preview'}</div><p className="max-h-28 overflow-auto whitespace-pre-wrap text-xs leading-5 text-slate-700">{transcript || 'Listening… start speaking to see words here.'}</p></div>}
             </div>
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_2px_8px_rgba(15,23,42,0.035)] sm:p-6"><div className="flex items-center gap-2"><span className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-700"><Cloud size={15}/></span><span className="text-sm font-semibold text-slate-900">Connect Google Drive</span></div><p className="mt-2 text-xs leading-5 text-slate-500">Choose a project folder to keep research docs and meeting notes in scope.</p><button onClick={() => setShowDrive(true)} className="mt-5 flex items-center gap-2 text-xs font-medium text-slate-700 hover:text-[#0f766e]">Choose a folder <ArrowRight size={14}/></button><p className="mt-3 text-[10px] leading-4 text-slate-400">{activeProject.driveFolder ? 'Folder scope recorded · connector setup still required' : 'Private-by-default: only the folder you choose should be read.'}</p></div>
+            <Connectors projectId={activeProject.id} projectName={activeProject.name} open={showConnect} onClose={() => setShowConnect(false)} onSynced={() => refreshServerSources(activeProject.id)} onMessage={(text, isError) => { if (isError) { setError(text); setNotice(''); } else { setNotice(text); setError(''); } }} />
           </section>
 
           <section className="mb-7 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_2px_8px_rgba(15,23,42,0.035)]">
@@ -579,7 +580,6 @@ export default function Workspace() {
 
     {showCreate && <div className="modal-backdrop"><form onSubmit={createProject} className="modal-card"><div className="flex items-start justify-between"><div><div className="mb-2 flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 text-[#0f766e]"><FolderKanban size={17}/></div><h2 className="text-lg font-semibold text-slate-900">Create a project</h2><p className="mt-1 text-xs leading-5 text-slate-500">Make a workspace for the feedback and roadmap you want to bring together.</p></div><button type="button" onClick={() => setShowCreate(false)} className="text-slate-500 hover:text-slate-900"><X size={17}/></button></div><label className="mt-6 block text-[11px] font-medium text-slate-600">Project name<input autoFocus value={newName} onChange={(event) => setNewName(event.target.value)} className="field mt-2 w-full" placeholder="e.g. Project Atlas" required/></label><label className="mt-4 block text-[11px] font-medium text-slate-600">GitHub repository <span className="font-normal text-slate-400">(optional, owner/repo)</span><input value={newRepo} onChange={(event) => setNewRepo(event.target.value)} className="field mt-2 w-full" placeholder="acme/product"/></label><p className="mt-3 text-[10px] leading-4 text-slate-400">Your projects are saved to your account. Issues use this project repository or fall back to the backend&apos;s configured repository.</p><div className="mt-6 flex justify-end gap-2"><button type="button" onClick={() => setShowCreate(false)} className="rounded-lg border border-slate-200 px-3 py-2 text-xs text-slate-700">Cancel</button><button className="rounded-lg bg-[#0f766e] px-4 py-2 text-xs font-semibold text-white">Create project</button></div></form></div>}
 
-    {showDrive && <div className="modal-backdrop"><form onSubmit={saveDriveScope} className="modal-card"><div className="flex items-start justify-between"><div><div className="mb-2 flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-700"><HardDrive size={17}/></div><h2 className="text-lg font-semibold text-slate-900">Add a Drive folder</h2><p className="mt-1 text-xs leading-5 text-slate-500">Scope this project to one folder, not your whole Drive.</p></div><button type="button" onClick={() => setShowDrive(false)} className="text-slate-500 hover:text-slate-900"><X size={17}/></button></div><label className="mt-6 block text-[11px] font-medium text-slate-600">Google Drive folder URL or ID<input value={folderUrl} onChange={(event) => setFolderUrl(event.target.value)} className="field mt-2 w-full" placeholder="https://drive.google.com/drive/folders/…" required/></label><div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-[10px] leading-[1.7] text-slate-600"><span className="font-medium text-amber-800">Connector setup required.</span> This build does not have Google OAuth credentials or a Drive sync endpoint. The folder scope will be noted locally, but no Drive files are accessed yet. Enable the Google Drive connector on the backend before using it with sensitive project data.</div><div className="mt-6 flex justify-end gap-2"><button type="button" onClick={() => setShowDrive(false)} className="rounded-lg border border-slate-200 px-3 py-2 text-xs text-slate-700">Cancel</button><button className="rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white">Save folder scope</button></div></form></div>}
 
     {reviewTheme && <div className="modal-backdrop"><div className="modal-card max-h-[85vh] overflow-y-auto"><div className="flex items-start justify-between"><span className="text-[10px] uppercase tracking-[.18em] text-[#0f766e]">Evidence review</span><button onClick={() => setReviewTheme(null)} className="text-slate-500 hover:text-slate-900"><X size={17}/></button></div>
       <label className="mt-3 block text-[11px] font-medium text-slate-600">Theme title<input value={editTitle} onChange={(event) => setEditTitle(event.target.value)} className="field mt-1.5 w-full text-sm font-semibold text-slate-900"/></label>

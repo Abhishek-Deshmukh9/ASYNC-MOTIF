@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends
-from app.api.v1.endpoints import health, feedback, pipeline, projects, sources, themes, metrics
+from app.api.v1.endpoints import health, connections, feedback, pipeline, projects, sources, themes, metrics
 from app.core.auth import get_current_user
 
 api_router = APIRouter()
@@ -11,6 +11,7 @@ protected = [Depends(get_current_user)]
 api_router.include_router(projects.router, dependencies=protected)
 api_router.include_router(feedback.router, dependencies=protected)
 api_router.include_router(sources.router, dependencies=protected)
+api_router.include_router(connections.router, dependencies=protected)
 api_router.include_router(pipeline.router, dependencies=protected)
 api_router.include_router(themes.router, dependencies=protected)
 api_router.include_router(metrics.router, dependencies=protected)

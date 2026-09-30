@@ -16,6 +16,7 @@ alembic>=1.13.1
 
 # Sign-in: verify Supabase Auth tokens
 pyjwt[crypto]>=2.8.0
+cryptography>=42.0.0  # encrypts connector tokens
 
 # HTTP Client & Utilities
 httpx>=0.27.0

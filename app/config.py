@@ -45,6 +45,8 @@ class Settings(BaseSettings):
     SUPABASE_URL: str | None = None
     SUPABASE_PUBLISHABLE_KEY: str | None = None
     SUPABASE_SECRET_KEY: str | None = None  # server-side only
+    # Encrypts stored connector tokens. Defaults to SUPABASE_SECRET_KEY when unset.
+    CONNECTOR_ENCRYPTION_KEY: str | None = None
     SUPABASE_JWT_SECRET: str | None = None  # only for older projects that sign tokens with HS256
     # Sign-in required on the API. Default (unset): on whenever SUPABASE_URL is set.
     AUTH_REQUIRED: bool | None = None

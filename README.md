@@ -92,7 +92,7 @@ Human PM Approves ──► Automated PRD Generation & GitHub Issue Creation
 | **LLM Synthesis** | Groq API (default `llama-3.3-70b-versatile`, with automatic fallback to other Groq-hosted models); Gemini and OpenAI also supported; offline fallback |
 | **Frontend Triage UI** | Next.js 16 + React 19 + Tailwind CSS 4 |
 | **Infrastructure** | Docker Compose |
-| **Integrations** | GitHub REST API (live when a token is set). Slack, Notion, Google Drive: planned (stubs) |
+| **Integrations** | GitHub REST API (live when a token is set). Notion, Google Drive (service account) and Slack: read-only connectors that sync into a project |
 
 ---
 
@@ -297,6 +297,18 @@ The backend verifies each token against the project's public signing keys (`/aut
 
 Row level security is enabled on every table, so the data is not reachable through Supabase's public API with the publishable key; the backend connects as the tables' owner and is unaffected.
 
+### Connect Notion, Google Drive and Slack
+
+Open a project and use **Connect your tools**. Each tool is read-only, tokens are encrypted before they are stored, and Motif reads only what you choose. **Sync now** adds new items, refreshes edited ones and removes deleted ones.
+
+| Tool | What you need | What Motif reads |
+| :--- | :--- | :--- |
+| **Notion** | An internal integration secret from notion.so/profile/integrations. Share pages with it (page menu, Connections). | The pages shared with the integration, or only the ones you select. |
+| **Google Drive** | A Google Cloud service account with the Drive API enabled; paste its JSON key. Share one folder with the service account email (Viewer). | That folder and its subfolders: Docs, Sheets, PDFs, Word, PowerPoint, Excel, Markdown. |
+| **Slack** | A Slack app with bot scopes `channels:read`, `channels:history`, `channels:join`, `users:read`, installed to the workspace; paste the `xoxb-` token. | The public channels you pick, last 90 days. Never DMs or private channels. |
+
+Set `CONNECTOR_ENCRYPTION_KEY` in `.env` (any long random string; it falls back to `SUPABASE_SECRET_KEY`).
+
 ### Verify
 
 ```bash
@@ -337,7 +349,7 @@ pytest
 - `triage-ui/` was scaffolded with `create-next-app` (MIT). The config files, `public/*.svg`, `src/app/favicon.ico` and `triage-ui/README.md` come from that template. `triage-ui/AGENTS.md` and `CLAUDE.md` are generated automatically by `next dev`.
 
 **Libraries** (installed from `requirements.txt` and `triage-ui/package.json`, not copied into the repo)
-- Backend: FastAPI (MIT), SQLAlchemy (MIT), Alembic (MIT), asyncpg (Apache-2.0), pgvector-python (MIT), scikit-learn (BSD-3-Clause), sentence-transformers (Apache-2.0), httpx (BSD-3-Clause), Pydantic (MIT), MarkItDown (MIT) for document import, PyJWT (MIT) for verifying sign-in tokens.
+- Backend: FastAPI (MIT), SQLAlchemy (MIT), Alembic (MIT), asyncpg (Apache-2.0), pgvector-python (MIT), scikit-learn (BSD-3-Clause), sentence-transformers (Apache-2.0), httpx (BSD-3-Clause), Pydantic (MIT), MarkItDown (MIT) for document import, PyJWT (MIT) for verifying sign-in tokens, cryptography (Apache-2.0/BSD) for encrypting connector tokens.
 - Frontend: Next.js (MIT), React (MIT), Tailwind CSS (MIT), lucide-react icons (ISC), supabase-js (MIT) for sign-in.
 
 **Models, services and images**

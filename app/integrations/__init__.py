@@ -1,0 +1,8 @@
+from app.integrations.base import ProviderError, RemoteDoc, Provider
+from app.integrations.gdrive import GoogleDriveProvider
+from app.integrations.notion import NotionProvider
+from app.integrations.slack import SlackProvider
+
+PROVIDERS = {"notion": NotionProvider, "gdrive": GoogleDriveProvider, "slack": SlackProvider}
+
+__all__ = ["PROVIDERS", "Provider", "ProviderError", "RemoteDoc", "NotionProvider", "GoogleDriveProvider", "SlackProvider"]

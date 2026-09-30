@@ -1,5 +1,5 @@
 import { getAccessToken } from './supabase';
-import { ApprovalResult, EvalMetrics, ProjectSource, ServerProject, Theme, UploadResult, UploadedSource } from './types';
+import { ApprovalResult, Connection, ConnectionOption, ProviderId, SyncResult, EvalMetrics, ProjectSource, ServerProject, Theme, UploadResult, UploadedSource } from './types';
 
 export const SIGN_IN_REQUIRED = 'motif:sign-in-required';
 
@@ -72,3 +72,13 @@ export async function ingestSource(source: ProjectSource, projectId: string, pro
 export const fetchProjects = () => request<ServerProject[]>('/projects');
 export const saveProject = (project: { id: string; name: string; repo?: string }) =>
   request<ServerProject>('/projects', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: project.id, name: project.name, github_repo: project.repo || null }) });
+
+// Connected tools (Notion, Google Drive, Slack)
+const json = (body: unknown): RequestInit => ({ headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+export const fetchConnections = (projectId: string) => request<Connection[]>(`/connections?project_id=${encodeURIComponent(projectId)}`);
+export const createConnection = (projectId: string, projectName: string, provider: ProviderId, credentials: Record<string, unknown>) =>
+  request<Connection>('/connections', { method: 'POST', ...json({ project_id: projectId, project_name: projectName, provider, credentials }) });
+export const connectionOptions = (id: string) => request<ConnectionOption[]>(`/connections/${id}/options`);
+export const updateConnection = (id: string, config: Record<string, unknown>) => request<Connection>(`/connections/${id}`, { method: 'PATCH', ...json({ config }) });
+export const syncConnection = (id: string) => request<SyncResult>(`/connections/${id}/sync`, { method: 'POST' });
+export const deleteConnection = (id: string, removeSources: boolean) => request<{ sources_removed: number }>(`/connections/${id}?remove_sources=${removeSources}`, { method: 'DELETE' });

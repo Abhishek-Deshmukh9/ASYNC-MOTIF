@@ -44,3 +44,11 @@ def resolve_issue_target(
         owner, repo = chosen.split("/", 1)
         return IssueTarget(owner, repo)
     return IssueTarget(default_owner, default_repo)
+
+
+DEMO_READ_ONLY_MESSAGE = "The shared demo is read-only. Create your own project to edit, approve or reject themes."
+
+
+def demo_is_locked(*, project_id, signed_in: bool, writable: bool) -> bool:
+    """The shared demo corpus (no project) is read-only for signed-in users unless the operator opts in."""
+    return signed_in and project_id is None and not writable

@@ -9,8 +9,8 @@ from sqlalchemy.orm import selectinload
 
 from app.api.deps import get_db
 from app.core.auth import CurrentUser, get_current_user
-from app.core.issue_target import resolve_issue_target
-from app.core.projects import authorize_project
+from app.core.issue_target import DEMO_READ_ONLY_MESSAGE, demo_is_locked, resolve_issue_target
+from app.core.projects import authorize_project, project_uuid
 from app.models.project import Project
 from app.models.theme import Theme
 from app.models.feedback import FeedbackItem, theme_feedback_associations
@@ -228,6 +228,8 @@ async def update_theme(
             detail=f"Theme {theme_id} not found",
         )
     await authorize_project(db, theme.project_id, user)
+    if demo_is_locked(project_id=theme.project_id, signed_in=user is not None, writable=settings.DEMO_WRITABLE):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=DEMO_READ_ONLY_MESSAGE)
 
     if user is not None:
         pm_user_id = user.email or user.id
@@ -290,7 +292,7 @@ async def approve_and_dispatch_theme(
     # the server's GitHub token to another repo (see resolve_issue_target).
     project_repo = None
     if theme.project_id is not None:
-        project_repo = await db.scalar(select(Project.github_repo).where(Project.id == theme.project_id))
+        project_repo = await db.scalar(select(Project.github_repo).where(Project.id == project_uuid(theme.project_id)))
     target = resolve_issue_target(
         shared_demo=theme.project_id is None,
         signed_in=user is not None,
@@ -298,7 +300,7 @@ async def approve_and_dispatch_theme(
         requested_repo=request.github_repo if request else None,
         default_owner=settings.GITHUB_REPO_OWNER,
         default_repo=settings.GITHUB_REPO_NAME,
-        demo_may_create_issues=settings.DEMO_CREATES_ISSUES,
+        demo_may_create_issues=settings.DEMO_WRITABLE,
     )
     repo_owner, repo_name = target.owner, target.repo
 
@@ -364,16 +366,30 @@ async def approve_and_dispatch_theme(
     theme.prd_markdown = prd_markdown
 
     # 2. Dispatch to GitHub REST API (FR-6.2)
-    if target.allowed:
-        gh_receipt = await dispatch_github_issue(
-            title=f"[MOTIF-THEME] {theme.title}",
-            body=prd_markdown,
-            labels=["motif-approved", "theme", "revenue-risk:critical"],
-            owner=repo_owner,
-            repo=repo_name,
-        )
-    else:
-        gh_receipt = {"issue_number": None, "issue_url": None, "is_live": False, "message": target.message}
+    if not target.allowed:
+        # Shared demo: hand back the PRD as a preview and save nothing (no status, edits or audit rows).
+        preview = {
+            "status": "approved",
+            "theme_id": str(theme.id),
+            "title": theme.title,
+            "revenue_at_risk": float(theme.revenue_at_risk or 0.0),
+            "github_issue_url": None,
+            "github_issue_number": None,
+            "github_dispatch": "simulated",
+            "github_message": target.message,
+            "prd_markdown": prd_markdown,
+            "audit_logged": False,
+        }
+        await db.rollback()
+        return preview
+
+    gh_receipt = await dispatch_github_issue(
+        title=f"[MOTIF-THEME] {theme.title}",
+        body=prd_markdown,
+        labels=["motif-approved", "theme", "revenue-risk:critical"],
+        owner=repo_owner,
+        repo=repo_name,
+    )
 
     theme.status = "approved"
     theme.github_issue_url = gh_receipt.get("issue_url")
@@ -429,6 +445,8 @@ async def reject_theme(
             detail=f"Theme {theme_id} not found",
         )
     await authorize_project(db, theme.project_id, user)
+    if demo_is_locked(project_id=theme.project_id, signed_in=user is not None, writable=settings.DEMO_WRITABLE):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=DEMO_READ_ONLY_MESSAGE)
 
     if user is not None:
         pm_user_id = user.email or user.id

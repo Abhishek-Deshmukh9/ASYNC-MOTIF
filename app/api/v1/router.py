@@ -1,22 +1,17 @@
-from fastapi import APIRouter
-from app.api.v1.endpoints import health, feedback, pipeline, sources, themes, metrics
+from fastapi import APIRouter, Depends
+from app.api.v1.endpoints import health, connections, feedback, pipeline, projects, sources, themes, metrics
+from app.core.auth import get_current_user
 
 api_router = APIRouter()
 
-# Include health router
+# Health stays public (uptime checks). Everything else needs a signed-in user when auth is on.
 api_router.include_router(health.router, tags=["Health"])
 
-# Include feedback router
-api_router.include_router(feedback.router)
-
-# Include project sources router (file uploads, Obsidian vaults)
-api_router.include_router(sources.router)
-
-# Include AI pipeline router
-api_router.include_router(pipeline.router)
-
-# Include themes router
-api_router.include_router(themes.router)
-
-# Include metrics router
-api_router.include_router(metrics.router)
+protected = [Depends(get_current_user)]
+api_router.include_router(projects.router, dependencies=protected)
+api_router.include_router(feedback.router, dependencies=protected)
+api_router.include_router(sources.router, dependencies=protected)
+api_router.include_router(connections.router, dependencies=protected)
+api_router.include_router(pipeline.router, dependencies=protected)
+api_router.include_router(themes.router, dependencies=protected)
+api_router.include_router(metrics.router, dependencies=protected)

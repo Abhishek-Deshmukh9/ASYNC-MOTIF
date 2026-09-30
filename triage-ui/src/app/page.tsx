@@ -1,16 +1,21 @@
 'use client';
 
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Activity, ArrowDown, ArrowRight, AudioLines, Award, Check, CheckCircle2,
-  CircleHelp, Clipboard, Cloud, DollarSign, ExternalLink, FileText, FlaskConical, FolderKanban, FolderOpen, GitBranch, HardDrive, Headphones,
-  LoaderCircle, Mic, MicOff, Plus, Radio, RefreshCw, Search, ShieldCheck, Sparkles, Timer, Trash2,
+  CircleHelp, Clipboard, DollarSign, ExternalLink, FileText, FlaskConical, FolderKanban, FolderOpen, GitBranch, HardDrive, Headphones,
+  LoaderCircle, LogOut, Mic, MicOff, Plus, Radio, RefreshCw, Search, ShieldCheck, Sparkles, Timer, Trash2,
   Upload, X, Zap,
 } from 'lucide-react';
-import { approveTheme, deleteSource, fetchMetrics, fetchPipelineStatus, fetchSources, fetchThemes, ingestSource, rejectTheme, runPipeline, uploadSources } from '@/utils/api';
+import { SIGN_IN_REQUIRED, approveTheme, deleteSource, fetchMetrics, fetchProjects, fetchPipelineStatus, fetchSources, fetchThemes, ingestSource, rejectTheme, runPipeline, saveProject, uploadSources } from '@/utils/api';
+import { authEnabled, getSupabase } from '@/utils/supabase';
+import type { PipelineProgress } from '@/utils/api';
+import Connectors from '@/components/Connectors';
 import type { EvalMetrics, Project, ProjectSource, Theme, UploadFileResult, UploadedSource } from '@/utils/types';
 
 const STORE_KEY = 'motif-project-workspaces-v1';
+const REPO_PATTERN = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
 type SpeechResultEvent = { resultIndex: number; results: ArrayLike<{ isFinal: boolean; [index: number]: { transcript: string } }> };
 type BrowserRecognition = {
   continuous: boolean; interimResults: boolean; lang: string;
@@ -36,7 +41,7 @@ const extOf = (name: string) => { const dot = name.lastIndexOf('.'); return dot 
 const relativePath = (file: File) => (file as File & { webkitRelativePath?: string }).webkitRelativePath || file.name;
 const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? '' : 's'}`;
 const fromServer = (source: UploadedSource): ProjectSource => ({
-  id: source.id, serverId: source.id, name: source.path?.split('/').pop() || source.title, kind: 'document',
+  id: source.id, serverId: source.id, name: source.connection_id ? source.title : (source.path?.split('/').pop() || source.title), kind: 'document',
   createdAt: source.created_at || new Date().toISOString(), content: '', syncState: 'synced', passages: source.passages,
 });
 
@@ -59,11 +64,33 @@ function describeUpload(results: UploadFileResult[], ignored: number, oversized:
 }
 
 function makeId() { return typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`; }
-function readProjects(): Project[] {
-  try { const value = localStorage.getItem(STORE_KEY); return value ? JSON.parse(value) as Project[] : []; } catch { return []; }
+function readProjects(key: string): Project[] {
+  try { const value = localStorage.getItem(key); return value ? JSON.parse(value) as Project[] : []; } catch { return []; }
+}
+
+// Projects live on the server for a signed-in user. Save any that only exist in this browser,
+// then show the server's list with the sources this browser already knows about.
+async function syncWithServer(local: Project[]): Promise<Project[]> {
+  let server = await fetchProjects();
+  const onServer = new Set(server.map((project) => project.id));
+  const pending = local.filter((project) => !onServer.has(project.id));
+  const failed: Project[] = [];
+  for (const project of pending) {
+    try { await saveProject(project); } catch { failed.push(project); }
+  }
+  if (pending.length > failed.length) server = await fetchProjects();
+  const cached = new Map(local.map((project) => [project.id, project]));
+  const merged = server.map((project) => {
+    const known = cached.get(project.id);
+    return { id: project.id, name: project.name, repo: project.github_repo || '', driveFolder: known?.driveFolder, sources: known?.sources || [] } as Project;
+  });
+  return [...merged, ...failed];
 }
 
 export default function Workspace() {
+  const router = useRouter();
+  const [userEmail, setUserEmail] = useState('');
+  const [storeKey, setStoreKey] = useState(STORE_KEY);
   const [projects, setProjects] = useState<Project[]>([]);
   const [activeId, setActiveId] = useState('');
   const [ready, setReady] = useState(false);
@@ -72,8 +99,7 @@ export default function Workspace() {
   const [newName, setNewName] = useState('');
   const [newRepo, setNewRepo] = useState('');
   const [showCreate, setShowCreate] = useState(false);
-  const [showDrive, setShowDrive] = useState(false);
-  const [folderUrl, setFolderUrl] = useState('');
+  const [showConnect, setShowConnect] = useState(false);
   const [sourceSearch, setSourceSearch] = useState('');
   const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
@@ -87,6 +113,7 @@ export default function Workspace() {
   const [editTitle, setEditTitle] = useState('');
   const [editSummary, setEditSummary] = useState('');
   const [prdTheme, setPrdTheme] = useState<Theme | null>(null);
+  const [progress, setProgress] = useState<PipelineProgress | null>(null);
   const [lastRunSeconds, setLastRunSeconds] = useState<number | null>(null);
   const [copied, setCopied] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
@@ -105,13 +132,53 @@ export default function Workspace() {
   const rejectedCount = themes.filter((theme) => theme.status === 'rejected').length;
 
   useEffect(() => {
-    // Browser storage is intentionally read after hydration to avoid SSR/client mismatch.
-    const loaded = readProjects();
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setProjects(loaded);
-    setActiveId(loaded[0]?.id || DEMO_ID);
-    setReady(true);
-  }, []);
+    // Browser storage is read after hydration to avoid an SSR/client mismatch.
+    let cancelled = false;
+    const start = async () => {
+      let key = STORE_KEY;
+      let loaded: Project[] = [];
+      let legacy = false;
+      const supabase = getSupabase();
+      if (supabase) {
+        const { data } = await supabase.auth.getSession();
+        const user = data.session?.user;
+        if (!user) { router.replace('/login'); return; }
+        if (cancelled) return;
+        key = `${STORE_KEY}:${user.id}`;
+        setUserEmail(user.email || '');
+        loaded = readProjects(key);
+        if (!loaded.length) { loaded = readProjects(STORE_KEY); legacy = loaded.length > 0; }
+        try {
+          // Do not let a slow or missing backend keep the spinner up forever
+          const timeout = new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 10000));
+          loaded = await Promise.race([syncWithServer(loaded), timeout]);
+          setApiOnline(true);
+        } catch { /* offline or slow: keep what this browser has */ }
+        // Projects from before accounts existed are removed from the shared key only after they are saved
+        if (legacy) { try { localStorage.removeItem(STORE_KEY); } catch { /* ignore */ } }
+      } else {
+        loaded = readProjects(key);
+      }
+      if (cancelled) return;
+      setStoreKey(key);
+      setProjects(loaded);
+      setActiveId(loaded[0]?.id || DEMO_ID);
+      setReady(true);
+    };
+    start().catch(() => { if (!cancelled) { setProjects([]); setActiveId(DEMO_ID); setReady(true); } });
+    return () => { cancelled = true; };
+  }, [router]);
+
+  useEffect(() => {
+    const goToLogin = () => router.replace('/login');
+    window.addEventListener(SIGN_IN_REQUIRED, goToLogin);
+    return () => window.removeEventListener(SIGN_IN_REQUIRED, goToLogin);
+  }, [router]);
+
+  const signOut = async () => {
+    await getSupabase()?.auth.signOut();
+    router.replace('/login');
+  };
 
   useEffect(() => {
     if (!activeId) return;
@@ -141,8 +208,8 @@ export default function Workspace() {
   };
 
   useEffect(() => {
-    if (ready) localStorage.setItem(STORE_KEY, JSON.stringify(projects));
-  }, [projects, ready]);
+    if (ready) { try { localStorage.setItem(storeKey, JSON.stringify(projects)); } catch { /* storage full or blocked */ } }
+  }, [projects, ready, storeKey]);
 
   useEffect(() => () => {
     recognitionRef.current?.stop?.();
@@ -153,11 +220,23 @@ export default function Workspace() {
     setProjects((current) => current.map((project) => project.id === id ? updater(project) : project));
   };
 
-  const createProject = (event: React.FormEvent) => {
+  // Re-read a project's sources from the server (after a tool sync added, updated or removed some)
+  const refreshServerSources = (projectId: string) => fetchSources(projectId).then((server) => updateProject(projectId, (project) => {
+    const local = new Map(project.sources.filter((source) => source.serverId).map((source) => [source.serverId as string, source]));
+    const synced = server.map((source) => local.get(source.id) ? { ...(local.get(source.id) as ProjectSource), passages: source.passages } : fromServer(source));
+    return { ...project, sources: [...synced, ...project.sources.filter((source) => !source.serverId)] };
+  })).catch(() => undefined);
+
+  const createProject = async (event: React.FormEvent) => {
     event.preventDefault();
     const name = newName.trim();
     if (!name) return;
-    const project = { id: makeId(), name, repo: newRepo.trim(), sources: [] };
+    const repo = newRepo.trim();
+    if (repo && !REPO_PATTERN.test(repo)) { setError('Write the repository as owner/repo, for example acme/product.'); return; }
+    const project: Project = { id: makeId(), name, repo, sources: [] };
+    try { await saveProject(project); setApiOnline(true); } catch (failure) {
+      if (authEnabled) { setError(failure instanceof Error ? failure.message : 'Could not save the project. Check that the API is running.'); return; }
+    }
     setProjects((existing) => [...existing, project]);
     setActiveId(project.id);
     setNewName(''); setNewRepo(''); setShowCreate(false);
@@ -306,7 +385,7 @@ export default function Workspace() {
         const serverId = await ingestSource(source, activeProject.id, activeProject.name);
         updateProject(activeProject.id, (project) => ({ ...project, sources: project.sources.map((item) => item.id === source.id ? { ...item, syncState: 'synced', serverId: serverId ?? undefined } : item) }));
       }
-      const result = await runPipeline(activeProject.id);
+      const result = await runPipeline(activeProject.id, setProgress);
       const updated = await fetchThemes(activeProject.id); setThemes(updated); setApiOnline(true);
       const created = result.themes_created ?? updated.length;
       const took = typeof result.duration_seconds === 'number' ? ` in ${result.duration_seconds}s` : '';
@@ -314,19 +393,19 @@ export default function Workspace() {
         ? `Analysis complete${took}. ${plural(created, 'theme')} ready for your review.`
         : `Analysis complete${took}, but no themes yet. A theme needs at least 4 passages about the same problem, so add more sources and analyze again.`);
     } catch (cause) { setApiOnline(false); setError(cause instanceof Error ? cause.message : API_HINT); }
-    finally { setWorking(''); }
+    finally { setWorking(''); setProgress(null); }
   };
 
   const runDemoAnalysis = async () => {
     setWorking('pipeline'); setError(''); setNotice('');
     try {
-      const result = await runPipeline();
+      const result = await runPipeline(undefined, setProgress);
       const [updated, latest] = await Promise.all([fetchThemes(), fetchMetrics()]);
       setThemes(updated); setMetrics(latest); setApiOnline(true);
       if (typeof result.duration_seconds === 'number') setLastRunSeconds(result.duration_seconds);
       setNotice(`Analysis complete${typeof result.duration_seconds === 'number' ? ` in ${result.duration_seconds}s` : ''}. ${result.themes_created ?? updated.length} themes discovered from the demo corpus.`);
     } catch (cause) { setApiOnline(false); setError(cause instanceof Error ? cause.message : API_HINT); }
-    finally { setWorking(''); }
+    finally { setWorking(''); setProgress(null); }
   };
 
   const openReview = (theme: Theme) => {
@@ -367,12 +446,6 @@ export default function Workspace() {
     catch { setError('Could not copy to the clipboard. Select the text and copy it instead.'); }
   };
 
-  const saveDriveScope = (event: React.FormEvent) => {
-    event.preventDefault();
-    if (activeProject) updateProject(activeProject.id, (project) => ({ ...project, driveFolder: folderUrl.trim() }));
-    setShowDrive(false);
-    setNotice('Drive folder scope recorded in this browser. To securely sync it, configure Google OAuth on the Motif backend; no Drive files are read until that connector is enabled.');
-  };
 
   const downloadSource = (source: ProjectSource) => {
     const blob = new Blob([source.content], { type: 'text/markdown' }); const url = URL.createObjectURL(blob);
@@ -380,9 +453,20 @@ export default function Workspace() {
   };
 
 
-  const noticeBanner = (
-    (notice || error) ? <div className={`mb-5 flex items-start justify-between gap-3 rounded-lg border px-3.5 py-3 text-xs leading-5 ${error ? 'border-rose-200 bg-rose-50 text-rose-700' : 'border-emerald-200 bg-emerald-50 text-emerald-900'}`}><div className="flex gap-2.5">{error ? <CircleHelp size={15} className="mt-0.5 shrink-0 text-rose-600"/> : <CheckCircle2 size={15} className="mt-0.5 shrink-0 text-[#0f766e]"/>}{error || notice}</div><button onClick={() => { setNotice(''); setError(''); }} className="text-slate-500 hover:text-slate-900"><X size={14}/></button></div> : null
-  );
+  const STAGES = [['embedding', 'Reading passages'], ['clustering', 'Finding patterns'], ['labelling', 'Naming themes'], ['saving', 'Saving']] as const;
+  const stageIndex = progress?.stage ? STAGES.findIndex(([key]) => key === progress.stage) : -1;
+  const stageFraction = progress && progress.total > 0 ? Math.min(progress.done / progress.total, 1) : 0;
+  const percent = progress?.stage ? Math.round(((Math.max(stageIndex, 0) + (progress.stage === 'labelling' ? stageFraction : 0)) / STAGES.length) * 100) : 0;
+  const progressPanel = working === 'pipeline' ? <div className="mb-5 rounded-lg border border-emerald-200 bg-white px-4 py-3.5" role="status" aria-live="polite">
+    <div className="flex items-center justify-between text-xs"><span className="flex items-center gap-2 font-medium text-slate-800"><LoaderCircle size={13} className="animate-spin text-[#0f766e]"/>{progress?.stage ? STAGES[stageIndex][1] : 'Starting analysis'}{progress?.stage === 'labelling' && progress.total > 0 ? ` (${progress.done} of ${progress.total} themes)` : ''}…</span><span className="tabular-nums text-slate-500">{progress?.elapsed_seconds != null ? `${Math.round(progress.elapsed_seconds)}s` : ''}</span></div>
+    <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-[#0f766e] transition-all duration-500" style={{ width: `${Math.max(percent, 4)}%` }}/></div>
+    <div className="mt-2 flex gap-4 text-[10px] text-slate-400">{STAGES.map(([key, label], index) => <span key={key} className={index < stageIndex ? 'text-[#0f766e]' : index === stageIndex ? 'font-medium text-slate-700' : ''}>{index < stageIndex ? '✓ ' : ''}{label}</span>)}</div>
+  </div> : null;
+
+  const noticeBanner = (<>
+    {progressPanel}
+    {(notice || error) ? <div className={`mb-5 flex items-start justify-between gap-3 rounded-lg border px-3.5 py-3 text-xs leading-5 ${error ? 'border-rose-200 bg-rose-50 text-rose-700' : 'border-emerald-200 bg-emerald-50 text-emerald-900'}`}><div className="flex gap-2.5">{error ? <CircleHelp size={15} className="mt-0.5 shrink-0 text-rose-600"/> : <CheckCircle2 size={15} className="mt-0.5 shrink-0 text-[#0f766e]"/>}{error || notice}</div><button onClick={() => { setNotice(''); setError(''); }} className="text-slate-500 hover:text-slate-900"><X size={14}/></button></div> : null}
+  </>);
 
   const roadmapSection = (
     <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_2px_8px_rgba(15,23,42,0.035)]">
@@ -413,6 +497,8 @@ export default function Workspace() {
     {roadmapSection}
   </>;
 
+  if (!ready) return <div className="flex min-h-screen items-center justify-center bg-[#f4f6f8]"><LoaderCircle className="animate-spin text-slate-400" size={22} aria-label="Loading"/></div>;
+
   return <div className="min-h-screen bg-[#f4f6f8] text-slate-900">
     <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur-xl">
       <div className="mx-auto flex h-[72px] max-w-[1440px] items-center justify-between px-5 md:px-9">
@@ -423,7 +509,9 @@ export default function Workspace() {
           <span className="hidden items-center gap-2 text-xs text-slate-600 sm:flex"><span className={`h-1.5 w-1.5 rounded-full ${apiOnline ? 'bg-emerald-500' : 'bg-slate-300'}`} />{apiOnline ? 'API connected' : 'Local workspace'}</span>
         </div>
         <div className="flex items-center gap-2.5">
+          {userEmail && <span className="hidden max-w-[200px] truncate text-xs text-slate-500 md:inline" title={userEmail}>{userEmail}</span>}
           <button onClick={refresh} className="icon-btn" title="Refresh"><RefreshCw size={15}/></button>
+          {authEnabled && <button onClick={signOut} className="icon-btn" title="Sign out" aria-label="Sign out"><LogOut size={15}/></button>}
           <button onClick={() => { setShowCreate(true); setError(''); }} className="flex items-center gap-2 rounded-lg bg-[#0f766e] px-3.5 py-2.5 text-xs font-semibold text-white transition hover:bg-[#115e59]"><Plus size={15}/> New project</button>
         </div>
       </div>
@@ -453,7 +541,7 @@ export default function Workspace() {
         </div> : <>
           <div className="mb-8 flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
             <div><div className="mb-3 flex items-center gap-2 text-[11px] text-slate-500"><span>Projects</span><span>/</span><span className="text-slate-700">{activeProject.name}</span></div><h1 className="text-[28px] font-semibold tracking-[-.045em] text-slate-900 sm:text-[34px]">{activeProject.name}<span className="ml-3 align-middle text-sm font-normal tracking-normal text-slate-400">workspace</span></h1><p className="mt-2 max-w-xl text-[13px] leading-5 text-slate-600">Bring the evidence together. Motif will map recurring needs into themes you can inspect, prioritize, and launch.</p></div>
-            <div className="flex flex-wrap items-center gap-2"><button onClick={() => setShowDrive(true)} className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100"><HardDrive size={14}/> Add Drive folder</button><button onClick={() => folderInput.current?.click()} disabled={working === 'upload'} title="Import an Obsidian vault or any folder of notes and documents" className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100 disabled:opacity-50"><FolderOpen size={14}/> Import folder</button><button onClick={() => fileInput.current?.click()} disabled={working === 'upload'} title="PDF, Word, PowerPoint, Excel, Markdown, text, CSV, JSON or .zip" className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100 disabled:opacity-50">{working === 'upload' ? <LoaderCircle size={14} className="animate-spin"/> : <Upload size={14}/>} Upload files</button><button onClick={runAnalysis} disabled={working === 'pipeline' || !sources.length} className="flex items-center gap-2 rounded-lg bg-[#0f766e] px-3.5 py-2.5 text-xs font-semibold text-white transition hover:bg-[#115e59] disabled:cursor-not-allowed disabled:opacity-40">{working === 'pipeline' ? <LoaderCircle size={14} className="animate-spin"/> : <Sparkles size={14}/>} Analyze feedback</button></div>
+            <div className="flex flex-wrap items-center gap-2"><button onClick={() => setShowConnect(true)} className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100"><HardDrive size={14}/> Connect a tool</button><button onClick={() => folderInput.current?.click()} disabled={working === 'upload'} title="Import an Obsidian vault or any folder of notes and documents" className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100 disabled:opacity-50"><FolderOpen size={14}/> Import folder</button><button onClick={() => fileInput.current?.click()} disabled={working === 'upload'} title="PDF, Word, PowerPoint, Excel, Markdown, text, CSV, JSON or .zip" className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100 disabled:opacity-50">{working === 'upload' ? <LoaderCircle size={14} className="animate-spin"/> : <Upload size={14}/>} Upload files</button><button onClick={runAnalysis} disabled={working === 'pipeline' || !sources.length} className="flex items-center gap-2 rounded-lg bg-[#0f766e] px-3.5 py-2.5 text-xs font-semibold text-white transition hover:bg-[#115e59] disabled:cursor-not-allowed disabled:opacity-40">{working === 'pipeline' ? <LoaderCircle size={14} className="animate-spin"/> : <Sparkles size={14}/>} Analyze feedback</button></div>
             <input ref={fileInput} type="file" multiple accept={UPLOAD_ACCEPT} className="hidden" onChange={onFiles}/>
             <input ref={(element) => { folderInput.current = element; element?.setAttribute('webkitdirectory', ''); }} type="file" multiple className="hidden" onChange={onFiles}/>
           </div>
@@ -466,11 +554,11 @@ export default function Workspace() {
               <div className="mt-5 flex flex-col gap-2 sm:flex-row"><input value={meetingName} onChange={(event) => setMeetingName(event.target.value)} className="field flex-1" aria-label="Meeting name" placeholder="Give this conversation a name"/><button onClick={recording ? stopMeeting : startMeeting} className={`flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-xs font-semibold transition ${recording ? 'bg-rose-600 text-white hover:bg-rose-700' : 'bg-[#0f766e] text-white hover:bg-[#115e59]'}`}>{recording ? <><MicOff size={14}/> Stop & save transcript</> : <><Mic size={14}/> Start recording</>}</button></div>
               {(transcribing || transcript) && <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3.5"><div className="mb-2 flex items-center gap-2 text-[10px] uppercase tracking-[.17em] text-slate-500"><Radio size={12} className={transcribing ? 'text-rose-600' : 'text-slate-500'}/>{transcribing ? 'Live transcript' : 'Transcript preview'}</div><p className="max-h-28 overflow-auto whitespace-pre-wrap text-xs leading-5 text-slate-700">{transcript || 'Listening… start speaking to see words here.'}</p></div>}
             </div>
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_2px_8px_rgba(15,23,42,0.035)] sm:p-6"><div className="flex items-center gap-2"><span className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-700"><Cloud size={15}/></span><span className="text-sm font-semibold text-slate-900">Connect Google Drive</span></div><p className="mt-2 text-xs leading-5 text-slate-500">Choose a project folder to keep research docs and meeting notes in scope.</p><button onClick={() => setShowDrive(true)} className="mt-5 flex items-center gap-2 text-xs font-medium text-slate-700 hover:text-[#0f766e]">Choose a folder <ArrowRight size={14}/></button><p className="mt-3 text-[10px] leading-4 text-slate-400">{activeProject.driveFolder ? 'Folder scope recorded · connector setup still required' : 'Private-by-default: only the folder you choose should be read.'}</p></div>
+            <Connectors projectId={activeProject.id} projectName={activeProject.name} open={showConnect} onClose={() => setShowConnect(false)} onSynced={() => refreshServerSources(activeProject.id)} onMessage={(text, isError) => { if (isError) { setError(text); setNotice(''); } else { setNotice(text); setError(''); } }} />
           </section>
 
           <section className="mb-7 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_2px_8px_rgba(15,23,42,0.035)]">
-            <div className="flex flex-col justify-between gap-3 border-b border-slate-200 px-5 py-4 sm:flex-row sm:items-center sm:px-6"><div><div className="flex items-center gap-2"><h2 className="text-sm font-semibold text-slate-900">Project sources</h2><span className="rounded-full bg-slate-100 px-2 py-0.5 font-mono text-[10px] text-slate-600">{sources.length}</span></div><p className="mt-1 text-[11px] text-slate-500">Documents, notes, exports and transcripts, split into passages for analysis.</p></div><div className="relative"><Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/><input value={sourceSearch} onChange={(event) => setSourceSearch(event.target.value)} className="field h-8 w-full pl-8 text-[11px] sm:w-48" placeholder="Find a source"/></div></div>
+            <div className="flex flex-col justify-between gap-3 border-b border-slate-200 px-5 py-4 sm:flex-row sm:items-center sm:px-6"><div><div className="flex items-center gap-2"><h2 className="text-sm font-semibold text-slate-900">Project sources</h2><span className="rounded-full bg-slate-100 px-2 py-0.5 font-mono text-[10px] text-slate-600">{sources.length}</span></div><p className="mt-1 text-[11px] text-slate-500">Documents, notes, exports and transcripts, split into passages for analysis.</p></div><div className="relative"><Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/><input value={sourceSearch} onChange={(event) => setSourceSearch(event.target.value)} className="field h-8 w-full pl-9! text-[11px] sm:w-48" placeholder="Find a source"/></div></div>
             {filteredSources.length ? <div className="divide-y divide-slate-100">{filteredSources.map((source) => <div key={source.id} className="flex items-center gap-3 px-5 py-3.5 sm:px-6"><span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${source.kind === 'meeting' ? 'bg-rose-50 text-rose-700' : source.kind === 'drive' ? 'bg-blue-50 text-blue-700' : 'bg-violet-50 text-violet-700'}`}>{source.kind === 'meeting' ? <Headphones size={15}/> : source.kind === 'drive' ? <HardDrive size={15}/> : <FileText size={15}/>}</span><div className="min-w-0 flex-1"><div className="truncate text-xs font-medium text-slate-800">{source.name}</div><div className="mt-1 text-[10px] text-slate-400">{source.kind === 'meeting' ? 'Meeting transcript' : source.kind === 'drive' ? 'Google Drive' : 'Document'} <span className="mx-1">·</span>{new Date(source.createdAt).toLocaleDateString()}{typeof source.passages === 'number' && <><span className="mx-1">·</span>{plural(source.passages, 'passage')}</>}</div></div><span className={`hidden rounded-full px-2 py-1 text-[9px] sm:inline-flex ${source.syncState === 'synced' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>{source.syncState === 'synced' ? 'Synced' : 'Saved locally'}</span>{source.content && <button title="Download source file" onClick={() => downloadSource(source)} className="rounded-md p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700"><ArrowDown size={14}/></button>}<button title="Remove from project" onClick={() => removeSource(source)} disabled={Boolean(working)} className="rounded-md p-2 text-slate-400 hover:bg-rose-50 hover:text-rose-600 disabled:opacity-40">{working === `source:${source.id}` ? <LoaderCircle size={14} className="animate-spin"/> : <Trash2 size={14}/>}</button></div>)}</div> : <div className="flex flex-col items-center px-5 py-10 text-center"><div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-500"><FileText size={18}/></div><p className="text-xs font-medium text-slate-700">{sources.length ? 'No matching files' : 'No sources in this project yet'}</p><p className="mt-1 max-w-sm text-[11px] leading-5 text-slate-400">{sources.length ? 'Try a different search.' : 'Upload interview notes, call transcripts, support-ticket exports or a whole Obsidian vault. PDF, Word, PowerPoint, Excel, Markdown, CSV and .zip all work.'}</p>{!sources.length && <div className="mt-4 flex gap-2"><button onClick={() => fileInput.current?.click()} className="flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-[11px] text-slate-700 hover:bg-slate-100"><Upload size={13}/> Upload files</button><button onClick={() => folderInput.current?.click()} className="flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-[11px] text-slate-700 hover:bg-slate-100"><FolderOpen size={13}/> Import folder</button></div>}</div>}
           </section>
 
@@ -490,9 +578,8 @@ export default function Workspace() {
       </main>
     </div>
 
-    {showCreate && <div className="modal-backdrop"><form onSubmit={createProject} className="modal-card"><div className="flex items-start justify-between"><div><div className="mb-2 flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 text-[#0f766e]"><FolderKanban size={17}/></div><h2 className="text-lg font-semibold text-slate-900">Create a project</h2><p className="mt-1 text-xs leading-5 text-slate-500">Make a workspace for the feedback and roadmap you want to bring together.</p></div><button type="button" onClick={() => setShowCreate(false)} className="text-slate-500 hover:text-slate-900"><X size={17}/></button></div><label className="mt-6 block text-[11px] font-medium text-slate-600">Project name<input autoFocus value={newName} onChange={(event) => setNewName(event.target.value)} className="field mt-2 w-full" placeholder="e.g. Project Atlas" required/></label><label className="mt-4 block text-[11px] font-medium text-slate-600">GitHub repository <span className="font-normal text-slate-400">(optional, owner/repo)</span><input value={newRepo} onChange={(event) => setNewRepo(event.target.value)} className="field mt-2 w-full" placeholder="acme/product"/></label><p className="mt-3 text-[10px] leading-4 text-slate-400">Projects and source metadata are stored in this browser. Issues use this project repository or fall back to the backend&apos;s configured repository.</p><div className="mt-6 flex justify-end gap-2"><button type="button" onClick={() => setShowCreate(false)} className="rounded-lg border border-slate-200 px-3 py-2 text-xs text-slate-700">Cancel</button><button className="rounded-lg bg-[#0f766e] px-4 py-2 text-xs font-semibold text-white">Create project</button></div></form></div>}
+    {showCreate && <div className="modal-backdrop"><form onSubmit={createProject} className="modal-card"><div className="flex items-start justify-between"><div><div className="mb-2 flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 text-[#0f766e]"><FolderKanban size={17}/></div><h2 className="text-lg font-semibold text-slate-900">Create a project</h2><p className="mt-1 text-xs leading-5 text-slate-500">Make a workspace for the feedback and roadmap you want to bring together.</p></div><button type="button" onClick={() => setShowCreate(false)} className="text-slate-500 hover:text-slate-900"><X size={17}/></button></div><label className="mt-6 block text-[11px] font-medium text-slate-600">Project name<input autoFocus value={newName} onChange={(event) => setNewName(event.target.value)} className="field mt-2 w-full" placeholder="e.g. Project Atlas" required/></label><label className="mt-4 block text-[11px] font-medium text-slate-600">GitHub repository <span className="font-normal text-slate-400">(optional, owner/repo)</span><input value={newRepo} onChange={(event) => setNewRepo(event.target.value)} className="field mt-2 w-full" placeholder="acme/product"/></label><p className="mt-3 text-[10px] leading-4 text-slate-400">Your projects are saved to your account. Issues use this project repository or fall back to the backend&apos;s configured repository.</p><div className="mt-6 flex justify-end gap-2"><button type="button" onClick={() => setShowCreate(false)} className="rounded-lg border border-slate-200 px-3 py-2 text-xs text-slate-700">Cancel</button><button className="rounded-lg bg-[#0f766e] px-4 py-2 text-xs font-semibold text-white">Create project</button></div></form></div>}
 
-    {showDrive && <div className="modal-backdrop"><form onSubmit={saveDriveScope} className="modal-card"><div className="flex items-start justify-between"><div><div className="mb-2 flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-700"><HardDrive size={17}/></div><h2 className="text-lg font-semibold text-slate-900">Add a Drive folder</h2><p className="mt-1 text-xs leading-5 text-slate-500">Scope this project to one folder, not your whole Drive.</p></div><button type="button" onClick={() => setShowDrive(false)} className="text-slate-500 hover:text-slate-900"><X size={17}/></button></div><label className="mt-6 block text-[11px] font-medium text-slate-600">Google Drive folder URL or ID<input value={folderUrl} onChange={(event) => setFolderUrl(event.target.value)} className="field mt-2 w-full" placeholder="https://drive.google.com/drive/folders/…" required/></label><div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-[10px] leading-[1.7] text-slate-600"><span className="font-medium text-amber-800">Connector setup required.</span> This build does not have Google OAuth credentials or a Drive sync endpoint. The folder scope will be noted locally, but no Drive files are accessed yet. Enable the Google Drive connector on the backend before using it with sensitive project data.</div><div className="mt-6 flex justify-end gap-2"><button type="button" onClick={() => setShowDrive(false)} className="rounded-lg border border-slate-200 px-3 py-2 text-xs text-slate-700">Cancel</button><button className="rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white">Save folder scope</button></div></form></div>}
 
     {reviewTheme && <div className="modal-backdrop"><div className="modal-card max-h-[85vh] overflow-y-auto"><div className="flex items-start justify-between"><span className="text-[10px] uppercase tracking-[.18em] text-[#0f766e]">Evidence review</span><button onClick={() => setReviewTheme(null)} className="text-slate-500 hover:text-slate-900"><X size={17}/></button></div>
       <label className="mt-3 block text-[11px] font-medium text-slate-600">Theme title<input value={editTitle} onChange={(event) => setEditTitle(event.target.value)} className="field mt-1.5 w-full text-sm font-semibold text-slate-900"/></label>

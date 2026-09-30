@@ -6,6 +6,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 
 from app.api.deps import get_db
+from app.core.auth import CurrentUser, get_current_user
+from app.core.projects import authorize_project
 from app.models.theme import Theme
 from app.models.audit import ApprovalAuditLog
 from app.models.feedback import FeedbackItem, theme_feedback_associations
@@ -28,6 +30,7 @@ router = APIRouter(prefix="/metrics", tags=["Metrics"])
 async def get_benchmark_metrics(
     project_id: Optional[str] = None,
     db: AsyncSession = Depends(get_db),
+    user: Optional[CurrentUser] = Depends(get_current_user),
 ):
     """
     Live benchmark metrics, all computed from the database on every call:
@@ -40,6 +43,8 @@ async def get_benchmark_metrics(
     Scope: one project workspace, or (no project_id) the labelled demo corpus from seed.py.
     P@3 needs ground-truth labels, so it is only available for the demo corpus.
     """
+    await authorize_project(db, project_id, user)
+
     def in_scope(column):
         return column == project_id if project_id is not None else column.is_(None)
 

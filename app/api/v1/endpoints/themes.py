@@ -8,6 +8,8 @@ from sqlalchemy import select, desc, func
 from sqlalchemy.orm import selectinload
 
 from app.api.deps import get_db
+from app.core.auth import CurrentUser, get_current_user
+from app.core.projects import authorize_project
 from app.models.theme import Theme
 from app.models.feedback import FeedbackItem, theme_feedback_associations
 from app.models.audit import ApprovalAuditLog
@@ -28,11 +30,13 @@ async def list_themes(
     limit: int = 50,
     offset: int = 0,
     db: AsyncSession = Depends(get_db),
+    user: Optional[CurrentUser] = Depends(get_current_user),
 ):
     """
     Lists discovered themes ordered by Revenue-at-Risk descending (Rule 1.4). Themes from
     documents and notes carry no ARR, so ties are broken by how many passages mention them.
     """
+    await authorize_project(db, project_id, user)
     mentions = (
         select(func.count())
         .select_from(theme_feedback_associations)
@@ -138,6 +142,7 @@ async def list_themes(
 async def get_theme(
     theme_id: UUID,
     db: AsyncSession = Depends(get_db),
+    user: Optional[CurrentUser] = Depends(get_current_user),
 ):
     """Fetch details, Mini-PRD, and verified quotes for a specific theme."""
     query = select(Theme).where(Theme.id == theme_id)
@@ -149,6 +154,7 @@ async def get_theme(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Theme with id {theme_id} not found.",
         )
+    await authorize_project(db, theme.project_id, user)
 
     assoc_query = (
         select(
@@ -207,6 +213,7 @@ async def update_theme(
     payload: ThemeUpdate,
     pm_user_id: str = "pm_user_default",
     db: AsyncSession = Depends(get_db),
+    user: Optional[CurrentUser] = Depends(get_current_user),
 ):
     """Allows PM to edit theme title, summary, or priority adjustments."""
     query = select(Theme).where(Theme.id == theme_id)
@@ -218,7 +225,10 @@ async def update_theme(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Theme {theme_id} not found",
         )
+    await authorize_project(db, theme.project_id, user)
 
+    if user is not None:
+        pm_user_id = user.email or user.id
     original_title = theme.title
     if payload.title is not None:
         theme.title = payload.title
@@ -242,7 +252,7 @@ async def update_theme(
     await db.commit()
     await db.refresh(theme)
 
-    return await get_theme(theme_id, db)
+    return await get_theme(theme_id, db, user)
 
 
 @router.post("/{theme_id}/approve", response_model=Dict[str, Any])
@@ -250,6 +260,7 @@ async def approve_and_dispatch_theme(
     theme_id: UUID,
     request: Optional[ThemeApprovalRequest] = None,
     db: AsyncSession = Depends(get_db),
+    user: Optional[CurrentUser] = Depends(get_current_user),
 ):
     """
     Human-in-the-Loop Approval Gate (Rule 1.3):
@@ -259,6 +270,8 @@ async def approve_and_dispatch_theme(
     4. Updates theme status to 'approved' and records action in ApprovalAuditLog.
     """
     pm_id = request.pm_user_id if request else "pm_lead"
+    if user is not None:
+        pm_id = user.email or user.id
     query = select(Theme).where(Theme.id == theme_id)
     result = await db.execute(query)
     theme = result.scalar_one_or_none()
@@ -268,6 +281,7 @@ async def approve_and_dispatch_theme(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Theme {theme_id} not found",
         )
+    await authorize_project(db, theme.project_id, user)
 
     # A project can target its own repository; otherwise use the backend's configured one.
     # Without a GITHUB_TOKEN the theme is still approved and its PRD generated, and the
@@ -389,6 +403,7 @@ async def reject_theme(
     theme_id: UUID,
     pm_user_id: str = "pm_lead",
     db: AsyncSession = Depends(get_db),
+    user: Optional[CurrentUser] = Depends(get_current_user),
 ):
     """Marks theme as rejected and records in audit log."""
     query = select(Theme).where(Theme.id == theme_id)
@@ -400,7 +415,10 @@ async def reject_theme(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Theme {theme_id} not found",
         )
+    await authorize_project(db, theme.project_id, user)
 
+    if user is not None:
+        pm_user_id = user.email or user.id
     theme.status = "rejected"
     audit_log = ApprovalAuditLog(
         id=uuid.uuid4(),

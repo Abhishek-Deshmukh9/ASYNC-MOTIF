@@ -2,7 +2,7 @@ import asyncio
 import logging
 import time
 import uuid
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -16,12 +16,16 @@ from app.core.ranker import calculate_revenue_at_risk
 
 logger = logging.getLogger(__name__)
 
+# progress(stage, done, total): stage is embedding | clustering | labelling | saving
+Progress = Callable[[str, int, int], None]
+
 
 async def run_ai_pipeline(
     batch_size: int = 50,
     min_cluster_size: int = 4,
     min_samples: int = 2,
     project_id: Optional[str] = None,
+    progress: Optional[Progress] = None,
 ) -> Dict[str, Any]:
     """
     Executes Phase 3 Core AI Processing:
@@ -37,7 +41,12 @@ async def run_ai_pipeline(
     min_cluster_size = min_cluster_size or 4
     min_samples = min_samples or 2
 
+    def report(stage: str, done: int = 0, total: int = 0) -> None:
+        if progress:
+            progress(stage, done, total)
+
     # Step 1: Embed any un-embedded feedback items
+    report("embedding")
     embedded_count = await embed_all_unembedded_items(batch_size=batch_size)
     logger.info(f"Step 1 Complete: {embedded_count} feedback items embedded.")
 
@@ -81,6 +90,7 @@ async def run_ai_pipeline(
         ]
 
     # Step 3: HDBSCAN Density Clustering
+    report("clustering", 0, len(items_for_clustering))
     logger.info(f"Step 2: Clustering {len(items_for_clustering)} items with HDBSCAN...")
     cluster_res: ClusterResult = cluster_feedback_embeddings(
         items_for_clustering,
@@ -96,6 +106,9 @@ async def run_ai_pipeline(
     # Step 4: Synthesize Themes Concurrently (avoiding long DB session locks)
     logger.info(f"Step 3: Synthesizing themes for {len(cluster_res.clusters)} clusters concurrently...")
     semaphore = asyncio.Semaphore(3)
+    total_clusters = len(cluster_res.clusters)
+    finished = 0
+    report("labelling", 0, total_clusters)
 
     async def _process_cluster(cluster_id: int, c_items: List[Dict[str, Any]]):
         async with semaphore:
@@ -109,6 +122,9 @@ async def run_ai_pipeline(
                 source_texts = [it.get("content", "") for it in c_items] + [it.get("clean_content", "") for it in c_items]
                 synthesized = _synthesize_offline_grounded_theme(exemplars, source_texts)
             risk_metrics = calculate_revenue_at_risk(c_items, cohesion_score=cohesion)
+            nonlocal finished
+            finished += 1
+            report("labelling", finished, total_clusters)
             return cluster_id, c_items, synthesized, risk_metrics
 
     tasks = [
@@ -118,6 +134,7 @@ async def run_ai_pipeline(
     cluster_payloads = await asyncio.gather(*tasks)
 
     # Step 5: Fast atomic persistence to database
+    report("saving", total_clusters, total_clusters)
     created_themes: List[Dict[str, Any]] = []
 
     async with AsyncSessionLocal() as session:

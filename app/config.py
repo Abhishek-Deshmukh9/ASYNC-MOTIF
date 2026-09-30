@@ -35,7 +35,7 @@ class Settings(BaseSettings):
     # LLM Provider Configuration (Groq for 100% Free-Tier Processing)
     LLM_PROVIDER: str = "groq"
     GROQ_API_KEY: str | None = None
-    GROQ_MODEL: str = "openai/gpt-oss-120b"
+    GROQ_MODEL: str = "llama-3.3-70b-versatile"
     GROQ_BASE_URL: str = "https://api.groq.com/openai/v1"
     GEMINI_API_KEY: str | None = None
     GEMINI_MODEL: str = "gemini-2.0-flash"
@@ -45,6 +45,11 @@ class Settings(BaseSettings):
     SUPABASE_URL: str | None = None
     SUPABASE_PUBLISHABLE_KEY: str | None = None
     SUPABASE_SECRET_KEY: str | None = None  # server-side only
+    # Encrypts stored connector tokens. Defaults to SUPABASE_SECRET_KEY when unset.
+    CONNECTOR_ENCRYPTION_KEY: str | None = None
+    SUPABASE_JWT_SECRET: str | None = None  # only for older projects that sign tokens with HS256
+    # Sign-in required on the API. Default (unset): on whenever SUPABASE_URL is set.
+    AUTH_REQUIRED: bool | None = None
 
     GITHUB_TOKEN: str | None = None
     GITHUB_REPO_OWNER: str | None = None

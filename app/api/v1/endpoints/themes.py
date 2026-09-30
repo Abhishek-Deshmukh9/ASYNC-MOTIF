@@ -30,11 +30,19 @@ async def list_themes(
     db: AsyncSession = Depends(get_db),
 ):
     """
-    Lists discovered themes ordered strictly by Revenue-at-Risk descending (Rule 1.4).
+    Lists discovered themes ordered by Revenue-at-Risk descending (Rule 1.4). Themes from
+    documents and notes carry no ARR, so ties are broken by how many passages mention them.
     """
+    mentions = (
+        select(func.count())
+        .select_from(theme_feedback_associations)
+        .where(theme_feedback_associations.c.theme_id == Theme.id)
+        .correlate(Theme)
+        .scalar_subquery()
+    )
     query = (
         select(Theme)
-        .order_by(desc(Theme.revenue_at_risk))
+        .order_by(desc(Theme.revenue_at_risk), desc(mentions), desc(Theme.created_at))
         .offset(offset)
         .limit(limit)
     )
@@ -58,6 +66,7 @@ async def list_themes(
             FeedbackItem.customer_id,
             FeedbackItem.arr_value,
             FeedbackItem.customer_tier,
+            FeedbackItem.metadata_["source_name"].astext.label("source_name"),
         )
         .join(
             FeedbackItem,
@@ -71,6 +80,21 @@ async def list_themes(
     assoc_res = await db.execute(assoc_query)
     assoc_rows = assoc_res.all()
 
+    # Evidence counts: passages in each theme, and how many distinct sources they come from
+    count_rows = (
+        await db.execute(
+            select(
+                theme_feedback_associations.c.theme_id,
+                func.count().label("mentions"),
+                func.count(func.distinct(FeedbackItem.source_id)).label("sources"),
+            )
+            .join(FeedbackItem, theme_feedback_associations.c.feedback_item_id == FeedbackItem.id)
+            .where(theme_feedback_associations.c.theme_id.in_(theme_ids))
+            .group_by(theme_feedback_associations.c.theme_id)
+        )
+    ).all()
+    counts = {row.theme_id: (row.mentions, row.sources) for row in count_rows}
+
     quotes_by_theme: Dict[UUID, List[CitedQuote]] = {t.id: [] for t in themes}
     for row in assoc_rows:
         if row.quote_text:
@@ -81,6 +105,7 @@ async def list_themes(
                     customer_id=row.customer_id,
                     arr_value=float(row.arr_value or 0.0),
                     customer_tier=row.customer_tier,
+                    source_name=row.source_name,
                 )
             )
 
@@ -101,6 +126,8 @@ async def list_themes(
                 created_at=t.created_at,
                 updated_at=t.updated_at,
                 cited_quotes=quotes,
+                mention_count=counts.get(t.id, (0, 0))[0],
+                source_count=counts.get(t.id, (0, 0))[1],
             )
         )
 
@@ -130,6 +157,7 @@ async def get_theme(
             FeedbackItem.customer_id,
             FeedbackItem.arr_value,
             FeedbackItem.customer_tier,
+            FeedbackItem.metadata_["source_name"].astext.label("source_name"),
         )
         .join(
             FeedbackItem,
@@ -150,6 +178,7 @@ async def get_theme(
             customer_id=row.customer_id,
             arr_value=float(row.arr_value or 0.0),
             customer_tier=row.customer_tier,
+            source_name=row.source_name,
         )
         for row in assoc_rows
         if row.quote_text
@@ -273,6 +302,7 @@ async def approve_and_dispatch_theme(
             FeedbackItem.customer_id,
             FeedbackItem.arr_value,
             FeedbackItem.customer_tier,
+            FeedbackItem.metadata_["source_name"].astext.label("source_name"),
         )
         .join(
             FeedbackItem,
@@ -292,6 +322,7 @@ async def approve_and_dispatch_theme(
             "customer_id": r.customer_id,
             "arr_value": float(r.arr_value or 0.0),
             "customer_tier": r.customer_tier,
+            "source_name": r.source_name,
         }
         for r in assoc_rows
         if r.quote_text

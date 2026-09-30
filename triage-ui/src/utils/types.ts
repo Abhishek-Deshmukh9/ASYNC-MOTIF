@@ -9,7 +9,9 @@ export type Theme = {
   prd_markdown?: string | null;
   github_issue_url?: string | null;
   github_issue_number?: number | null;
-  cited_quotes?: { quote_text: string; customer_id?: string; customer_tier?: string; arr_value?: number }[];
+  cited_quotes?: { quote_text: string; customer_id?: string | null; customer_tier?: string | null; arr_value?: number; source_name?: string | null }[];
+  mention_count?: number; // passages grouped into this theme
+  source_count?: number; // distinct uploaded sources among them
 };
 
 export type ProjectSource = {
@@ -19,6 +21,8 @@ export type ProjectSource = {
   createdAt: string;
   content: string;
   syncState?: 'local' | 'synced' | 'pending';
+  serverId?: string; // id of the source on the backend, once uploaded
+  passages?: number; // how many passages the backend split it into
 };
 
 export type Project = { id: string; name: string; repo?: string; driveFolder?: string; sources: ProjectSource[] };
@@ -53,3 +57,15 @@ export type ApprovalResult = {
   github_message?: string | null;
   prd_markdown?: string | null;
 };
+
+// A source stored on the backend (POST /sources/upload, GET /sources)
+export type UploadedSource = { id: string; title: string; path?: string | null; mime_type?: string | null; created_at?: string | null; passages: number };
+export type UploadFileResult = {
+  filename: string;
+  status: 'imported' | 'duplicate' | 'skipped' | 'failed';
+  detail?: string;
+  passages: number;
+  sources: UploadedSource[];
+  skipped: { path: string; reason: string }[];
+};
+export type UploadResult = { project_id: string; files: UploadFileResult[]; sources_created: number; passages_created: number };

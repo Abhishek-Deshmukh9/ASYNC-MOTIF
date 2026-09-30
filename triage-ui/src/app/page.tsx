@@ -3,12 +3,12 @@
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Activity, ArrowDown, ArrowRight, AudioLines, Award, Check, CheckCircle2,
-  CircleHelp, Clipboard, Cloud, DollarSign, ExternalLink, FileText, FlaskConical, FolderKanban, GitBranch, HardDrive, Headphones,
-  LoaderCircle, Mic, MicOff, Plus, Radio, RefreshCw, Search, ShieldCheck, Sparkles, Timer,
+  CircleHelp, Clipboard, Cloud, DollarSign, ExternalLink, FileText, FlaskConical, FolderKanban, FolderOpen, GitBranch, HardDrive, Headphones,
+  LoaderCircle, Mic, MicOff, Plus, Radio, RefreshCw, Search, ShieldCheck, Sparkles, Timer, Trash2,
   Upload, X, Zap,
 } from 'lucide-react';
-import { approveTheme, fetchMetrics, fetchPipelineStatus, fetchThemes, ingestSource, rejectTheme, runPipeline } from '@/utils/api';
-import type { EvalMetrics, Project, ProjectSource, Theme } from '@/utils/types';
+import { approveTheme, deleteSource, fetchMetrics, fetchPipelineStatus, fetchSources, fetchThemes, ingestSource, rejectTheme, runPipeline, uploadSources } from '@/utils/api';
+import type { EvalMetrics, Project, ProjectSource, Theme, UploadFileResult, UploadedSource } from '@/utils/types';
 
 const STORE_KEY = 'motif-project-workspaces-v1';
 type SpeechResultEvent = { resultIndex: number; results: ArrayLike<{ isFinal: boolean; [index: number]: { transcript: string } }> };
@@ -25,6 +25,38 @@ const API_HINT = 'API is not connected. Start the Motif backend to sync sources 
 const DEMO_ID = '__demo_benchmark__';
 const pct = (value: number | null | undefined) => (value === null || value === undefined ? '—' : `${value}%`);
 const meets = (value: number | null | undefined, target: number) => value !== null && value !== undefined && value >= target;
+
+// File types the backend can read (see app/core/extraction.py)
+const UPLOAD_TYPES = ['.pdf', '.docx', '.pptx', '.xlsx', '.md', '.markdown', '.txt', '.csv', '.json', '.html', '.htm', '.zip'];
+const UPLOAD_ACCEPT = UPLOAD_TYPES.join(',');
+const MAX_BATCH_FILES = 20;
+const MAX_BATCH_BYTES = 8 * 1024 * 1024;
+const MAX_FILE_BYTES = 25 * 1024 * 1024; // same limit as the backend
+const extOf = (name: string) => { const dot = name.lastIndexOf('.'); return dot >= 0 ? name.slice(dot).toLowerCase() : ''; };
+const relativePath = (file: File) => (file as File & { webkitRelativePath?: string }).webkitRelativePath || file.name;
+const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? '' : 's'}`;
+const fromServer = (source: UploadedSource): ProjectSource => ({
+  id: source.id, serverId: source.id, name: source.path?.split('/').pop() || source.title, kind: 'document',
+  createdAt: source.created_at || new Date().toISOString(), content: '', syncState: 'synced', passages: source.passages,
+});
+
+// One line for the notice banner: what was imported, what was already there, what could not be read
+function describeUpload(results: UploadFileResult[], ignored: number, oversized: string[] = []) {
+  const imported = results.flatMap((result) => result.sources);
+  const passages = imported.reduce((total, source) => total + source.passages, 0);
+  const duplicates = results.filter((result) => result.status === 'duplicate').length;
+  const problems = [
+    ...oversized.map((name) => `${name} (larger than 25 MB)`),
+    ...results.filter((result) => result.status === 'failed' || result.status === 'skipped').map((result) => `${result.filename} (${result.detail || 'not imported'})`),
+    ...results.flatMap((result) => result.status === 'imported' ? result.skipped.map((entry) => `${entry.path} (${entry.reason})`) : []),
+  ];
+  const parts = [];
+  if (imported.length) parts.push(`Imported ${plural(imported.length, 'source')} (${plural(passages, 'passage')}).`);
+  if (duplicates) parts.push(`${plural(duplicates, 'file')} already in this project.`);
+  if (ignored) parts.push(`${plural(ignored, 'file')} ignored (hidden or unsupported).`);
+  if (problems.length) parts.push(`Not imported: ${problems.slice(0, 3).join('; ')}${problems.length > 3 ? ` and ${problems.length - 3} more` : ''}.`);
+  return { text: parts.join(' ') || 'Nothing new to import.', ok: imported.length > 0 || (duplicates > 0 && !problems.length) };
+}
 
 function makeId() { return typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`; }
 function readProjects(): Project[] {
@@ -58,6 +90,7 @@ export default function Workspace() {
   const [lastRunSeconds, setLastRunSeconds] = useState<number | null>(null);
   const [copied, setCopied] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
+  const folderInput = useRef<HTMLInputElement>(null);
   const recognitionRef = useRef<BrowserRecognition | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const audioChunks = useRef<Blob[]>([]);
@@ -84,6 +117,15 @@ export default function Workspace() {
     if (!activeId) return;
     const demo = activeId === DEMO_ID;
     fetchThemes(demo ? undefined : activeId).then((value) => { setThemes(value); setApiOnline(true); }).catch(() => setApiOnline(false));
+    if (!demo) {
+      // Sources uploaded from another browser (or before this one's storage was cleared)
+      fetchSources(activeId).then((server) => setProjects((current) => current.map((project) => {
+        if (project.id !== activeId) return project;
+        const known = new Set(project.sources.map((source) => source.serverId).filter(Boolean));
+        const missing = server.filter((source) => !known.has(source.id)).map(fromServer);
+        return missing.length ? { ...project, sources: [...project.sources, ...missing] } : project;
+      }))).catch(() => undefined);
+    }
     if (demo) {
       fetchMetrics().then(setMetrics).catch(() => setMetrics(null));
       fetchPipelineStatus().then((status) => {
@@ -130,23 +172,70 @@ export default function Workspace() {
     setError('');
     if (sync && apiOnline) {
       try {
-        await ingestSource(source, activeProject.id);
-        updateProject(activeProject.id, (project) => ({ ...project, sources: project.sources.map((item) => item.id === source.id ? { ...item, syncState: 'synced' } : item) }));
+        const serverId = await ingestSource(source, activeProject.id, activeProject.name);
+        updateProject(activeProject.id, (project) => ({ ...project, sources: project.sources.map((item) => item.id === source.id ? { ...item, syncState: 'synced', serverId: serverId ?? undefined } : item) }));
         setNotice(`Saved “${source.name}” to ${activeProject.name} and synced it to Motif.`);
       } catch { setError('Saved in this browser, but could not sync to the backend. Check that the API and database are running.'); }
     }
   };
 
+  // Files and folders (e.g. an Obsidian vault) are read on the backend: PDF, Word, PowerPoint,
+  // Excel, Markdown, text, CSV/JSON exports and .zip archives, split into passages for analysis.
+  const importFiles = async (picked: File[]) => {
+    if (!activeProject || !picked.length) return;
+    const project = activeProject;
+    const supported = picked.filter((file) => !relativePath(file).split('/').some((part) => part.startsWith('.')) && UPLOAD_TYPES.includes(extOf(file.name)));
+    const ignored = picked.length - supported.length;
+    const oversized = supported.filter((file) => file.size > MAX_FILE_BYTES).map((file) => file.name);
+    const usable = supported.filter((file) => file.size <= MAX_FILE_BYTES);
+    if (!usable.length) {
+      setNotice('');
+      setError(oversized.length ? `Too large to import (25 MB limit): ${oversized.join(', ')}.` : 'None of these files can be imported. Use PDF, Word, PowerPoint, Excel, Markdown, text, CSV, JSON, HTML or .zip.');
+      return;
+    }
+    const batches: File[][] = [];
+    let batch: File[] = []; let bytes = 0;
+    for (const file of usable) {
+      if (batch.length && (batch.length >= MAX_BATCH_FILES || bytes + file.size > MAX_BATCH_BYTES)) { batches.push(batch); batch = []; bytes = 0; }
+      batch.push(file); bytes += file.size;
+    }
+    if (batch.length) batches.push(batch);
+
+    setWorking('upload'); setError(''); setNotice(`Reading ${plural(usable.length, 'file')}…`);
+    const results: UploadFileResult[] = [];
+    try {
+      for (const [index, files] of batches.entries()) {
+        if (batches.length > 1) setNotice(`Reading files… batch ${index + 1} of ${batches.length}`);
+        const result = await uploadSources(files.map((file) => ({ file, name: relativePath(file) })), project.id, project.name);
+        results.push(...result.files);
+        const created = result.files.flatMap((item) => item.sources.map(fromServer));
+        if (created.length) updateProject(project.id, (current) => ({ ...current, sources: [...created, ...current.sources] }));
+      }
+      setApiOnline(true);
+      const summary = describeUpload(results, ignored, oversized);
+      if (summary.ok) { setNotice(summary.text); setError(''); } else { setNotice(''); setError(summary.text); }
+    } catch (cause) {
+      setNotice('');
+      setError(cause instanceof Error && cause.message !== 'Failed to fetch' ? `Upload failed: ${cause.message}` : API_HINT);
+    } finally { setWorking(''); }
+  };
+
   const onFiles = async (event: ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
-    if (!activeProject || !files.length) return;
-    for (const file of files) {
-      const text = await file.text();
-      if (!text.trim()) continue;
-      const source: ProjectSource = { id: makeId(), name: file.name, kind: 'document', createdAt: new Date().toISOString(), content: text.slice(0, 120_000), syncState: 'local' };
-      await saveSource(source);
-    }
     event.target.value = '';
+    await importFiles(files);
+  };
+
+  const removeSource = async (source: ProjectSource) => {
+    if (!activeProject) return;
+    const project = activeProject;
+    setWorking(`source:${source.id}`); setError('');
+    try {
+      if (source.serverId) await deleteSource(source.serverId, project.id);
+      updateProject(project.id, (current) => ({ ...current, sources: current.sources.filter((item) => item.id !== source.id) }));
+      setNotice(`Removed “${source.name}”. Analyze again to update the themes.`);
+    } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not remove this source.'); }
+    finally { setWorking(''); }
   };
 
   const startMeeting = async () => {
@@ -214,12 +303,16 @@ export default function Workspace() {
     setWorking('pipeline'); setError(''); setNotice('');
     try {
       for (const source of sources.filter((item) => item.syncState !== 'synced')) {
-        await ingestSource(source, activeProject.id);
-        updateProject(activeProject.id, (project) => ({ ...project, sources: project.sources.map((item) => item.id === source.id ? { ...item, syncState: 'synced' } : item) }));
+        const serverId = await ingestSource(source, activeProject.id, activeProject.name);
+        updateProject(activeProject.id, (project) => ({ ...project, sources: project.sources.map((item) => item.id === source.id ? { ...item, syncState: 'synced', serverId: serverId ?? undefined } : item) }));
       }
       const result = await runPipeline(activeProject.id);
       const updated = await fetchThemes(activeProject.id); setThemes(updated); setApiOnline(true);
-      setNotice(`Analysis complete${typeof result.duration_seconds === 'number' ? ` in ${result.duration_seconds}s` : ''}. ${result.themes_created ?? updated.length} themes are ready for your review.`);
+      const created = result.themes_created ?? updated.length;
+      const took = typeof result.duration_seconds === 'number' ? ` in ${result.duration_seconds}s` : '';
+      setNotice(created
+        ? `Analysis complete${took}. ${plural(created, 'theme')} ready for your review.`
+        : `Analysis complete${took}, but no themes yet. A theme needs at least 4 passages about the same problem, so add more sources and analyze again.`);
     } catch (cause) { setApiOnline(false); setError(cause instanceof Error ? cause.message : API_HINT); }
     finally { setWorking(''); }
   };
@@ -294,7 +387,7 @@ export default function Workspace() {
   const roadmapSection = (
     <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_2px_8px_rgba(15,23,42,0.035)]">
       <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4 sm:px-6"><div><h2 className="text-sm font-semibold text-slate-900">Review the roadmap</h2><p className="mt-1 text-[11px] text-slate-500">Approve an evidence-backed theme to create its issue.</p></div><span className="rounded-full bg-slate-100 px-2 py-1 font-mono text-[10px] text-slate-600">{pendingThemes.length} to review</span></div>
-      {pendingThemes.length ? <div className="divide-y divide-slate-100">{pendingThemes.map((theme) => <div key={theme.id} className="flex flex-col gap-4 px-5 py-4 sm:flex-row sm:items-center sm:px-6"><div className="flex min-w-0 flex-1 gap-3"><div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-50 font-mono text-xs text-amber-700">{(theme.cited_quotes || []).length}</div><div className="min-w-0"><h3 className="text-xs font-semibold text-slate-900">{theme.title}</h3><p className="mt-1 line-clamp-2 max-w-2xl text-[11px] leading-5 text-slate-500">{theme.summary}</p><div className="mt-2 flex flex-wrap gap-2 text-[10px] text-slate-500"><span>{theme.affected_accounts_count} accounts</span><span>·</span><span>${theme.revenue_at_risk.toLocaleString()} at risk</span><span>·</span><span>{(theme.cited_quotes || []).length} cited sources</span></div></div></div><div className="flex shrink-0 gap-2"><button onClick={() => dismissTheme(theme)} disabled={Boolean(working)} className="rounded-lg border border-rose-200 px-3 py-2 text-[11px] text-rose-700 hover:bg-rose-50 disabled:opacity-50">Reject</button><button onClick={() => openReview(theme)} className="rounded-lg border border-slate-200 px-3 py-2 text-[11px] text-slate-700 hover:bg-slate-100">Review &amp; edit</button><button onClick={() => launchTheme(theme)} disabled={Boolean(working)} className="flex items-center gap-1.5 rounded-lg bg-[#0f766e] px-3 py-2 text-[11px] font-semibold text-white hover:bg-[#115e59] disabled:opacity-50">{working === theme.id ? <LoaderCircle size={13} className="animate-spin"/> : <Check size={13}/>} Launch issue</button></div></div>)}</div> : <div className="px-6 py-9 text-center"><p className="text-xs font-medium text-slate-700">{themes.length ? 'Nothing waiting for approval' : 'Your themes will appear here'}</p><p className="mt-1 text-[11px] text-slate-400">{themes.length ? 'New themes are ready after another analysis.' : 'Add sources, then analyze to discover what customers are telling you.'}</p></div>}
+      {pendingThemes.length ? <div className="divide-y divide-slate-100">{pendingThemes.map((theme) => <div key={theme.id} className="flex flex-col gap-4 px-5 py-4 sm:flex-row sm:items-center sm:px-6"><div className="flex min-w-0 flex-1 gap-3"><div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-50 font-mono text-xs text-amber-700">{(theme.cited_quotes || []).length}</div><div className="min-w-0"><h3 className="text-xs font-semibold text-slate-900">{theme.title}</h3><p className="mt-1 line-clamp-2 max-w-2xl text-[11px] leading-5 text-slate-500">{theme.summary}</p><div className="mt-2 flex flex-wrap gap-2 text-[10px] text-slate-500">{theme.revenue_at_risk > 0 && <><span>{plural(theme.affected_accounts_count, 'account')}</span><span>·</span><span>${theme.revenue_at_risk.toLocaleString()} at risk</span><span>·</span></>}{theme.mention_count ? <><span>{plural(theme.mention_count, 'mention')}</span><span>·</span></> : null}<span>{theme.source_count ? `${plural(theme.source_count, 'source')}` : `${(theme.cited_quotes || []).length} cited quotes`}</span></div></div></div><div className="flex shrink-0 gap-2"><button onClick={() => dismissTheme(theme)} disabled={Boolean(working)} className="rounded-lg border border-rose-200 px-3 py-2 text-[11px] text-rose-700 hover:bg-rose-50 disabled:opacity-50">Reject</button><button onClick={() => openReview(theme)} className="rounded-lg border border-slate-200 px-3 py-2 text-[11px] text-slate-700 hover:bg-slate-100">Review &amp; edit</button><button onClick={() => launchTheme(theme)} disabled={Boolean(working)} className="flex items-center gap-1.5 rounded-lg bg-[#0f766e] px-3 py-2 text-[11px] font-semibold text-white hover:bg-[#115e59] disabled:opacity-50">{working === theme.id ? <LoaderCircle size={13} className="animate-spin"/> : <Check size={13}/>} Launch issue</button></div></div>)}</div> : <div className="px-6 py-9 text-center"><p className="text-xs font-medium text-slate-700">{themes.length ? 'Nothing waiting for approval' : 'Your themes will appear here'}</p><p className="mt-1 text-[11px] text-slate-400">{themes.length ? 'New themes are ready after another analysis.' : 'Add sources, then analyze to discover what customers are telling you.'}</p></div>}
       {(approvedThemes.length > 0 || rejectedCount > 0) && <div className="border-t border-slate-200 bg-slate-50/60 px-5 py-4 sm:px-6"><div className="mb-2 flex items-center justify-between"><h3 className="text-[11px] font-semibold uppercase tracking-[.16em] text-slate-500">Approved</h3>{rejectedCount > 0 && <span className="text-[10px] text-slate-400">{rejectedCount} rejected</span>}</div>{approvedThemes.length ? <div className="space-y-2">{approvedThemes.map((theme) => <div key={theme.id} className="flex flex-col gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2.5 sm:flex-row sm:items-center"><div className="min-w-0 flex-1"><div className="truncate text-xs font-medium text-slate-800">{theme.title}</div><div className="mt-0.5 text-[10px] text-slate-500">{theme.github_issue_url ? <a href={theme.github_issue_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[#0f766e] hover:underline">Issue #{theme.github_issue_number} <ExternalLink size={10}/></a> : 'PRD generated · not sent to GitHub'}</div></div><button onClick={() => setPrdTheme(theme)} className="self-start rounded-lg border border-slate-200 px-3 py-1.5 text-[11px] text-slate-700 hover:bg-slate-100 sm:self-auto">View PRD</button></div>)}</div> : <p className="text-[11px] text-slate-400">No approved themes yet.</p>}</div>}
     </section>
   );
@@ -360,8 +453,9 @@ export default function Workspace() {
         </div> : <>
           <div className="mb-8 flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
             <div><div className="mb-3 flex items-center gap-2 text-[11px] text-slate-500"><span>Projects</span><span>/</span><span className="text-slate-700">{activeProject.name}</span></div><h1 className="text-[28px] font-semibold tracking-[-.045em] text-slate-900 sm:text-[34px]">{activeProject.name}<span className="ml-3 align-middle text-sm font-normal tracking-normal text-slate-400">workspace</span></h1><p className="mt-2 max-w-xl text-[13px] leading-5 text-slate-600">Bring the evidence together. Motif will map recurring needs into themes you can inspect, prioritize, and launch.</p></div>
-            <div className="flex flex-wrap items-center gap-2"><button onClick={() => setShowDrive(true)} className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100"><HardDrive size={14}/> Add Drive folder</button><button onClick={() => fileInput.current?.click()} className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100"><Upload size={14}/> Upload docs</button><button onClick={runAnalysis} disabled={working === 'pipeline' || !sources.length} className="flex items-center gap-2 rounded-lg bg-[#0f766e] px-3.5 py-2.5 text-xs font-semibold text-white transition hover:bg-[#115e59] disabled:cursor-not-allowed disabled:opacity-40">{working === 'pipeline' ? <LoaderCircle size={14} className="animate-spin"/> : <Sparkles size={14}/>} Analyze feedback</button></div>
-            <input ref={fileInput} type="file" multiple accept=".txt,.md,.csv,.json,.html,.log" className="hidden" onChange={onFiles}/>
+            <div className="flex flex-wrap items-center gap-2"><button onClick={() => setShowDrive(true)} className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100"><HardDrive size={14}/> Add Drive folder</button><button onClick={() => folderInput.current?.click()} disabled={working === 'upload'} title="Import an Obsidian vault or any folder of notes and documents" className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100 disabled:opacity-50"><FolderOpen size={14}/> Import folder</button><button onClick={() => fileInput.current?.click()} disabled={working === 'upload'} title="PDF, Word, PowerPoint, Excel, Markdown, text, CSV, JSON or .zip" className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100 disabled:opacity-50">{working === 'upload' ? <LoaderCircle size={14} className="animate-spin"/> : <Upload size={14}/>} Upload files</button><button onClick={runAnalysis} disabled={working === 'pipeline' || !sources.length} className="flex items-center gap-2 rounded-lg bg-[#0f766e] px-3.5 py-2.5 text-xs font-semibold text-white transition hover:bg-[#115e59] disabled:cursor-not-allowed disabled:opacity-40">{working === 'pipeline' ? <LoaderCircle size={14} className="animate-spin"/> : <Sparkles size={14}/>} Analyze feedback</button></div>
+            <input ref={fileInput} type="file" multiple accept={UPLOAD_ACCEPT} className="hidden" onChange={onFiles}/>
+            <input ref={(element) => { folderInput.current = element; element?.setAttribute('webkitdirectory', ''); }} type="file" multiple className="hidden" onChange={onFiles}/>
           </div>
 
           {noticeBanner}
@@ -376,15 +470,15 @@ export default function Workspace() {
           </section>
 
           <section className="mb-7 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_2px_8px_rgba(15,23,42,0.035)]">
-            <div className="flex flex-col justify-between gap-3 border-b border-slate-200 px-5 py-4 sm:flex-row sm:items-center sm:px-6"><div><div className="flex items-center gap-2"><h2 className="text-sm font-semibold text-slate-900">Project sources</h2><span className="rounded-full bg-slate-100 px-2 py-0.5 font-mono text-[10px] text-slate-600">{sources.length}</span></div><p className="mt-1 text-[11px] text-slate-500">A project-scoped evidence library. Add notes or transcripts as files.</p></div><div className="relative"><Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/><input value={sourceSearch} onChange={(event) => setSourceSearch(event.target.value)} className="field h-8 w-full pl-8 text-[11px] sm:w-48" placeholder="Find a source"/></div></div>
-            {filteredSources.length ? <div className="divide-y divide-slate-100">{filteredSources.map((source) => <div key={source.id} className="flex items-center gap-3 px-5 py-3.5 sm:px-6"><span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${source.kind === 'meeting' ? 'bg-rose-50 text-rose-700' : source.kind === 'drive' ? 'bg-blue-50 text-blue-700' : 'bg-violet-50 text-violet-700'}`}>{source.kind === 'meeting' ? <Headphones size={15}/> : source.kind === 'drive' ? <HardDrive size={15}/> : <FileText size={15}/>}</span><div className="min-w-0 flex-1"><div className="truncate text-xs font-medium text-slate-800">{source.name}</div><div className="mt-1 text-[10px] text-slate-400">{source.kind === 'meeting' ? 'Meeting transcript' : source.kind === 'drive' ? 'Google Drive' : 'Document'} <span className="mx-1">·</span>{new Date(source.createdAt).toLocaleDateString()}</div></div><span className={`hidden rounded-full px-2 py-1 text-[9px] sm:inline-flex ${source.syncState === 'synced' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>{source.syncState === 'synced' ? 'Synced' : 'Saved locally'}</span><button title="Download source file" onClick={() => downloadSource(source)} className="rounded-md p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700"><ArrowDown size={14}/></button></div>)}</div> : <div className="flex flex-col items-center px-5 py-10 text-center"><div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-500"><FileText size={18}/></div><p className="text-xs font-medium text-slate-700">{sources.length ? 'No matching files' : 'No sources in this project yet'}</p><p className="mt-1 max-w-sm text-[11px] leading-5 text-slate-400">{sources.length ? 'Try a different search.' : 'Upload a document or record a conversation. Each source stays grouped under this project.'}</p>{!sources.length && <button onClick={() => fileInput.current?.click()} className="mt-4 flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-[11px] text-slate-700 hover:bg-slate-100"><Upload size={13}/> Add first document</button>}</div>}
+            <div className="flex flex-col justify-between gap-3 border-b border-slate-200 px-5 py-4 sm:flex-row sm:items-center sm:px-6"><div><div className="flex items-center gap-2"><h2 className="text-sm font-semibold text-slate-900">Project sources</h2><span className="rounded-full bg-slate-100 px-2 py-0.5 font-mono text-[10px] text-slate-600">{sources.length}</span></div><p className="mt-1 text-[11px] text-slate-500">Documents, notes, exports and transcripts, split into passages for analysis.</p></div><div className="relative"><Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/><input value={sourceSearch} onChange={(event) => setSourceSearch(event.target.value)} className="field h-8 w-full pl-8 text-[11px] sm:w-48" placeholder="Find a source"/></div></div>
+            {filteredSources.length ? <div className="divide-y divide-slate-100">{filteredSources.map((source) => <div key={source.id} className="flex items-center gap-3 px-5 py-3.5 sm:px-6"><span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${source.kind === 'meeting' ? 'bg-rose-50 text-rose-700' : source.kind === 'drive' ? 'bg-blue-50 text-blue-700' : 'bg-violet-50 text-violet-700'}`}>{source.kind === 'meeting' ? <Headphones size={15}/> : source.kind === 'drive' ? <HardDrive size={15}/> : <FileText size={15}/>}</span><div className="min-w-0 flex-1"><div className="truncate text-xs font-medium text-slate-800">{source.name}</div><div className="mt-1 text-[10px] text-slate-400">{source.kind === 'meeting' ? 'Meeting transcript' : source.kind === 'drive' ? 'Google Drive' : 'Document'} <span className="mx-1">·</span>{new Date(source.createdAt).toLocaleDateString()}{typeof source.passages === 'number' && <><span className="mx-1">·</span>{plural(source.passages, 'passage')}</>}</div></div><span className={`hidden rounded-full px-2 py-1 text-[9px] sm:inline-flex ${source.syncState === 'synced' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>{source.syncState === 'synced' ? 'Synced' : 'Saved locally'}</span>{source.content && <button title="Download source file" onClick={() => downloadSource(source)} className="rounded-md p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700"><ArrowDown size={14}/></button>}<button title="Remove from project" onClick={() => removeSource(source)} disabled={Boolean(working)} className="rounded-md p-2 text-slate-400 hover:bg-rose-50 hover:text-rose-600 disabled:opacity-40">{working === `source:${source.id}` ? <LoaderCircle size={14} className="animate-spin"/> : <Trash2 size={14}/>}</button></div>)}</div> : <div className="flex flex-col items-center px-5 py-10 text-center"><div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-500"><FileText size={18}/></div><p className="text-xs font-medium text-slate-700">{sources.length ? 'No matching files' : 'No sources in this project yet'}</p><p className="mt-1 max-w-sm text-[11px] leading-5 text-slate-400">{sources.length ? 'Try a different search.' : 'Upload interview notes, call transcripts, support-ticket exports or a whole Obsidian vault. PDF, Word, PowerPoint, Excel, Markdown, CSV and .zip all work.'}</p>{!sources.length && <div className="mt-4 flex gap-2"><button onClick={() => fileInput.current?.click()} className="flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-[11px] text-slate-700 hover:bg-slate-100"><Upload size={13}/> Upload files</button><button onClick={() => folderInput.current?.click()} className="flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-[11px] text-slate-700 hover:bg-slate-100"><FolderOpen size={13}/> Import folder</button></div>}</div>}
           </section>
 
           <section className="mb-7 rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_2px_8px_rgba(15,23,42,0.035)] sm:p-6">
             <div className="mb-5 flex flex-col justify-between gap-3 sm:flex-row sm:items-center"><div><div className="flex items-center gap-2"><Activity size={15} className="text-[#0f766e]"/><h2 className="text-sm font-semibold text-slate-900">Roadmap signal map</h2></div><p className="mt-1 text-[11px] text-slate-500">Sources → evidence → emergent themes → approved GitHub issue</p></div><button onClick={runAnalysis} disabled={working === 'pipeline' || !sources.length} className="flex items-center gap-2 self-start rounded-lg border border-slate-200 px-3 py-2 text-[11px] font-medium text-slate-700 hover:bg-slate-100 disabled:opacity-40"><Zap size={13}/>{working === 'pipeline' ? 'Analyzing…' : 'Build roadmap'}</button></div>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_28px_1fr_28px_1fr_28px_1fr] sm:items-center">{[
               {label:'Feedback sources', count:sources.length, icon:<FileText size={15}/>, sub:'Project inputs', color:'text-slate-700'},
-              {label:'Evidence library', count:sources.length, icon:<Search size={15}/>, sub:'Quotes & signals', color:'text-blue-700'},
+              {label:'Evidence library', count:sources.reduce((total, source) => total + (source.passages ?? 1), 0), icon:<Search size={15}/>, sub:'Passages', color:'text-blue-700'},
               {label:'Discovered themes', count:themes.length, icon:<Sparkles size={15}/>, sub:pendingThemes.length ? `${pendingThemes.length} awaiting review` : 'HDBSCAN clusters', color:'text-violet-700'},
               {label:'GitHub issues', count:themes.filter((theme) => theme.github_issue_url).length, icon:<GitBranch size={15}/>, sub:'Human approved', color:'text-[#0f766e]'},
             ].map((step, index) => <div key={step.label} className="contents"><div className="rounded-xl border border-slate-200 bg-slate-50 p-3.5"><div className={`mb-3 flex items-center gap-2 text-[10px] ${step.color}`}>{step.icon}<span>{step.label}</span></div><div className="flex items-end justify-between"><span className="text-2xl font-semibold tracking-tight text-slate-900">{step.count}</span><span className="mb-1 text-[9px] text-slate-400">{step.sub}</span></div></div>{index < 3 && <ArrowRight size={14} className="hidden justify-self-center text-slate-300 sm:block"/>}{index < 3 && <ArrowDown size={14} className="mx-auto my-[-3px] text-slate-300 sm:hidden"/>}</div>)}</div>
@@ -404,7 +498,7 @@ export default function Workspace() {
       <label className="mt-3 block text-[11px] font-medium text-slate-600">Theme title<input value={editTitle} onChange={(event) => setEditTitle(event.target.value)} className="field mt-1.5 w-full text-sm font-semibold text-slate-900"/></label>
       <label className="mt-3 block text-[11px] font-medium text-slate-600">Problem summary<textarea value={editSummary} onChange={(event) => setEditSummary(event.target.value)} rows={3} className="field mt-1.5 w-full resize-y text-xs leading-5 text-slate-700"/></label>
       {(editTitle.trim() !== reviewTheme.title || editSummary.trim() !== reviewTheme.summary) && <p className="mt-2 text-[10px] text-amber-700">Edited — this approval will count as “edited” in the acceptance rate.</p>}
-      <div className="mt-5 flex gap-4 border-y border-slate-200 py-3 text-[11px] text-slate-600"><span>${reviewTheme.revenue_at_risk.toLocaleString()} ARR at risk</span><span>{reviewTheme.affected_accounts_count} accounts</span></div><div className="mt-5 space-y-3">{reviewTheme.cited_quotes?.length ? reviewTheme.cited_quotes.map((quote, index) => <blockquote key={index} className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs leading-5 text-slate-700">“{quote.quote_text}”<span className="mt-2 block text-[10px] text-slate-400">{quote.customer_id || 'Customer'}{quote.customer_tier ? ` · ${quote.customer_tier}` : ''}</span></blockquote>) : <p className="text-xs text-slate-500">No evidence quotes have been attached.</p>}</div>
+      <div className="mt-5 flex flex-wrap gap-4 border-y border-slate-200 py-3 text-[11px] text-slate-600">{reviewTheme.revenue_at_risk > 0 && <><span>${reviewTheme.revenue_at_risk.toLocaleString()} ARR at risk</span><span>{plural(reviewTheme.affected_accounts_count, 'account')}</span></>}{reviewTheme.mention_count ? <span>{plural(reviewTheme.mention_count, 'mention')}</span> : null}{reviewTheme.source_count ? <span>{plural(reviewTheme.source_count, 'source')}</span> : null}</div><div className="mt-5 space-y-3">{reviewTheme.cited_quotes?.length ? reviewTheme.cited_quotes.map((quote, index) => <blockquote key={index} className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs leading-5 text-slate-700">“{quote.quote_text}”<span className="mt-2 block text-[10px] text-slate-400">{[quote.customer_id, quote.customer_id ? quote.customer_tier : null, quote.source_name].filter(Boolean).join(' · ') || 'Customer'}</span></blockquote>) : <p className="text-xs text-slate-500">No evidence quotes have been attached.</p>}</div>
       <div className="sticky -bottom-5 -mx-5 -mb-5 mt-6 flex flex-wrap justify-end gap-2 border-t border-slate-100 bg-white px-5 pb-5 pt-3 sm:-bottom-6 sm:-mx-6 sm:-mb-6 sm:px-6 sm:pb-6"><button onClick={() => setReviewTheme(null)} className="rounded-lg border border-slate-200 px-3 py-2 text-xs text-slate-700">Close</button><button onClick={() => dismissTheme(reviewTheme)} disabled={Boolean(working)} className="rounded-lg border border-rose-200 px-3 py-2 text-xs font-medium text-rose-700 hover:bg-rose-50 disabled:opacity-50">Reject</button><button onClick={() => launchTheme(reviewTheme, { title: editTitle, summary: editSummary })} disabled={Boolean(working) || !editTitle.trim()} className="flex items-center gap-2 rounded-lg bg-[#0f766e] px-3 py-2 text-xs font-semibold text-white disabled:opacity-50"><GitBranch size={14}/> Approve & create issue</button></div></div></div>}
 
     {prdTheme && <div className="modal-backdrop"><div className="modal-card max-h-[85vh] overflow-y-auto"><div className="flex items-start justify-between"><div><span className="text-[10px] uppercase tracking-[.18em] text-[#0f766e]">Generated PRD</span><h2 className="mt-2 text-lg font-semibold text-slate-900">{prdTheme.title}</h2></div><button onClick={() => setPrdTheme(null)} className="text-slate-500 hover:text-slate-900"><X size={17}/></button></div>

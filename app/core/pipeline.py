@@ -74,6 +74,7 @@ async def run_ai_pipeline(
                 "arr_value": float(item.arr_value or 0.0),
                 "churn_risk_flag": bool(item.churn_risk_flag),
                 "source_type": item.source_type,
+                "source_name": (item.metadata_ or {}).get("source_name"),
                 "embedding": item.embedding,
             }
             for item in db_items

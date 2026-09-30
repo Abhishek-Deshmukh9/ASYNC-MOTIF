@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.api.v1.endpoints import health, feedback, pipeline, themes, metrics
+from app.api.v1.endpoints import health, feedback, pipeline, sources, themes, metrics
 
 api_router = APIRouter()
 
@@ -8,6 +8,9 @@ api_router.include_router(health.router, tags=["Health"])
 
 # Include feedback router
 api_router.include_router(feedback.router)
+
+# Include project sources router (file uploads, Obsidian vaults)
+api_router.include_router(sources.router)
 
 # Include AI pipeline router
 api_router.include_router(pipeline.router)

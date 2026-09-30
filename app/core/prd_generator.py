@@ -31,13 +31,14 @@ def generate_mini_prd(
     if cited_quotes:
         for i, q in enumerate(cited_quotes, 1):
             text = q.get("quote_text", "").strip()
-            cid = q.get("customer_id", "Anonymous")
-            tier = q.get("customer_tier", "standard")
-            arr = float(q.get("arr_value", 0.0))
-            evidence_lines.append(
-                f"> **Customer:** `{cid}` ({tier.title()}, ARR: ${arr:,.0f})\n"
-                f"> *\"{text}\"*\n"
-            )
+            cid = q.get("customer_id")
+            tier = q.get("customer_tier") or "standard"
+            arr = float(q.get("arr_value") or 0.0)
+            if cid:
+                attribution = f"> **Customer:** `{cid}` ({tier.title()}, ARR: ${arr:,.0f})\n"
+            else:
+                attribution = f"> **Source:** {q.get('source_name') or 'Project document'}\n"
+            evidence_lines.append(f"{attribution}> *\"{text}\"*\n")
     else:
         evidence_lines.append("> *No verbatim quotes attached.*")
 

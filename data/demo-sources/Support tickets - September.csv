@@ -1,0 +1,27 @@
+ticket_id,customer,plan,arr,channel,message,created
+T-4182,Redfern Media,growth,30000,email,Invoice is missing our VAT registration number so AP cannot pay it.,2026-09-12
+T-4185,Tidewater Insurance,enterprise,120000,email,"Please add our VAT ID to invoices, finance rejected the last two.",2026-09-23
+T-4118,Pinecrest Logistics,growth,18000,email,Users are logged out via Okta SSO every 30 minutes and lose unsaved work.,2026-09-18
+T-4190,Halcyon Bank,enterprise,180000,email,"Billing currency is wrong on the invoice again, it should be GBP.",2026-09-17
+T-4103,Lumen Schools,starter,4800,email,"CSV export only contains the first 1000 rows, the rest of the report is missing.",2026-09-13
+T-4108,Brightline Freight,enterprise,110000,email,Exported file is incomplete again - stops at row 1000 with no warning.,2026-09-17
+T-4165,Halcyon Bank,enterprise,180000,email,Performance is poor: the overview dashboard spins for almost a minute.,2026-09-20
+T-4121,Brightline Freight,enterprise,110000,email,Getting kicked out mid-edit because the single sign-on session times out.,2026-09-08
+T-4174,Redfern Media,growth,30000,email,"Our invoice is in USD but our contract is in EUR, please reissue.",2026-09-14
+T-4149,Brightline Freight,enterprise,110000,email,Alerts to our Slack channel are late or missing entirely since last week.,2026-09-18
+T-4135,Ostara Foods,growth,24000,email,"Our Slack notification for failed syncs never arrived, we only found out from a customer.",2026-09-14
+T-4119,Redfern Media,growth,30000,email,"SSO session expires far too quickly, our analysts have to sign in again several times a day.",2026-09-27
+T-4122,Brightline Freight,enterprise,110000,email,"Azure AD login keeps expiring after half an hour, can the session length be extended?",2026-09-19
+T-4201,Marlow Energy,enterprise,150000,email,Can we get a mobile app for managers on the road?,2026-09-20
+T-4130,Pinecrest Logistics,growth,18000,email,Slack alerts are arriving 2-3 hours after the threshold was breached.,2026-09-18
+T-4155,Brightline Freight,enterprise,110000,email,"Dashboards are very slow in the morning, pages time out for our regional managers.",2026-09-12
+T-4196,Marlow Energy,enterprise,150000,email,Would love a dark mode for the dashboard.,2026-09-24
+T-4164,Halcyon Bank,enterprise,180000,email,Report pages load extremely slowly once a workspace has more than 50 dashboards.,2026-09-23
+T-4107,Kestrel Health,enterprise,140000,email,Is there a way to export more than 1000 rows? Our finance team needs the full ledger.,2026-09-12
+T-4105,Juniper Retail,enterprise,96000,email,"Excel download is truncated. We expected 4,200 rows and got exactly 1,000.",2026-09-27
+T-4203,Halcyon Bank,enterprise,180000,email,Thanks for the quick help with the onboarding session yesterday!,2026-09-17
+T-4151,Ostara Foods,growth,24000,email,Main dashboard takes over 45 seconds to load for our workspace.,2026-09-19
+T-4109,Pinecrest Logistics,growth,18000,email,Large report exports get cut off. Please raise the export row limit.,2026-09-03
+T-4129,Brightline Freight,enterprise,110000,email,Forced re-login every 30 min through SSO is killing productivity for our ops team.,2026-09-02
+T-4116,Redfern Media,growth,30000,email,"The download silently drops rows past 1,000 so our month-end numbers don't reconcile.",2026-09-03
+T-4144,Ostara Foods,growth,24000,email,"Slack integration alerts are delayed, sometimes by half a day.",2026-09-04

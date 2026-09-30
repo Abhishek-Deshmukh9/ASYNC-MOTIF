@@ -57,12 +57,14 @@ async def run_async_migrations() -> None:
     and associate a connection with the context.
     """
     configuration = config.get_section(config.config_ini_section, {})
-    configuration["sqlalchemy.url"] = settings.async_database_url
+    configuration["sqlalchemy.url"] = settings.migration_database_url
 
     connectable = async_engine_from_config(
         configuration,
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
+        # Supabase / PgBouncer-style poolers break asyncpg's cached prepared statements
+        connect_args={"statement_cache_size": 0},
     )
 
     async with connectable.connect() as connection:

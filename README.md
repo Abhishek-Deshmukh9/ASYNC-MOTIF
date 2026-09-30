@@ -246,6 +246,28 @@ npm run dev
 
 Open **http://localhost:3000**, select **Demo benchmark** in the sidebar (it opens by default on a first visit) and click **Analyze demo feedback** (or call `POST /api/v1/pipeline/run` from http://localhost:8000/docs).
 
+### Option C — Hosted database on Supabase
+
+Supabase gives a hosted Postgres with pgvector, plus login and file storage used by upcoming features.
+
+1. Create a Supabase project. In **SQL Editor** run `create extension if not exists vector;`.
+2. From **Connect → Connection String**, copy the **Transaction pooler** (port 6543) and **Session pooler** (port 5432) URLs — not "Direct connection", which needs IPv6. In `.env` set:
+   - `DATABASE_URL=` the transaction pooler URL, with `postgresql+asyncpg://` at the start
+   - `SYNC_DATABASE_URL=` the session pooler URL (used for migrations)
+3. Create the tables, then load the demo data (virtual environment active):
+
+```bash
+alembic upgrade head
+```
+
+```bash
+python seed.py
+```
+
+4. Start the backend and frontend as in Option B (skip the Docker database step).
+
+Row level security is enabled on every table, so the data is not reachable through Supabase's public API with the publishable key; the backend connects as the tables' owner and is unaffected.
+
 ### Verify
 
 ```bash
@@ -266,7 +288,7 @@ pytest
 - **`docker: command not found`** — Docker Desktop is not installed or not open yet. Open it, wait for "Engine running", then restart your terminal.
 - **Port 5432 already in use** — another PostgreSQL is running on your machine. Stop it, or change `POSTGRES_PORT` and the port in `DATABASE_URL` / `SYNC_DATABASE_URL` in `.env`.
 - **First pipeline run is slow** — the embedding model is being downloaded; later runs are faster.
-- **`column ... project_id does not exist`** — your database was created before project workspaces were added. Run `alembic stamp 001_initial_schema` and then `alembic upgrade head` (with the virtual environment active), then `python seed.py`.
+- **`column ... does not exist`** (for example `project_id` or `source_id`) — your database was created with an older schema. With the virtual environment active run `alembic upgrade head` (if Alembic says the tables already exist, run `alembic stamp 001_initial_schema` first), then `python seed.py`.
 - **`Could not open requirements file`** — run the commands from the `ASYNC-MOTIF` folder (the one containing `requirements.txt`).
 
 ---

@@ -9,6 +9,7 @@ from sqlalchemy import (
     Boolean,
     DateTime,
     ForeignKey,
+    Integer,
     Table,
 )
 from sqlalchemy.dialects.postgresql import UUID, JSONB
@@ -52,6 +53,10 @@ class FeedbackItem(Base):
     arr_value = Column(Numeric(12, 2), default=0.00)
     churn_risk_flag = Column(Boolean, default=False)
     embedding = Column(Vector(384), nullable=True)
+    # Where this chunk came from (migration 003): the source document, its position, the speaker in a meeting
+    source_id = Column(UUID(as_uuid=True), ForeignKey("sources.id", ondelete="CASCADE"), nullable=True, index=True)
+    chunk_index = Column(Integer, nullable=True)
+    speaker = Column(String(255), nullable=True)
     created_at = Column(
         DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),

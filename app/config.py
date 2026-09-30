@@ -41,6 +41,11 @@ class Settings(BaseSettings):
     GEMINI_MODEL: str = "gemini-2.0-flash"
     OPENAI_API_KEY: str | None = None
     OPENAI_MODEL: str = "gpt-4o-mini"
+    # Supabase (optional: only needed for login and file/audio storage)
+    SUPABASE_URL: str | None = None
+    SUPABASE_PUBLISHABLE_KEY: str | None = None
+    SUPABASE_SECRET_KEY: str | None = None  # server-side only
+
     GITHUB_TOKEN: str | None = None
     GITHUB_REPO_OWNER: str | None = None
     GITHUB_REPO_NAME: str | None = None
@@ -72,6 +77,16 @@ class Settings(BaseSettings):
                 return self.DATABASE_URL.replace("postgresql+asyncpg://", "postgresql://", 1)
             return self.DATABASE_URL
         return f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_SERVER}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
+
+
+    @property
+    def migration_database_url(self) -> str:
+        """URL for Alembic. Prefers SYNC_DATABASE_URL (on Supabase: the session pooler, port 5432,
+        which supports the prepared statements migrations use), switched to the asyncpg driver."""
+        url = self.sync_database_url_str
+        if url.startswith("postgresql://"):
+            return url.replace("postgresql://", "postgresql+asyncpg://", 1)
+        return url
 
 
 settings = Settings()

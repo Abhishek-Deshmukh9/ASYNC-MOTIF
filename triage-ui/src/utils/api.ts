@@ -17,7 +17,8 @@ export const runPipeline = (projectId?: string) => request<PipelineResult>('/pip
 export const fetchMetrics = (projectId?: string) => request<EvalMetrics>(`/metrics/eval${scopeQuery(projectId)}`);
 export const approveTheme = (id: string, title?: string, repo?: string, summary?: string) => request<ApprovalResult>(`/themes/${id}/approve`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pm_user_id: 'workspace_user', ...(title ? { final_title: title } : {}), ...(summary ? { final_summary: summary } : {}), ...(repo ? { github_repo: repo } : {}) }) });
 export const rejectTheme = (id: string) => request<{ status: string }>(`/themes/${id}/reject?pm_user_id=workspace_user`, { method: 'POST' });
-export const fetchPipelineStatus = () => request<{ status: string; last_result?: PipelineResult | null }>('/pipeline/status');
+export const fetchPipelineStatus = () => request<PipelineProgress>('/pipeline/status');
+export const seedDemoCorpus = () => request<{ seeded: boolean; total_items: number; message: string }>('/health/seed', { method: 'POST' });
 
 export async function ingestSource(source: ProjectSource, projectId: string) {
   const file = new File([JSON.stringify([{
@@ -30,4 +31,35 @@ export async function ingestSource(source: ProjectSource, projectId: string) {
   const form = new FormData();
   form.append('file', file);
   return request<{ canonical_persisted_count: number }>('/feedback/upload', { method: 'POST', body: form });
+}
+
+// Pipeline progress tracking via SSE
+export type PipelineProgress = {
+  status: string;
+  stage: string;
+  stage_detail: string;
+  percent: number;
+  elapsed_seconds: number | null;
+  error: string | null;
+  last_result: PipelineResult | null;
+};
+
+export function subscribeToPipelineProgress(
+  onMessage: (data: PipelineProgress) => void,
+  onError?: () => void,
+): () => void {
+  const source = new EventSource('/api/v1/pipeline/progress');
+  source.onmessage = (event) => {
+    try {
+      const data = JSON.parse(event.data) as PipelineProgress;
+      onMessage(data);
+    } catch {
+      // ignore parse errors
+    }
+  };
+  source.onerror = () => {
+    onError?.();
+    source.close();
+  };
+  return () => source.close();
 }

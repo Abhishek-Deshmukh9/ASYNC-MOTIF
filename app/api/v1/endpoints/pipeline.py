@@ -1,7 +1,10 @@
+import asyncio
+import json
 import logging
 from typing import Any, Dict, Optional
 from fastapi import APIRouter, BackgroundTasks, HTTPException, status
-from app.core.pipeline import run_ai_pipeline
+from fastapi.responses import StreamingResponse
+from app.core.pipeline import run_ai_pipeline, pipeline_progress
 
 from pydantic import BaseModel, Field
 
@@ -17,13 +20,22 @@ class PipelineRunRequest(BaseModel):
     project_id: Optional[str] = Field(default=None, max_length=255)
 
 
-# Simple in-memory tracker for pipeline run status
-_pipeline_status = {
-    "status": "idle",
-    "last_run": None,
-    "last_result": None,
-    "error": None,
-}
+async def _run_pipeline_bg(
+    batch_size: int,
+    min_cluster_size: int,
+    min_samples: int,
+    project_id: Optional[str],
+) -> None:
+    """Background wrapper so exceptions are caught and recorded."""
+    try:
+        await run_ai_pipeline(
+            batch_size=batch_size,
+            min_cluster_size=min_cluster_size,
+            min_samples=min_samples,
+            project_id=project_id,
+        )
+    except Exception as e:
+        logger.error(f"Background pipeline failed: {e}", exc_info=True)
 
 
 @router.post("/run", response_model=Dict[str, Any], status_code=status.HTTP_200_OK)
@@ -52,8 +64,16 @@ async def trigger_pipeline(
         payload.min_samples if payload and payload.min_samples is not None
         else (min_samples if min_samples is not None else 2)
     )
-    global _pipeline_status
-    _pipeline_status["status"] = "running"
+
+    if pipeline_progress.status == "running":
+        # Don't allow concurrent pipeline runs
+        return {
+            "status": "already_running",
+            "message": "Pipeline is already running. Check /pipeline/status for progress.",
+            **pipeline_progress.snapshot(),
+        }
+
+    # Run inline (keeps backward compat with frontend that awaits the response)
     try:
         result = await run_ai_pipeline(
             batch_size=eff_batch_size,
@@ -61,13 +81,9 @@ async def trigger_pipeline(
             min_samples=eff_min_samples,
             project_id=payload.project_id if payload else None,
         )
-        _pipeline_status["status"] = "idle"
-        _pipeline_status["last_result"] = result
         return result
     except Exception as e:
         logger.error(f"Pipeline execution failed: {e}", exc_info=True)
-        _pipeline_status["status"] = "failed"
-        _pipeline_status["error"] = str(e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Pipeline execution failed: {e}",
@@ -76,5 +92,42 @@ async def trigger_pipeline(
 
 @router.get("/status", response_model=Dict[str, Any])
 async def get_pipeline_status():
-    """Returns the current processing status of the AI pipeline."""
-    return _pipeline_status
+    """Returns the current processing status of the AI pipeline with stage-level detail."""
+    return pipeline_progress.snapshot()
+
+
+@router.get("/progress")
+async def stream_pipeline_progress():
+    """
+    Server-Sent Events (SSE) endpoint for real-time pipeline progress.
+    The frontend opens an EventSource connection here and receives
+    stage updates as they happen.
+    """
+    queue = pipeline_progress.subscribe()
+
+    async def event_stream():
+        try:
+            # Send the current snapshot immediately so the client has a baseline
+            yield f"data: {json.dumps(pipeline_progress.snapshot())}\n\n"
+            while True:
+                try:
+                    msg = await asyncio.wait_for(queue.get(), timeout=30.0)
+                    yield f"data: {json.dumps(msg)}\n\n"
+                    # Stop when pipeline completes or fails
+                    if msg.get("stage") in ("completed", "failed"):
+                        break
+                except asyncio.TimeoutError:
+                    # Keepalive so proxies don't drop the connection
+                    yield ": keepalive\n\n"
+        finally:
+            pipeline_progress.unsubscribe(queue)
+
+    return StreamingResponse(
+        event_stream(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )

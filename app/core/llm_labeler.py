@@ -172,7 +172,17 @@ def _synthesize_offline_grounded_theme(
     Extracts high-impact verbatim sentences from cluster medoids.
     Guarantees 100% citation validity for test/offline environments.
     """
-    best_item = exemplars[0] if exemplars else {"content": "General friction"}
+    if not exemplars:
+        # W-3 guard: empty exemplar list edge case
+        return ClusterSynthesizedTheme(
+            title="Uncategorized customer friction",
+            problem_statement="Customer friction identified from feedback cluster (no exemplars available).",
+            affected_workflows=["Core application workflow"],
+            cited_quotes=[source_texts[0][:120] if source_texts else "General friction reported"],
+            confidence_score=0.5,
+        )
+
+    best_item = exemplars[0]
     full_text = best_item.get("clean_content") or best_item.get("content", "")
 
     # Strip generic email greetings

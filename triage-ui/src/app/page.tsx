@@ -1,13 +1,14 @@
 'use client';
 
-import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
+import { ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Activity, ArrowDown, ArrowRight, AudioLines, Award, Check, CheckCircle2,
+  Activity, ArrowDown, ArrowRight, AudioLines, Award, BarChart3, Check, CheckCircle2,
   CircleHelp, Clipboard, Cloud, DollarSign, ExternalLink, FileText, FlaskConical, FolderKanban, GitBranch, HardDrive, Headphones,
   LoaderCircle, Mic, MicOff, Plus, Radio, RefreshCw, Search, ShieldCheck, Sparkles, Timer,
   Upload, X, Zap,
 } from 'lucide-react';
-import { approveTheme, fetchMetrics, fetchPipelineStatus, fetchThemes, ingestSource, rejectTheme, runPipeline } from '@/utils/api';
+import { approveTheme, fetchMetrics, fetchPipelineStatus, fetchThemes, ingestSource, rejectTheme, runPipeline, seedDemoCorpus, subscribeToPipelineProgress } from '@/utils/api';
+import type { PipelineProgress } from '@/utils/api';
 import type { EvalMetrics, Project, ProjectSource, Theme } from '@/utils/types';
 
 const STORE_KEY = 'motif-project-workspaces-v1';
@@ -57,11 +58,16 @@ export default function Workspace() {
   const [prdTheme, setPrdTheme] = useState<Theme | null>(null);
   const [lastRunSeconds, setLastRunSeconds] = useState<number | null>(null);
   const [copied, setCopied] = useState(false);
+  const [pipelineProgress, setPipelineProgress] = useState<PipelineProgress | null>(null);
+  const [prdTypewriterText, setPrdTypewriterText] = useState('');
+  const [prdFullText, setPrdFullText] = useState('');
+  const [seeding, setSeeding] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
   const recognitionRef = useRef<BrowserRecognition | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const audioChunks = useRef<Blob[]>([]);
   const transcriptRef = useRef('');
+  const sseCleanup = useRef<(() => void) | null>(null);
 
   const isDemo = activeId === DEMO_ID;
   const activeProject = projects.find((project) => project.id === activeId) || projects[0];
@@ -226,6 +232,12 @@ export default function Workspace() {
 
   const runDemoAnalysis = async () => {
     setWorking('pipeline'); setError(''); setNotice('');
+    // Connect SSE for real-time progress
+    sseCleanup.current?.();
+    sseCleanup.current = subscribeToPipelineProgress(
+      (data) => setPipelineProgress(data),
+      () => setPipelineProgress(null),
+    );
     try {
       const result = await runPipeline();
       const [updated, latest] = await Promise.all([fetchThemes(), fetchMetrics()]);
@@ -233,7 +245,20 @@ export default function Workspace() {
       if (typeof result.duration_seconds === 'number') setLastRunSeconds(result.duration_seconds);
       setNotice(`Analysis complete${typeof result.duration_seconds === 'number' ? ` in ${result.duration_seconds}s` : ''}. ${result.themes_created ?? updated.length} themes discovered from the demo corpus.`);
     } catch (cause) { setApiOnline(false); setError(cause instanceof Error ? cause.message : API_HINT); }
-    finally { setWorking(''); }
+    finally { setWorking(''); sseCleanup.current?.(); sseCleanup.current = null; setPipelineProgress(null); }
+  };
+
+  const seedAndAnalyze = async () => {
+    setSeeding(true); setError(''); setNotice('');
+    try {
+      const seedResult = await seedDemoCorpus();
+      setNotice(`Seeded ${seedResult.total_items} items. Starting analysis…`);
+      setSeeding(false);
+      await runDemoAnalysis();
+    } catch (cause) {
+      setSeeding(false);
+      setError(cause instanceof Error ? cause.message : 'Could not seed the demo corpus.');
+    }
   };
 
   const openReview = (theme: Theme) => {
@@ -251,6 +276,21 @@ export default function Workspace() {
       setThemes((existing) => existing.map((item) => item.id === theme.id ? approved : item));
       setReviewTheme(null);
       setPrdTheme(approved);
+      // H-1: Typewriter animation for PRD
+      if (result.prd_markdown) {
+        setPrdFullText(result.prd_markdown);
+        setPrdTypewriterText('');
+        let i = 0;
+        const interval = setInterval(() => {
+          i += 3;
+          if (i >= (result.prd_markdown?.length ?? 0)) {
+            setPrdTypewriterText(result.prd_markdown ?? '');
+            clearInterval(interval);
+          } else {
+            setPrdTypewriterText(result.prd_markdown!.slice(0, i));
+          }
+        }, 8);
+      }
       setNotice(result.github_issue_url ? `Issue #${result.github_issue_number} created in GitHub.` : `Theme approved and PRD generated. ${result.github_message ?? 'No GitHub issue was created.'}`);
       if (isDemo) fetchMetrics().then(setMetrics).catch(() => undefined);
     } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not create GitHub issue. Check the GitHub configuration.'); }
@@ -307,18 +347,139 @@ export default function Workspace() {
     { label: 'ARR at risk', icon: <DollarSign size={14} className="text-[#0f766e]"/>, value: metrics ? `$${Math.round(metrics.total_revenue_at_risk / 1000).toLocaleString()}k` : '—', target: '', met: false, sub: `Each account counted once · ${metrics?.total_themes_discovered ?? 0} themes` },
   ];
 
+  // H-3: Revenue-at-risk bar chart data
+  const maxRevenue = Math.max(...themes.map((t) => t.revenue_at_risk), 1);
+  const revenueChartThemes = [...themes].sort((a, b) => b.revenue_at_risk - a.revenue_at_risk).slice(0, 8);
+
+  // H-2: Live pipeline progress bar
+  const progressBar = (working === 'pipeline' || seeding) ? (
+    <div className="mb-5 overflow-hidden rounded-xl border border-slate-200 bg-white p-4 shadow-[0_2px_8px_rgba(15,23,42,0.035)]">
+      <div className="mb-3 flex items-center justify-between">
+        <div className="flex items-center gap-2 text-xs font-medium text-slate-700">
+          <LoaderCircle size={14} className="animate-spin text-[#0f766e]"/>
+          {seeding ? 'Seeding 300 demo items…' : (pipelineProgress?.stage_detail || 'Starting pipeline…')}
+        </div>
+        {pipelineProgress?.elapsed_seconds != null && (
+          <span className="text-[10px] text-slate-400">{pipelineProgress.elapsed_seconds}s elapsed</span>
+        )}
+      </div>
+      <div className="relative h-1.5 overflow-hidden rounded-full bg-slate-100">
+        <div
+          className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-[#0f766e] to-[#2ca58d] transition-all duration-700 ease-out"
+          style={{ width: `${pipelineProgress?.percent ?? (seeding ? 5 : 2)}%` }}
+        />
+      </div>
+      <div className="mt-3 flex flex-wrap gap-1">
+        {(['embedding', 'clustering', 'labeling', 'persisting', 'completed'] as const).map((s) => {
+          const order = ['embedding', 'clustering', 'labeling', 'persisting', 'completed'];
+          const cur = order.indexOf(pipelineProgress?.stage || '');
+          const idx = order.indexOf(s);
+          const done = cur >= 0 && idx < cur;
+          const active = pipelineProgress?.stage === s;
+          return (
+            <span key={s} className={`rounded-full px-2 py-0.5 text-[9px] font-semibold transition-all ${
+              active ? 'bg-[#0f766e] text-white' : done ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-400'
+            }`}>{s}</span>
+          );
+        })}
+      </div>
+    </div>
+  ) : null;
+
   const demoView = <>
     <div className="mb-8 flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
-      <div><div className="mb-3 flex items-center gap-2 text-[11px] text-slate-500"><span>Workspaces</span><span>/</span><span className="text-slate-700">Demo benchmark</span></div><h1 className="text-[28px] font-semibold tracking-[-.045em] text-slate-900 sm:text-[34px]">Demo benchmark<span className="ml-3 align-middle text-sm font-normal tracking-normal text-slate-400">300 labelled items</span></h1><p className="mt-2 max-w-xl text-[13px] leading-5 text-slate-600">Synthetic app reviews, support emails and a sales call, loaded by <code className="font-mono text-[12px]">seed.py</code>. Every item carries a ground-truth theme label, so the metrics below are measured, not estimated.</p></div>
-      <div className="flex flex-wrap items-center gap-2"><button onClick={runDemoAnalysis} disabled={working === 'pipeline'} className="flex items-center gap-2 rounded-lg bg-[#0f766e] px-3.5 py-2.5 text-xs font-semibold text-white transition hover:bg-[#115e59] disabled:cursor-not-allowed disabled:opacity-40">{working === 'pipeline' ? <LoaderCircle size={14} className="animate-spin"/> : <Sparkles size={14}/>} Analyze demo feedback</button></div>
+      <div>
+        <div className="mb-3 flex items-center gap-2 text-[11px] text-slate-500"><span>Workspaces</span><span>/</span><span className="text-slate-700">Demo benchmark</span></div>
+        <h1 className="text-[28px] font-semibold tracking-[-.045em] text-slate-900 sm:text-[34px]">Demo benchmark<span className="ml-3 align-middle text-sm font-normal tracking-normal text-slate-400">300 labelled items</span></h1>
+        <p className="mt-2 max-w-xl text-[13px] leading-5 text-slate-600">Synthetic app reviews, support emails and a sales call. Every item carries a ground-truth theme label, so the metrics below are <em>measured</em>, not estimated.</p>
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        {/* H-4: One-click demo – seeds + runs pipeline in a single button */}
+        {apiOnline && metrics && metrics.total_feedback_items === 0 && (
+          <button onClick={seedAndAnalyze} disabled={seeding || working === 'pipeline'} className="flex items-center gap-2 rounded-lg border border-[#0f766e] px-3.5 py-2.5 text-xs font-semibold text-[#0f766e] transition hover:bg-emerald-50 disabled:opacity-40">
+            {seeding ? <LoaderCircle size={14} className="animate-spin"/> : <Zap size={14}/>} Seed &amp; analyze
+          </button>
+        )}
+        <button onClick={runDemoAnalysis} disabled={working === 'pipeline' || seeding} className="flex items-center gap-2 rounded-lg bg-[#0f766e] px-3.5 py-2.5 text-xs font-semibold text-white transition hover:bg-[#115e59] disabled:cursor-not-allowed disabled:opacity-40">
+          {working === 'pipeline' ? <LoaderCircle size={14} className="animate-spin"/> : <Sparkles size={14}/>} Analyze demo feedback
+        </button>
+      </div>
     </div>
+    {progressBar}
     {noticeBanner}
     {!apiOnline && <div className="mb-5 rounded-lg border border-slate-200 bg-white px-3.5 py-3 text-xs leading-5 text-slate-600">{API_HINT}</div>}
-    {apiOnline && metrics && metrics.total_feedback_items === 0 && <div className="mb-5 rounded-lg border border-amber-200 bg-amber-50 px-3.5 py-3 text-xs leading-5 text-amber-900">No demo data yet. Load it with <code className="font-mono">python seed.py</code> (or <code className="font-mono">docker compose exec backend python seed.py</code>), then click Analyze demo feedback.</div>}
-    <section className="mb-7 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">{metricCards.map((card) => <div key={card.label} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_2px_8px_rgba(15,23,42,0.035)]"><div className="flex items-center justify-between text-[10px] font-semibold uppercase tracking-[.16em] text-slate-500"><span>{card.label}</span>{card.icon}</div><div className="mt-3 flex items-baseline gap-2"><span className="text-2xl font-semibold tracking-tight text-slate-900">{card.value}</span>{card.target && <span className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${card.met ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>{card.target}</span>}</div><p className="mt-1.5 text-[11px] leading-4 text-slate-500">{card.sub}</p></div>)}</section>
-    {metrics && metrics.top_3_breakdown.length > 0 && <section className="mb-7 rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_2px_8px_rgba(15,23,42,0.035)] sm:p-6"><h2 className="text-sm font-semibold text-slate-900">How P@3 was scored</h2><p className="mt-1 text-[11px] text-slate-500">Ground-truth top 3 by revenue at risk: {metrics.ground_truth_top_3.map((label) => label.replaceAll('_', ' ')).join(' · ')}</p><div className="mt-4 divide-y divide-slate-100">{metrics.top_3_breakdown.map((row, index) => <div key={index} className="flex items-center gap-3 py-2.5 text-xs"><span className="font-mono text-[10px] text-slate-400">#{index + 1}</span><span className="min-w-0 flex-1 truncate text-slate-800">{row.title}</span><span className="hidden text-[11px] text-slate-500 sm:inline">{row.matched_ground_truth_theme ? `${row.matched_ground_truth_theme.replaceAll('_', ' ')} · ${row.purity}% pure` : 'no label'}</span>{row.is_in_ground_truth_top_3 ? <Check size={14} className="text-emerald-600"/> : <span className="text-[11px] text-amber-700">miss</span>}</div>)}</div></section>}
+    {apiOnline && metrics && metrics.total_feedback_items === 0 && !seeding && (
+      <div className="mb-5 rounded-lg border border-amber-200 bg-amber-50 px-3.5 py-3 text-xs leading-5 text-amber-900">
+        No demo data yet. Click <strong>Seed &amp; analyze</strong> above, or run <code className="font-mono">python seed.py</code> then click Analyze.
+      </div>
+    )}
+    <section className="mb-7 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
+      {metricCards.map((card) => (
+        <div key={card.label} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_2px_8px_rgba(15,23,42,0.035)] transition-shadow hover:shadow-md">
+          <div className="flex items-center justify-between text-[10px] font-semibold uppercase tracking-[.16em] text-slate-500"><span>{card.label}</span>{card.icon}</div>
+          <div className="mt-3 flex items-baseline gap-2">
+            <span className="text-2xl font-semibold tracking-tight text-slate-900">{card.value}</span>
+            {card.target && <span className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${card.met ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>{card.target}</span>}
+          </div>
+          <p className="mt-1.5 text-[11px] leading-4 text-slate-500">{card.sub}</p>
+        </div>
+      ))}
+    </section>
+    {metrics && metrics.top_3_breakdown.length > 0 && (
+      <section className="mb-7 rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_2px_8px_rgba(15,23,42,0.035)] sm:p-6">
+        <h2 className="text-sm font-semibold text-slate-900">How P@3 was scored</h2>
+        <p className="mt-1 text-[11px] text-slate-500">Ground-truth top 3 by revenue at risk: {metrics.ground_truth_top_3.map((l) => l.replaceAll('_', ' ')).join(' · ')}</p>
+        <div className="mt-4 divide-y divide-slate-100">
+          {metrics.top_3_breakdown.map((row, index) => (
+            <div key={index} className="flex items-center gap-3 py-2.5 text-xs">
+              <span className="font-mono text-[10px] text-slate-400">#{index + 1}</span>
+              <span className="min-w-0 flex-1 truncate text-slate-800">{row.title}</span>
+              <span className="hidden text-[11px] text-slate-500 sm:inline">{row.matched_ground_truth_theme ? `${row.matched_ground_truth_theme.replaceAll('_', ' ')} · ${row.purity}% pure` : 'no label'}</span>
+              {row.is_in_ground_truth_top_3 ? <Check size={14} className="text-emerald-600"/> : <span className="text-[11px] text-amber-700">miss</span>}
+            </div>
+          ))}
+        </div>
+      </section>
+    )}
+    {/* H-3: Revenue-at-risk bar chart */}
+    {revenueChartThemes.length > 0 && (
+      <section className="mb-7 rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_2px_8px_rgba(15,23,42,0.035)] sm:p-6">
+        <div className="mb-4 flex items-center gap-2">
+          <BarChart3 size={15} className="text-[#0f766e]"/>
+          <h2 className="text-sm font-semibold text-slate-900">Revenue at risk by theme</h2>
+          <span className="ml-auto text-[10px] text-slate-400">Click a bar to review</span>
+        </div>
+        <div className="space-y-2.5">
+          {revenueChartThemes.map((theme) => {
+            const barPct = Math.max(4, (theme.revenue_at_risk / maxRevenue) * 100);
+            const barColor = theme.revenue_at_risk >= 100_000
+              ? 'from-rose-500 to-rose-400'
+              : theme.revenue_at_risk >= 25_000
+              ? 'from-amber-500 to-amber-400'
+              : 'from-blue-500 to-blue-400';
+            return (
+              <button
+                key={theme.id}
+                onClick={() => theme.status === 'pending_review' ? openReview(theme) : setPrdTheme(theme)}
+                className="group flex w-full items-center gap-3 text-left transition hover:opacity-80"
+              >
+                <span className="w-40 min-w-0 truncate text-[11px] text-slate-700 group-hover:text-slate-900">{theme.title}</span>
+                <div className="relative flex-1 overflow-hidden rounded-full bg-slate-100" style={{ height: 10 }}>
+                  <div
+                    className={`absolute inset-y-0 left-0 rounded-full bg-gradient-to-r ${barColor} transition-all duration-700 ease-out`}
+                    style={{ width: `${barPct}%` }}
+                  />
+                </div>
+                <span className="w-20 text-right font-mono text-[10px] font-semibold text-slate-700">${theme.revenue_at_risk.toLocaleString()}</span>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+    )}
     {roadmapSection}
   </>;
+
 
   return <div className="min-h-screen bg-[#f4f6f8] text-slate-900">
     <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur-xl">
@@ -404,12 +565,57 @@ export default function Workspace() {
       <label className="mt-3 block text-[11px] font-medium text-slate-600">Theme title<input value={editTitle} onChange={(event) => setEditTitle(event.target.value)} className="field mt-1.5 w-full text-sm font-semibold text-slate-900"/></label>
       <label className="mt-3 block text-[11px] font-medium text-slate-600">Problem summary<textarea value={editSummary} onChange={(event) => setEditSummary(event.target.value)} rows={3} className="field mt-1.5 w-full resize-y text-xs leading-5 text-slate-700"/></label>
       {(editTitle.trim() !== reviewTheme.title || editSummary.trim() !== reviewTheme.summary) && <p className="mt-2 text-[10px] text-amber-700">Edited — this approval will count as “edited” in the acceptance rate.</p>}
-      <div className="mt-5 flex gap-4 border-y border-slate-200 py-3 text-[11px] text-slate-600"><span>${reviewTheme.revenue_at_risk.toLocaleString()} ARR at risk</span><span>{reviewTheme.affected_accounts_count} accounts</span></div><div className="mt-5 space-y-3">{reviewTheme.cited_quotes?.length ? reviewTheme.cited_quotes.map((quote, index) => <blockquote key={index} className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs leading-5 text-slate-700">“{quote.quote_text}”<span className="mt-2 block text-[10px] text-slate-400">{quote.customer_id || 'Customer'}{quote.customer_tier ? ` · ${quote.customer_tier}` : ''}</span></blockquote>) : <p className="text-xs text-slate-500">No evidence quotes have been attached.</p>}</div>
-      <div className="sticky -bottom-5 -mx-5 -mb-5 mt-6 flex flex-wrap justify-end gap-2 border-t border-slate-100 bg-white px-5 pb-5 pt-3 sm:-bottom-6 sm:-mx-6 sm:-mb-6 sm:px-6 sm:pb-6"><button onClick={() => setReviewTheme(null)} className="rounded-lg border border-slate-200 px-3 py-2 text-xs text-slate-700">Close</button><button onClick={() => dismissTheme(reviewTheme)} disabled={Boolean(working)} className="rounded-lg border border-rose-200 px-3 py-2 text-xs font-medium text-rose-700 hover:bg-rose-50 disabled:opacity-50">Reject</button><button onClick={() => launchTheme(reviewTheme, { title: editTitle, summary: editSummary })} disabled={Boolean(working) || !editTitle.trim()} className="flex items-center gap-2 rounded-lg bg-[#0f766e] px-3 py-2 text-xs font-semibold text-white disabled:opacity-50"><GitBranch size={14}/> Approve & create issue</button></div></div></div>}
+      <div className="mt-5 flex items-center gap-4 border-y border-slate-200 py-3 text-[11px] text-slate-600">
+        <span className="flex items-center gap-1"><DollarSign size={11} className="text-emerald-600"/>${reviewTheme.revenue_at_risk.toLocaleString()} ARR at risk</span>
+        <span>{reviewTheme.affected_accounts_count} accounts</span>
+      </div>
+      <div className="mt-5 space-y-3">
+        {reviewTheme.cited_quotes?.length ? reviewTheme.cited_quotes.map((quote, index) => (
+          <blockquote key={index} className="rounded-xl border border-slate-200 bg-slate-50 p-3.5">
+            <div className="mb-2 flex items-center gap-1.5">
+              <ShieldCheck size={11} className="text-emerald-600"/>
+              <span className="text-[9px] font-bold uppercase tracking-[.15em] text-emerald-700">Verified verbatim</span>
+            </div>
+            <p className="text-[11px] italic leading-5 text-slate-800">&ldquo;{quote.quote_text}&rdquo;</p>
+            <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+              <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[9px] font-medium text-slate-700">{quote.customer_id || 'Anonymous'}</span>
+              {quote.customer_tier && <span className={`rounded-full px-2 py-0.5 text-[9px] font-semibold ${
+                quote.customer_tier === 'enterprise' ? 'bg-violet-100 text-violet-700'
+                : quote.customer_tier === 'growth' ? 'bg-blue-100 text-blue-700'
+                : 'bg-slate-100 text-slate-600'
+              }`}>{quote.customer_tier}</span>}
+              {quote.arr_value != null && quote.arr_value > 0 && <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[9px] font-semibold text-emerald-700">${quote.arr_value.toLocaleString()} ARR</span>}
+            </div>
+          </blockquote>
+        )) : <p className="text-xs text-slate-500">No evidence quotes have been attached.</p>}
+      </div>
+      <div className="sticky -bottom-5 -mx-5 -mb-5 mt-6 flex flex-wrap justify-end gap-2 border-t border-slate-100 bg-white px-5 pb-5 pt-3 sm:-bottom-6 sm:-mx-6 sm:-mb-6 sm:px-6 sm:pb-6">
+        <button onClick={() => setReviewTheme(null)} className="rounded-lg border border-slate-200 px-3 py-2 text-xs text-slate-700 transition hover:bg-slate-50">Close</button>
+        <button onClick={() => dismissTheme(reviewTheme)} disabled={Boolean(working)} className="rounded-lg border border-rose-200 px-3 py-2 text-xs font-medium text-rose-700 transition hover:bg-rose-50 disabled:opacity-50">Reject</button>
+        <button onClick={() => launchTheme(reviewTheme, { title: editTitle, summary: editSummary })} disabled={Boolean(working) || !editTitle.trim()} className="flex items-center gap-2 rounded-lg bg-[#0f766e] px-3 py-2 text-xs font-semibold text-white transition hover:bg-[#115e59] disabled:opacity-50">
+          {working === reviewTheme.id ? <LoaderCircle size={13} className="animate-spin"/> : <GitBranch size={14}/>} Approve &amp; create issue
+        </button>
+      </div>
+    </div></div>}
 
-    {prdTheme && <div className="modal-backdrop"><div className="modal-card max-h-[85vh] overflow-y-auto"><div className="flex items-start justify-between"><div><span className="text-[10px] uppercase tracking-[.18em] text-[#0f766e]">Generated PRD</span><h2 className="mt-2 text-lg font-semibold text-slate-900">{prdTheme.title}</h2></div><button onClick={() => setPrdTheme(null)} className="text-slate-500 hover:text-slate-900"><X size={17}/></button></div>
-      {prdTheme.github_issue_url ? <a href={prdTheme.github_issue_url} target="_blank" rel="noreferrer" className="mt-4 flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-xs text-emerald-900 hover:bg-emerald-100"><GitBranch size={14}/> GitHub issue #{prdTheme.github_issue_number} created <ExternalLink size={12}/></a> : <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-[11px] leading-5 text-amber-900">Not sent to GitHub. Set GITHUB_TOKEN, GITHUB_REPO_OWNER and GITHUB_REPO_NAME in .env to create real issues.</div>}
-      <pre className="mt-4 max-h-[50vh] overflow-auto whitespace-pre-wrap rounded-lg border border-slate-200 bg-slate-50 p-4 font-mono text-[11px] leading-5 text-slate-700">{prdTheme.prd_markdown || 'No PRD text was returned for this theme.'}</pre>
-      <div className="mt-5 flex justify-end gap-2">{prdTheme.prd_markdown && <button onClick={() => copyPrd(prdTheme.prd_markdown || '')} className="flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-xs text-slate-700 hover:bg-slate-100"><Clipboard size={13}/>{copied ? 'Copied' : 'Copy PRD'}</button>}<button onClick={() => setPrdTheme(null)} className="rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white">Done</button></div></div></div>}
+    {/* H-1: PRD modal with typewriter animation */}
+    {prdTheme && <div className="modal-backdrop"><div className="modal-card max-h-[85vh] overflow-y-auto">
+      <div className="flex items-start justify-between">
+        <div><span className="text-[10px] uppercase tracking-[.18em] text-[#0f766e]">Generated PRD</span><h2 className="mt-2 text-lg font-semibold text-slate-900">{prdTheme.title}</h2></div>
+        <button onClick={() => { setPrdTheme(null); setPrdTypewriterText(''); setPrdFullText(''); }} className="text-slate-500 transition hover:text-slate-900"><X size={17}/></button>
+      </div>
+      {prdTheme.github_issue_url
+        ? <a href={prdTheme.github_issue_url} target="_blank" rel="noreferrer" className="mt-4 flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-xs text-emerald-900 transition hover:bg-emerald-100"><GitBranch size={14}/> GitHub issue #{prdTheme.github_issue_number} created <ExternalLink size={12}/></a>
+        : <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-[11px] leading-5 text-amber-900">Not sent to GitHub. Set GITHUB_TOKEN, GITHUB_REPO_OWNER and GITHUB_REPO_NAME in .env to create real issues.</div>
+      }
+      <pre className="mt-4 max-h-[50vh] overflow-auto whitespace-pre-wrap rounded-lg border border-slate-200 bg-slate-50 p-4 font-mono text-[11px] leading-5 text-slate-700">
+        {prdTypewriterText || prdTheme.prd_markdown || 'No PRD text was returned for this theme.'}
+        {prdTypewriterText && prdTypewriterText !== prdFullText && <span className="ml-0.5 inline-block h-3 w-0.5 animate-pulse bg-[#0f766e] align-middle"/>}
+      </pre>
+      <div className="mt-5 flex justify-end gap-2">
+        {prdTheme.prd_markdown && <button onClick={() => copyPrd(prdTheme.prd_markdown || '')} className="flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-xs text-slate-700 transition hover:bg-slate-100"><Clipboard size={13}/>{copied ? 'Copied!' : 'Copy PRD'}</button>}
+        <button onClick={() => { setPrdTheme(null); setPrdTypewriterText(''); setPrdFullText(''); }} className="rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white transition hover:bg-slate-800">Done</button>
+      </div>
+    </div></div>}
   </div>;
 }

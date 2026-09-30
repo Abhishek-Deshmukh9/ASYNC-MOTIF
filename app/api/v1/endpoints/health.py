@@ -1,3 +1,4 @@
+from typing import Any, Dict
 from fastapi import APIRouter
 from app.config import settings
 from app.db.session import check_db_health
@@ -32,3 +33,28 @@ async def get_health() -> HealthCheckResponse:
             error=db_health_data.get("error"),
         ),
     )
+
+
+@router.post("/health/seed", response_model=Dict[str, Any])
+async def seed_demo_corpus():
+    """
+    One-click demo seeding (H-4): Generates and inserts the 300-item benchmark
+    corpus into the database so the demo is ready without manual CLI steps.
+    """
+    import sys, os
+    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))))
+    from seed import generate_seed_corpus, save_corpus_to_disk, seed_database_if_available
+
+    corpus = generate_seed_corpus()
+    save_corpus_to_disk(corpus)
+    success = await seed_database_if_available(corpus)
+
+    return {
+        "seeded": success,
+        "total_items": len(corpus),
+        "message": (
+            f"Successfully seeded {len(corpus)} demo feedback items."
+            if success
+            else "Could not connect to database. The JSON file was saved."
+        ),
+    }

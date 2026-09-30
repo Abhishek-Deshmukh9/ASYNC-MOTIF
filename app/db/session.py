@@ -38,16 +38,17 @@ AsyncSessionLocal = async_sessionmaker(
 
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
-    """Dependency for providing database sessions to endpoints."""
+    """Dependency for providing database sessions to endpoints.
+
+    NOTE: Endpoints are responsible for calling session.commit() themselves.
+    This dependency only handles rollback on unhandled exceptions.
+    """
     async with AsyncSessionLocal() as session:
         try:
             yield session
-            await session.commit()
         except Exception:
             await session.rollback()
             raise
-        finally:
-            await session.close()
 
 
 async def check_db_health() -> dict:

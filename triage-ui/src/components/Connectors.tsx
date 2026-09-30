@@ -1,7 +1,7 @@
 'use client';
 
 import { FormEvent, useCallback, useEffect, useState } from 'react';
-import { Check, FileText, HardDrive, Hash, LoaderCircle, RefreshCw, Trash2, X } from 'lucide-react';
+import { Check, FileText, GitBranch, HardDrive, Hash, LoaderCircle, RefreshCw, Trash2, X } from 'lucide-react';
 import { connectionOptions, createConnection, deleteConnection, fetchConnections, syncConnection, updateConnection } from '@/utils/api';
 import type { Connection, ConnectionOption, ProviderId, SyncResult } from '@/utils/types';
 
@@ -18,6 +18,7 @@ const PROVIDERS: { id: ProviderId; name: string; blurb: string; icon: React.Reac
   { id: 'notion', name: 'Notion', blurb: 'Pages and databases you share with Motif', icon: <FileText size={15}/> },
   { id: 'gdrive', name: 'Google Drive', blurb: 'Docs, Sheets, PDFs in one folder you choose', icon: <HardDrive size={15}/> },
   { id: 'slack', name: 'Slack', blurb: 'Public channels you pick (never DMs)', icon: <Hash size={15}/> },
+  { id: 'github', name: 'GitHub Issues', blurb: 'Issues and comments from a repository', icon: <GitBranch size={15}/> },
 ];
 
 const HELP: Record<ProviderId, { steps: string[]; field: string; placeholder: string; multiline?: boolean }> = {
@@ -32,6 +33,10 @@ const HELP: Record<ProviderId, { steps: string[]; field: string; placeholder: st
   slack: {
     steps: ['At api.slack.com/apps create an app, add the bot scopes channels:read, channels:history, channels:join and users:read, then install it to your workspace.', 'Copy the Bot User OAuth Token (starts with xoxb-) and paste it below.', 'Next you will choose the public channels to read. DMs and private channels are never read.'],
     field: 'Bot token', placeholder: 'xoxb-…',
+  },
+  github: {
+    steps: ['Enter the repository as owner/repo. Public repositories work without a token.', 'For a private repository, create a token at github.com/settings/tokens with read access to Issues (repo scope) and paste it below.', 'Motif imports issues and their comments, not pull requests.'],
+    field: 'Access token (optional for public repositories)', placeholder: 'ghp_… or leave empty',
   },
 };
 
@@ -54,6 +59,7 @@ export default function Connectors({ projectId, projectName, open, onClose, onSy
   const [busy, setBusy] = useState('');
   const [picker, setPicker] = useState<ProviderId | null>(null);     // credential form for a provider
   const [secret, setSecret] = useState('');
+  const [repo, setRepo] = useState('');
   const [formError, setFormError] = useState('');
   const [scope, setScope] = useState<Connection | null>(null);       // choose what to import
   const [options, setOptions] = useState<ConnectionOption[]>([]);
@@ -79,9 +85,10 @@ export default function Connectors({ projectId, projectName, open, onClose, onSy
     if (!picker) return;
     setBusy('connect'); setFormError('');
     try {
-      const credentials = picker === 'gdrive' ? { service_account: secret.trim() } : { token: secret.trim() };
+      const credentials = picker === 'gdrive' ? { service_account: secret.trim() } : picker === 'github' ? { repo: repo.trim(), token: secret.trim() } : { token: secret.trim() };
       const created = await createConnection(projectId, projectName, picker, credentials);
-      setSecret(''); await load(); await openScope(created);
+      setSecret(''); setRepo(''); await load();
+      if (picker === 'github') { setPicker(null); onClose(); await runSync(created); } else await openScope(created);
     } catch (cause) { setFormError(cause instanceof Error ? cause.message : 'Could not connect.'); }
     finally { setBusy(''); }
   };
@@ -148,9 +155,9 @@ export default function Connectors({ projectId, projectName, open, onClose, onSy
             </div>
             {connection ? <div className="flex items-center gap-1">
               <button onClick={() => runSync(connection)} disabled={busy === connection.id} title="Sync now" aria-label={`Sync ${provider.name}`} className="icon-btn !h-8 !w-8">{busy === connection.id ? <LoaderCircle size={14} className="animate-spin"/> : <RefreshCw size={14}/>}</button>
-              <button onClick={() => openScope(connection)} className="rounded-lg border border-slate-200 px-2.5 py-1.5 text-[11px] font-medium text-slate-700 hover:bg-slate-50">Choose</button>
+              {provider.id !== 'github' && <button onClick={() => openScope(connection)} className="rounded-lg border border-slate-200 px-2.5 py-1.5 text-[11px] font-medium text-slate-700 hover:bg-slate-50">Choose</button>}
               <button onClick={() => disconnect(connection)} title="Disconnect" aria-label={`Disconnect ${provider.name}`} className="icon-btn !h-8 !w-8"><Trash2 size={14}/></button>
-            </div> : <button onClick={() => { setPicker(provider.id); setSecret(''); setFormError(''); }} className="rounded-lg bg-[#0f766e] px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-[#115e59]">Connect</button>}
+            </div> : <button onClick={() => { setPicker(provider.id); setSecret(''); setRepo(''); setFormError(''); }} className="rounded-lg bg-[#0f766e] px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-[#115e59]">Connect</button>}
           </div>;
         })}
       </div>
@@ -162,10 +169,11 @@ export default function Connectors({ projectId, projectName, open, onClose, onSy
     {picker && <div className="modal-backdrop"><form onSubmit={connect} className="modal-card">
       <div className="flex items-start justify-between"><h2 className="text-lg font-semibold text-slate-900">Connect {PROVIDERS.find((p) => p.id === picker)?.name}</h2><button type="button" onClick={closeAll} aria-label="Close" className="text-slate-500 hover:text-slate-900"><X size={17}/></button></div>
       <ol className="mt-4 list-decimal space-y-1.5 pl-4 text-xs leading-5 text-slate-600">{HELP[picker].steps.map((step) => <li key={step}>{step}</li>)}</ol>
-      <label className="mt-5 block text-[11px] font-medium text-slate-600">{HELP[picker].field}
+      {picker === 'github' && <label className="mt-5 block text-[11px] font-medium text-slate-600">Repository<input required value={repo} onChange={(e) => setRepo(e.target.value)} className="field mt-2 w-full" placeholder="acme/product"/></label>}
+      <label className="mt-4 block text-[11px] font-medium text-slate-600">{HELP[picker].field}
         {HELP[picker].multiline
           ? <textarea required value={secret} onChange={(e) => setSecret(e.target.value)} rows={5} spellCheck={false} className="field mt-2 w-full font-mono !text-[11px]" placeholder={HELP[picker].placeholder}/>
-          : <input required type="password" autoComplete="off" value={secret} onChange={(e) => setSecret(e.target.value)} className="field mt-2 w-full" placeholder={HELP[picker].placeholder}/>}
+          : <input required={picker !== 'github'} type="password" autoComplete="off" value={secret} onChange={(e) => setSecret(e.target.value)} className="field mt-2 w-full" placeholder={HELP[picker].placeholder}/>}
       </label>
       <p className="mt-2 text-[10px] leading-4 text-slate-400">Stored encrypted on the Motif server and never shown again. Motif only reads; it never writes to your tools.</p>
       {formError && <p role="alert" className="mt-3 rounded-lg bg-rose-50 px-3 py-2 text-xs text-rose-700">{formError}</p>}

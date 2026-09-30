@@ -92,7 +92,7 @@ Human PM Approves ──► Automated PRD Generation & GitHub Issue Creation
 | **LLM Synthesis** | Groq API (default `llama-3.3-70b-versatile`, with automatic fallback to other Groq-hosted models); Gemini and OpenAI also supported; offline fallback |
 | **Frontend Triage UI** | Next.js 16 + React 19 + Tailwind CSS 4 |
 | **Infrastructure** | Docker Compose |
-| **Integrations** | GitHub REST API (live when a token is set). Notion, Google Drive (service account) and Slack: read-only connectors that sync into a project |
+| **Integrations** | GitHub REST API (live when a token is set). Notion, Google Drive (service account), Slack and GitHub Issues: read-only connectors that sync into a project |
 
 ---
 
@@ -297,7 +297,7 @@ The backend verifies each token against the project's public signing keys (`/aut
 
 Row level security is enabled on every table, so the data is not reachable through Supabase's public API with the publishable key; the backend connects as the tables' owner and is unaffected.
 
-### Connect Notion, Google Drive and Slack
+### Connect Notion, Google Drive, Slack and GitHub Issues
 
 Open a project and use **Connect your tools**. Each tool is read-only, tokens are encrypted before they are stored, and Motif reads only what you choose. **Sync now** adds new items, refreshes edited ones and removes deleted ones.
 
@@ -305,6 +305,7 @@ Open a project and use **Connect your tools**. Each tool is read-only, tokens ar
 | :--- | :--- | :--- |
 | **Notion** | An internal integration secret from notion.so/profile/integrations. Share pages with it (page menu, Connections). | The pages shared with the integration, or only the ones you select. |
 | **Google Drive** | A Google Cloud service account with the Drive API enabled; paste its JSON key. Share one folder with the service account email (Viewer). | That folder and its subfolders: Docs, Sheets, PDFs, Word, PowerPoint, Excel, Markdown. |
+| **GitHub Issues** | A repository name (`owner/repo`). A token with read access to Issues only for private repositories. | Issues and their comments, not pull requests. |
 | **Slack** | A Slack app with bot scopes `channels:read`, `channels:history`, `channels:join`, `users:read`, installed to the workspace; paste the `xoxb-` token. | The public channels you pick, last 90 days. Never DMs or private channels. |
 
 Set `CONNECTOR_ENCRYPTION_KEY` in `.env` (any long random string; it falls back to `SUPABASE_SECRET_KEY`).

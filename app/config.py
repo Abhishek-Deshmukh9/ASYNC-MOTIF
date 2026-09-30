@@ -35,7 +35,7 @@ class Settings(BaseSettings):
     # LLM Provider Configuration (Groq for 100% Free-Tier Processing)
     LLM_PROVIDER: str = "groq"
     GROQ_API_KEY: str | None = None
-    GROQ_MODEL: str = "openai/gpt-oss-120b"
+    GROQ_MODEL: str = "llama-3.3-70b-versatile"
     GROQ_BASE_URL: str = "https://api.groq.com/openai/v1"
     GEMINI_API_KEY: str | None = None
     GEMINI_MODEL: str = "gemini-2.0-flash"

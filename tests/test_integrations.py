@@ -212,3 +212,49 @@ def test_slack_error_codes_are_translated():
     with pytest.raises(ProviderError, match="xoxb-"):
         run(SlackProvider({"token": "bad"}, transport=transport(handler)).validate())
     assert clean_message("hi <@U9>", {}) == "hi @someone"
+
+
+# ---------- GitHub Issues ----------
+def github_handler(request: httpx.Request) -> httpx.Response:
+    path = request.url.path
+    if path == "/repos/acme/product":
+        return httpx.Response(200, json={"full_name": "acme/product", "has_issues": True})
+    if path == "/repos/acme/private":
+        return httpx.Response(404, json={})
+    if path == "/repos/acme/product/issues":
+        page = int(request.url.params.get("page", 1))
+        if page > 1:
+            return httpx.Response(200, json=[])
+        return httpx.Response(200, json=[
+            {"number": 7, "title": "Export times out", "state": "open", "body": "CSV export fails for big accounts.", "user": {"login": "priya"}, "labels": [{"name": "bug"}], "reactions": {"+1": 12}, "comments": 1, "html_url": "https://github.com/acme/product/issues/7"},
+            {"number": 8, "title": "Add dark mode", "state": "closed", "body": None, "user": {"login": "sam"}, "labels": [], "reactions": {}, "comments": 0},
+            {"number": 9, "title": "Fix typo", "state": "open", "body": "pr", "user": {"login": "dev"}, "pull_request": {}, "labels": [], "comments": 0},
+        ])
+    if path == "/repos/acme/product/issues/7/comments":
+        return httpx.Response(200, json=[{"user": {"login": "sam"}, "body": "Same problem\nfor us"}])
+    return httpx.Response(404, json={})
+
+
+def test_github_issues_become_documents_and_prs_are_skipped():
+    from app.integrations import GitHubIssuesProvider
+    provider = GitHubIssuesProvider({"repo": "https://github.com/acme/product"}, transport=transport(github_handler))
+    assert run(provider.validate())["display_name"] == "acme/product"
+    docs = run(collect(provider.documents({})))
+    assert [d.external_id for d in docs] == ["issue-7", "issue-8"]  # the pull request is skipped
+    text = docs[0].text
+    assert "CSV export fails" in text and "12 people gave this a thumbs up" in text and "Labels: bug" in text
+    assert "sam: Same problem for us" in text
+    assert docs[0].title == "#7 Export times out" and docs[0].url.endswith("/issues/7")
+
+
+def test_github_repo_names_and_errors():
+    from app.integrations import GitHubIssuesProvider
+    from app.integrations.github import parse_repo
+    assert parse_repo("Acme/product.git") == "Acme/product"
+    with pytest.raises(ProviderError, match="owner/repo"):
+        parse_repo("not a repo")
+    with pytest.raises(ProviderError, match="cannot find that repository"):
+        run(GitHubIssuesProvider({"repo": "acme/private"}, transport=transport(github_handler)).validate())
+    limited = lambda request: httpx.Response(403, headers={"X-RateLimit-Remaining": "0"}, json={})
+    with pytest.raises(ProviderError, match="rate limit"):
+        run(GitHubIssuesProvider({"repo": "acme/product"}, transport=transport(limited)).validate())

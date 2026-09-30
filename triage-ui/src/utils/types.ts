@@ -72,7 +72,7 @@ export type UploadFileResult = {
 };
 export type UploadResult = { project_id: string; files: UploadFileResult[]; sources_created: number; passages_created: number };
 
-export type ProviderId = 'notion' | 'gdrive' | 'slack';
+export type ProviderId = 'notion' | 'gdrive' | 'slack' | 'github';
 export type Connection = {
   id: string; provider: ProviderId; label: string; project_id: string; display_name?: string | null;
   config: { page_ids?: string[]; folder_id?: string; channel_ids?: string[]; [key: string]: unknown };

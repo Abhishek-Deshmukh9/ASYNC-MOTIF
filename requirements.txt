@@ -23,3 +23,6 @@ numpy>=1.26.0
 # AI Engine & Clustering (Phase 3)
 sentence-transformers>=2.5.0
 scikit-learn>=1.4.0
+
+# Document import: PDF, Word, PowerPoint, Excel, HTML -> Markdown
+markitdown[pdf,docx,pptx,xlsx]>=0.1.2,<0.2

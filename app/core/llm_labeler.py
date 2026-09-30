@@ -37,10 +37,15 @@ def _generate_user_prompt(exemplars: List[Dict[str, Any]]) -> str:
     ]
     for i, item in enumerate(exemplars, 1):
         content = item.get("clean_content") or item.get("content", "")
-        cid = item.get("customer_id", "Unknown")
-        tier = item.get("customer_tier", "free")
-        arr = item.get("arr_value", 0.0)
-        prompt_lines.append(f"[{i}] Customer '{cid}' ({tier}, ARR: ${arr:,.0f}):\n\"{content}\"\n")
+        cid = item.get("customer_id")
+        if cid:
+            tier = item.get("customer_tier") or "free"
+            arr = item.get("arr_value") or 0.0
+            prompt_lines.append(f"[{i}] Customer '{cid}' ({tier}, ARR: ${arr:,.0f}):\n\"{content}\"\n")
+        else:
+            # Passages from uploaded documents, notes and meeting transcripts
+            source = item.get("source_name") or "a project document"
+            prompt_lines.append(f"[{i}] From '{source}':\n\"{content}\"\n")
 
     prompt_lines.append(
         "\nProvide strictly the JSON object. Do not include markdown code block backticks."

@@ -10,6 +10,7 @@ class CitedQuote(BaseModel):
     customer_id: Optional[str] = None
     arr_value: Optional[float] = None
     customer_tier: Optional[str] = None
+    source_name: Optional[str] = None  # document or note the quote came from
 
 
 class ThemeBase(BaseModel):
@@ -29,6 +30,8 @@ class ThemeResponse(ThemeBase):
     created_at: datetime
     updated_at: datetime
     cited_quotes: List[CitedQuote] = Field(default_factory=list)
+    mention_count: int = 0  # passages grouped into this theme
+    source_count: int = 0  # distinct uploaded sources among them (0 for items without a source)
 
     model_config = {"from_attributes": True}
 

@@ -50,15 +50,23 @@ def cluster_feedback_embeddings(
 
     # Configure and fit HDBSCAN
     # Metric 'euclidean' on unit-normalized vectors directly preserves cosine distance
-    clusterer = HDBSCAN(
-        min_cluster_size=min_cluster_size,
-        min_samples=min_samples,
-        metric="euclidean",
-        cluster_selection_method="eom",  # Excess of Mass
-        allow_single_cluster=True,
-        copy=True,
-    )
-    labels = clusterer.fit_predict(X)
+    def fit(allow_single_cluster: bool):
+        return HDBSCAN(
+            min_cluster_size=min_cluster_size,
+            min_samples=min_samples,
+            metric="euclidean",
+            cluster_selection_method="eom",  # Excess of Mass
+            allow_single_cluster=allow_single_cluster,
+            copy=True,
+        ).fit_predict(X)
+
+    # Look for separate topics first. Allowing a single cluster up front makes a small project
+    # (tens of passages about several problems) collapse into one theme, because the topics sit
+    # close together compared with the outliers. Only if no topics are found at all, check
+    # whether everything is one problem. On the 300-item demo corpus the labels are identical.
+    labels = fit(allow_single_cluster=False)
+    if (labels == -1).all():
+        labels = fit(allow_single_cluster=True)
 
     dense_clusters: Dict[int, List[Dict[str, Any]]] = {}
     noise_items: List[Dict[str, Any]] = []

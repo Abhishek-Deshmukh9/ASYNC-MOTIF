@@ -1,4 +1,4 @@
-import { ApprovalResult, EvalMetrics, ProjectSource, Theme } from './types';
+import { ApprovalResult, EvalMetrics, ProjectSource, Theme, UploadResult, UploadedSource } from './types';
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`/api/v1${path}`, init);
@@ -19,15 +19,25 @@ export const approveTheme = (id: string, title?: string, repo?: string, summary?
 export const rejectTheme = (id: string) => request<{ status: string }>(`/themes/${id}/reject?pm_user_id=workspace_user`, { method: 'POST' });
 export const fetchPipelineStatus = () => request<{ status: string; last_result?: PipelineResult | null }>('/pipeline/status');
 
-export async function ingestSource(source: ProjectSource, projectId: string) {
-  const file = new File([JSON.stringify([{
-    source_type: source.kind === 'meeting' ? 'meeting_transcript' : 'google_drive',
-    external_id: `motif_${source.id}`,
-    content: source.content,
-    customer_tier: 'free',
-    metadata: { project_id: projectId, source_name: source.name },
-  }])], `${source.name.replace(/[^a-z0-9-_]/gi, '_')}.json`, { type: 'application/json' });
+// Project sources: files are extracted, split into passages and stored on the backend
+export async function uploadSources(files: { file: Blob; name: string }[], projectId: string, projectName?: string, kind: 'document' | 'meeting' = 'document') {
   const form = new FormData();
-  form.append('file', file);
-  return request<{ canonical_persisted_count: number }>('/feedback/upload', { method: 'POST', body: form });
+  form.append('project_id', projectId);
+  if (projectName) form.append('project_name', projectName);
+  form.append('kind', kind);
+  files.forEach(({ file, name }) => form.append('files', file, name));
+  return request<UploadResult>('/sources/upload', { method: 'POST', body: form });
+}
+export const fetchSources = (projectId: string) => request<UploadedSource[]>(`/sources?project_id=${encodeURIComponent(projectId)}`);
+export const deleteSource = (id: string, projectId: string) => request<{ deleted: string; passages_removed: number }>(`/sources/${id}?project_id=${encodeURIComponent(projectId)}`, { method: 'DELETE' });
+
+// Send a source written in the browser (a meeting transcript) through the same upload path.
+// Returns the backend source id, or null when the same text is already in the project.
+export async function ingestSource(source: ProjectSource, projectId: string, projectName?: string): Promise<string | null> {
+  const name = /\.(md|markdown|txt)$/i.test(source.name) ? source.name : `${source.name}.md`;
+  const file = new Blob([source.content], { type: 'text/markdown' });
+  const result = await uploadSources([{ file, name }], projectId, projectName, source.kind === 'meeting' ? 'meeting' : 'document');
+  const [first] = result.files;
+  if (first?.status === 'failed' || first?.status === 'skipped') throw new Error(`${source.name}: ${first.detail || 'could not be imported'}`);
+  return first?.sources[0]?.id ?? null;
 }

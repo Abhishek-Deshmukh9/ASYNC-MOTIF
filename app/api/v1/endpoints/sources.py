@@ -1,0 +1,262 @@
+"""
+Project sources: upload files (documents, notes, exported tables, Obsidian vaults),
+list them, and remove them.
+
+An upload is extracted to text, split into passages, and stored as feedback_items
+linked to a row in `sources`. The existing pipeline then embeds and clusters the
+passages like any other feedback, scoped to the project.
+"""
+import hashlib
+import json
+import logging
+import uuid
+from typing import Any, Dict, List, Optional
+
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
+from sqlalchemy import delete, func, select
+from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.ext.asyncio import AsyncSession
+from starlette.concurrency import run_in_threadpool
+
+from app.api.deps import get_db
+from app.core.chunking import chunk_text
+from app.core.extraction import MAX_FILE_BYTES, ExtractedDocument, ExtractionError, extract_file
+from app.core.normalization import clean_text, detect_churn_intent, normalize_and_deduplicate
+from app.models.feedback import FeedbackItem
+from app.models.project import Project, Source
+
+logger = logging.getLogger(__name__)
+
+router = APIRouter(prefix="/sources", tags=["Sources"])
+
+MAX_FILES_PER_REQUEST = 100
+MAX_PASSAGES_PER_REQUEST = 10_000
+SOURCE_KINDS = {"document", "note", "meeting", "table"}
+# Project ids that are not UUIDs (older browsers' fallback ids) map to a stable UUID
+PROJECT_NAMESPACE = uuid.UUID("6f0f5d4e-8a57-4d0e-9a53-5b7f3c1d2e10")
+
+
+def project_uuid(project_id: str) -> uuid.UUID:
+    try:
+        return uuid.UUID(project_id)
+    except ValueError:
+        return uuid.uuid5(PROJECT_NAMESPACE, project_id)
+
+
+def _validate_project_id(project_id: str) -> str:
+    project_id = (project_id or "").strip()
+    if not project_id or len(project_id) > 255 or project_id.startswith("__"):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="A project id is required. The demo benchmark cannot take uploads.")
+    return project_id
+
+
+async def _ensure_project(db: AsyncSession, project_id: str, name: Optional[str]) -> uuid.UUID:
+    pid = project_uuid(project_id)
+    stmt = insert(Project).values(id=pid, name=(name or "").strip()[:200] or "Untitled project")
+    if name and name.strip():
+        stmt = stmt.on_conflict_do_update(index_elements=[Project.id], set_={"name": name.strip()[:200]})
+    else:
+        stmt = stmt.on_conflict_do_nothing(index_elements=[Project.id])
+    await db.execute(stmt)
+    return pid
+
+
+def _content_hash(document: ExtractedDocument) -> str:
+    payload = document.text if not document.rows else json.dumps(document.rows, sort_keys=True, ensure_ascii=False)
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def _passages(document: ExtractedDocument, project_id: str, source_id: uuid.UUID, kind: str) -> List[FeedbackItem]:
+    """Build the feedback_items rows for one extracted document."""
+    base_meta = {"project_id": project_id, "source_name": document.title, "source_path": document.path}
+    items: List[FeedbackItem] = []
+
+    if document.rows:
+        # One piece of feedback per table row: customer, tier and ARR columns carry through
+        normalized, _ = normalize_and_deduplicate(
+            [dict(row, metadata=dict(base_meta, row=i + 1)) for i, row in enumerate(document.rows)]
+        )
+        for i, item in enumerate(normalized):
+            items.append(
+                FeedbackItem(
+                    id=uuid.uuid4(),
+                    project_id=project_id,
+                    source_id=source_id,
+                    chunk_index=i,
+                    source_type=item.source_type[:50],
+                    external_id=f"{source_id}:{i}",
+                    content=item.content,
+                    clean_content=item.clean_content,
+                    customer_id=item.customer_id,
+                    customer_tier=item.customer_tier,
+                    arr_value=item.arr_value,
+                    churn_risk_flag=item.churn_risk_flag,
+                    metadata_=item.metadata,
+                )
+            )
+        return items
+
+    source_type = "meeting_transcript" if kind == "meeting" else ("note" if document.kind == "note" else "document")
+    for chunk in chunk_text(document.text):
+        cleaned = clean_text(chunk.text)
+        if len(cleaned) < 3:
+            continue
+        items.append(
+            FeedbackItem(
+                id=uuid.uuid4(),
+                project_id=project_id,
+                source_id=source_id,
+                chunk_index=chunk.index,
+                speaker=(chunk.speaker or None) and chunk.speaker[:255],
+                source_type=source_type,
+                external_id=f"{source_id}:{chunk.index}",
+                content=chunk.text,
+                clean_content=cleaned,
+                customer_id=None,
+                customer_tier="free",
+                arr_value=0,
+                churn_risk_flag=detect_churn_intent(cleaned),
+                metadata_=dict(base_meta, section=chunk.section) if chunk.section else base_meta,
+            )
+        )
+    return items
+
+
+def _source_payload(source: Source, passages: int) -> Dict[str, Any]:
+    return {
+        "id": str(source.id),
+        "title": source.title,
+        "path": source.external_id,
+        "mime_type": source.mime_type,
+        "created_at": source.created_at.isoformat() if source.created_at else None,
+        "passages": passages,
+    }
+
+
+@router.post("/upload", response_model=Dict[str, Any], status_code=status.HTTP_201_CREATED)
+async def upload_sources(
+    project_id: str = Form(...),
+    project_name: Optional[str] = Form(default=None),
+    kind: str = Form(default="document"),
+    files: List[UploadFile] = File(...),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Add files to a project. Accepts PDF, Word, PowerPoint, Excel, HTML, Markdown,
+    text, CSV, JSON, and .zip archives (for example an Obsidian vault).
+    Each file is reported as imported, duplicate, skipped or failed; one bad file
+    does not stop the others.
+    """
+    project_id = _validate_project_id(project_id)
+    kind = kind if kind in SOURCE_KINDS else "document"
+    if len(files) > MAX_FILES_PER_REQUEST:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Upload at most {MAX_FILES_PER_REQUEST} files at a time.")
+
+    pid = await _ensure_project(db, project_id, project_name)
+    await db.commit()
+
+    results: List[Dict[str, Any]] = []
+    total_passages = 0
+    for upload in files:
+        name = upload.filename or "untitled"
+        result: Dict[str, Any] = {"filename": name, "status": "imported", "sources": [], "skipped": [], "passages": 0}
+        results.append(result)
+
+        data = await upload.read(MAX_FILE_BYTES + 1)
+        try:
+            documents, skipped = await run_in_threadpool(extract_file, name, data)
+        except ExtractionError as exc:
+            result.update(status="failed", detail=str(exc))
+            continue
+        except Exception as exc:  # a parser crashed on a malformed file
+            logger.warning("Could not extract %s: %s", name, exc, exc_info=True)
+            result.update(status="failed", detail="could not read this file")
+            continue
+        result["skipped"] = skipped
+
+        duplicates = 0
+        for document in documents:
+            content_hash = _content_hash(document)
+            existing = await db.scalar(
+                select(Source.id).where(Source.project_id == pid, Source.content_hash == content_hash).limit(1)
+            )
+            if existing:
+                duplicates += 1
+                continue
+
+            source = Source(
+                id=uuid.uuid4(),
+                project_id=pid,
+                external_id=document.path[:1000],
+                title=document.title[:500],
+                mime_type=document.mime_type,
+                content_hash=content_hash,
+            )
+            passages = await run_in_threadpool(_passages, document, project_id, source.id, kind)
+            if not passages:
+                result["skipped"].append({"path": document.path, "reason": "no readable text (a scanned PDF needs OCR first)"})
+                continue
+            if total_passages + len(passages) > MAX_PASSAGES_PER_REQUEST:
+                result["skipped"].append({"path": document.path, "reason": "upload limit reached; add it in a separate upload"})
+                continue
+
+            db.add(source)
+            await db.flush()
+            db.add_all(passages)
+            await db.flush()
+            total_passages += len(passages)
+            result["passages"] += len(passages)
+            result["sources"].append(_source_payload(source, len(passages)))
+
+        await db.commit()
+
+        if not result["sources"]:
+            if duplicates and duplicates == len(documents):
+                result.update(status="duplicate", detail="already in this project")
+            elif documents or result["skipped"]:
+                reasons = {s["reason"] for s in result["skipped"]}
+                result.update(status="skipped", detail="; ".join(sorted(reasons)) or "nothing new to import")
+            else:
+                result.update(status="skipped", detail="the archive has no supported files")
+        elif duplicates:
+            result["detail"] = f"{duplicates} file(s) inside were already in this project"
+
+    return {
+        "project_id": project_id,
+        "files": results,
+        "sources_created": sum(len(r["sources"]) for r in results),
+        "passages_created": total_passages,
+    }
+
+
+@router.get("", response_model=List[Dict[str, Any]])
+async def list_sources(project_id: str, db: AsyncSession = Depends(get_db)):
+    """Sources in a project, newest first, with how many passages each one produced."""
+    project_id = _validate_project_id(project_id)
+    passages = (
+        select(func.count(FeedbackItem.id))
+        .where(FeedbackItem.source_id == Source.id)
+        .correlate(Source)
+        .scalar_subquery()
+    )
+    rows = (
+        await db.execute(
+            select(Source, passages.label("passages"))
+            .where(Source.project_id == project_uuid(project_id))
+            .order_by(Source.created_at.desc())
+        )
+    ).all()
+    return [_source_payload(source, count or 0) for source, count in rows]
+
+
+@router.delete("/{source_id}", response_model=Dict[str, Any])
+async def delete_source(source_id: uuid.UUID, project_id: str, db: AsyncSession = Depends(get_db)):
+    """Remove a source and its passages from the project. Themes are rebuilt on the next analysis."""
+    project_id = _validate_project_id(project_id)
+    source = await db.scalar(select(Source).where(Source.id == source_id, Source.project_id == project_uuid(project_id)))
+    if source is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Source not found in this project.")
+    removed = await db.execute(delete(FeedbackItem).where(FeedbackItem.source_id == source_id))
+    await db.execute(delete(Source).where(Source.id == source_id))
+    await db.commit()
+    return {"deleted": str(source_id), "passages_removed": removed.rowcount or 0}

@@ -101,9 +101,22 @@ Human PM Approves ──► Automated PRD Generation & GitHub Issue Creation
 The triage UI has two kinds of workspace:
 
 - **Demo benchmark** (pinned in the sidebar, opened by default on a first visit): the 300 labelled items loaded by `seed.py`, with the live quality metrics (P@3, acceptance rate, citation validity, ARR at risk). This is the workspace to use for judging and the demo.
-- **Your own projects:** named project spaces with project-scoped document uploads, live browser meeting transcription, a source library, project-filtered theme analysis, evidence review, and a human-approved GitHub issue launch. Project and source metadata is stored in the browser; uploaded content is sent to the API and tagged with its project ID, and each analysis only clusters that project's feedback. Meeting transcripts are saved to the project library and downloaded as Markdown; captured audio is also downloaded as a WebM file. Live transcription uses the browser's SpeechRecognition implementation (Chrome or Edge recommended).
+- **Your own projects:** named project spaces with file and folder uploads, live browser meeting transcription, a source library, project-filtered theme analysis, evidence review, and a human-approved GitHub issue launch. Projects are listed in the browser; uploaded sources and their passages are stored in the database (`sources` and `feedback_items`), and each analysis only clusters that project's passages. Meeting transcripts are saved to the project library and downloaded as Markdown; captured audio is also downloaded as a WebM file. Live transcription uses the browser's SpeechRecognition implementation (Chrome or Edge recommended).
 
 A project can target its own GitHub `owner/repo`; if none is set, the backend uses `GITHUB_REPO_OWNER` and `GITHUB_REPO_NAME`. Without `GITHUB_TOKEN`, approving a theme still generates its PRD and the UI states that no issue was created — Motif never invents issue URLs.
+
+**Adding sources to a project.** Use **Upload files** or **Import folder** (for example an Obsidian vault). The backend reads:
+
+| Format | How it is read |
+| :--- | :--- |
+| PDF, Word (`.docx`), PowerPoint (`.pptx`), Excel (`.xlsx`), HTML | Converted to Markdown with [MarkItDown](https://github.com/microsoft/markitdown), keeping headings, lists and tables |
+| Markdown, text | Read directly; Obsidian front matter, `[[wiki links]]`, `![[embeds]]` and `%%comments%%` are cleaned up |
+| CSV, JSON | If a column holds the feedback (`feedback`, `comment`, `message`, `text`, `review`…), each row becomes one item and `customer`, `plan`/`tier` and `arr`/`mrr` columns carry into revenue at risk. Otherwise the table is read as text |
+| `.zip` | Every supported file inside is imported; hidden folders such as `.obsidian` are skipped |
+
+Each document is split into passages of one idea each (a paragraph, a bullet point, a speaker's turn, a table row), up to about 900 characters so they fit the embedding model. Uploading the same content twice is detected and skipped. Scanned PDFs have no text layer and need OCR first. Limits: 25 MB per file, 100 files per request; the UI sends large folders in batches. Themes built from documents have no ARR attached, so they are ranked by how many passages mention them, and each quote shows the document it came from.
+
+To try it, create a project and upload everything in [`data/demo-sources/`](data/demo-sources): an interview (Word), a renewal call transcript (Markdown), NPS comments (PDF), a business review (PowerPoint), a support-ticket export with ARR (CSV) and a small Obsidian vault (.zip). The same five problems appear across them in different words, so the analysis should group them into cross-source themes.
 
 **Existing databases:** a fresh setup needs no extra step, because `scripts/init-db.sql` already includes the project columns. If your database was created before project workspaces were added, either reset it with `docker compose down -v` (this deletes its data), or add the columns with:
 
@@ -115,7 +128,7 @@ docker compose exec backend alembic stamp 001_initial_schema
 docker compose exec backend alembic upgrade head
 ```
 
-**Google Drive note:** The UI records a folder scope locally but does not yet authenticate to Google or sync Drive contents. `GoogleDriveConnector` is still a stub; Google OAuth credentials, token handling, folder listing/export, and a sync endpoint must be implemented before using this as a real Drive connection. The interface says so rather than claiming files were imported. Uploaded files are currently parsed as text; binary Office/PDF extraction is not included.
+**Google Drive note:** The UI records a folder scope locally but does not yet authenticate to Google or sync Drive contents. `GoogleDriveConnector` is still a stub; Google OAuth credentials, token handling, folder listing/export, and a sync endpoint must be implemented before using this as a real Drive connection. The interface says so rather than claiming files were imported. To bring in Drive documents today, download them and use Upload files.
 
 ---
 
@@ -308,7 +321,7 @@ pytest
 - `triage-ui/` was scaffolded with `create-next-app` (MIT). The config files, `public/*.svg`, `src/app/favicon.ico` and `triage-ui/README.md` come from that template. `triage-ui/AGENTS.md` and `CLAUDE.md` are generated automatically by `next dev`.
 
 **Libraries** (installed from `requirements.txt` and `triage-ui/package.json`, not copied into the repo)
-- Backend: FastAPI (MIT), SQLAlchemy (MIT), Alembic (MIT), asyncpg (Apache-2.0), pgvector-python (MIT), scikit-learn (BSD-3-Clause), sentence-transformers (Apache-2.0), httpx (BSD-3-Clause), Pydantic (MIT).
+- Backend: FastAPI (MIT), SQLAlchemy (MIT), Alembic (MIT), asyncpg (Apache-2.0), pgvector-python (MIT), scikit-learn (BSD-3-Clause), sentence-transformers (Apache-2.0), httpx (BSD-3-Clause), Pydantic (MIT), MarkItDown (MIT) for document import.
 - Frontend: Next.js (MIT), React (MIT), Tailwind CSS (MIT), lucide-react icons (ISC).
 
 **Models, services and images**
@@ -317,6 +330,7 @@ pytest
 - Database image: `pgvector/pgvector:pg16` (pgvector is under the PostgreSQL License).
 
 **Dataset**
+- `data/demo-sources/` is **synthetic** too: the companies (Kestrel Health, Brightline Freight, Halcyon Bank and others) and people in it are invented for this project.
 - `data/seed/corpus_300.json` is **synthetic**, generated by `seed.py` for this project. Company and person names in it (Acme Global, Globex, Initech, etc.) are fictional placeholders. No real customer data is used.
 
 **AI assistance**

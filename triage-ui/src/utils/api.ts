@@ -1,7 +1,14 @@
-import { ApprovalResult, EvalMetrics, ProjectSource, Theme, UploadResult, UploadedSource } from './types';
+import { getAccessToken } from './supabase';
+import { ApprovalResult, EvalMetrics, ProjectSource, ServerProject, Theme, UploadResult, UploadedSource } from './types';
+
+export const SIGN_IN_REQUIRED = 'motif:sign-in-required';
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`/api/v1${path}`, init);
+  const token = await getAccessToken();
+  const headers = new Headers(init?.headers);
+  if (token) headers.set('Authorization', `Bearer ${token}`);
+  const response = await fetch(`/api/v1${path}`, { ...init, headers });
+  if (response.status === 401 && token !== null && typeof window !== 'undefined') window.dispatchEvent(new Event(SIGN_IN_REQUIRED));
   if (!response.ok) {
     const body = await response.json().catch(() => ({}));
     throw new Error(body.detail || `Request failed (${response.status})`);
@@ -12,12 +19,31 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 export const fetchThemes = (projectId?: string) => request<Theme[]>(`/themes${projectId ? `?project_id=${encodeURIComponent(projectId)}` : ''}`);
 const scopeQuery = (projectId?: string) => (projectId ? `?project_id=${encodeURIComponent(projectId)}` : '');
 // projectId undefined = the labelled demo corpus loaded by seed.py
+export type PipelineProgress = { status: 'idle' | 'running' | 'failed'; stage: 'embedding' | 'clustering' | 'labelling' | 'saving' | null; done: number; total: number; elapsed_seconds: number | null; error: string | null; last_result: PipelineResult | null };
 export type PipelineResult = { themes_created?: number; duration_seconds?: number; project_id?: string | null; [key: string]: unknown };
-export const runPipeline = (projectId?: string) => request<PipelineResult>('/pipeline/run', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ batch_size: 100, project_id: projectId ?? null }) });
+const pipelineStatus = (projectId?: string) => request<PipelineProgress>(`/pipeline/status${scopeQuery(projectId)}`);
+// projectId undefined = the labelled demo corpus loaded by seed.py.
+// The run happens on the server in the background; this polls its progress and resolves with the result.
+export async function runPipeline(projectId?: string, onProgress?: (progress: PipelineProgress) => void): Promise<PipelineResult> {
+  const started = await request<{ status: string }>('/pipeline/run?background=true', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ batch_size: 100, project_id: projectId ?? null }) });
+  if (started.status !== 'running') throw new Error('The analysis did not start.');
+  let failures = 0;
+  for (;;) {
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    let progress: PipelineProgress;
+    try { progress = await pipelineStatus(projectId); failures = 0; } catch (cause) {
+      if (++failures >= 5) throw cause; // tolerate brief hiccups; give up if the API stays unreachable
+      continue;
+    }
+    onProgress?.(progress);
+    if (progress.status === 'failed') throw new Error(progress.error || 'The analysis failed.');
+    if (progress.status === 'idle' && progress.last_result) return progress.last_result;
+  }
+}
 export const fetchMetrics = (projectId?: string) => request<EvalMetrics>(`/metrics/eval${scopeQuery(projectId)}`);
 export const approveTheme = (id: string, title?: string, repo?: string, summary?: string) => request<ApprovalResult>(`/themes/${id}/approve`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pm_user_id: 'workspace_user', ...(title ? { final_title: title } : {}), ...(summary ? { final_summary: summary } : {}), ...(repo ? { github_repo: repo } : {}) }) });
 export const rejectTheme = (id: string) => request<{ status: string }>(`/themes/${id}/reject?pm_user_id=workspace_user`, { method: 'POST' });
-export const fetchPipelineStatus = () => request<{ status: string; last_result?: PipelineResult | null }>('/pipeline/status');
+export const fetchPipelineStatus = (projectId?: string) => pipelineStatus(projectId);
 
 // Project sources: files are extracted, split into passages and stored on the backend
 export async function uploadSources(files: { file: Blob; name: string }[], projectId: string, projectName?: string, kind: 'document' | 'meeting' = 'document') {
@@ -41,3 +67,8 @@ export async function ingestSource(source: ProjectSource, projectId: string, pro
   if (first?.status === 'failed' || first?.status === 'skipped') throw new Error(`${source.name}: ${first.detail || 'could not be imported'}`);
   return first?.sources[0]?.id ?? null;
 }
+
+// The signed-in user's projects, kept on the server so they follow the account
+export const fetchProjects = () => request<ServerProject[]>('/projects');
+export const saveProject = (project: { id: string; name: string; repo?: string }) =>
+  request<ServerProject>('/projects', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: project.id, name: project.name, github_repo: project.repo || null }) });

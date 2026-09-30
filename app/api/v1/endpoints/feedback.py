@@ -1,11 +1,13 @@
 import json
 import uuid
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from app.api.deps import get_db
+from app.core.auth import CurrentUser, get_current_user
+from app.core.projects import authorize_project
 from app.models.feedback import FeedbackItem
 from app.core.normalization import normalize_and_deduplicate
 from app.schemas.feedback import FeedbackItemCreate, FeedbackItemResponse
@@ -17,6 +19,7 @@ router = APIRouter(prefix="/feedback", tags=["Feedback"])
 async def upload_feedback_file(
     file: UploadFile = File(...),
     db: AsyncSession = Depends(get_db),
+    user: Optional[CurrentUser] = Depends(get_current_user),
 ):
     """
     Upload raw JSON or CSV feedback file.
@@ -58,6 +61,14 @@ async def upload_feedback_file(
     # Execute normalization & deduplication engine
     canonical_items, dupes_found = normalize_and_deduplicate(raw_items)
 
+    # Signed-in users may only add feedback to their own projects
+    if user is not None:
+        project_ids = {item.metadata.get("project_id") for item in canonical_items}
+        if None in project_ids or "" in project_ids:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Each record needs metadata.project_id when signed in.")
+        for pid in project_ids:
+            await authorize_project(db, pid, user)
+
     # Persist to database
     db_items: List[FeedbackItem] = []
     for item in canonical_items:
@@ -93,10 +104,15 @@ async def list_feedback_items(
     limit: int = 100,
     offset: int = 0,
     source_type: str | None = None,
+    project_id: str | None = None,
     db: AsyncSession = Depends(get_db),
+    user: Optional[CurrentUser] = Depends(get_current_user),
 ):
     """List ingested feedback items with pagination and optional source_type filter."""
+    await authorize_project(db, project_id, user)
     query = select(FeedbackItem).offset(offset).limit(limit)
+    if user is not None or project_id is not None:
+        query = query.where(FeedbackItem.project_id == project_id if project_id is not None else FeedbackItem.project_id.is_(None))
     if source_type:
         query = query.where(FeedbackItem.source_type == source_type)
 

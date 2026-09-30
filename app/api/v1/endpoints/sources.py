@@ -19,6 +19,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.concurrency import run_in_threadpool
 
 from app.api.deps import get_db
+from app.core.auth import CurrentUser, get_current_user
+from app.core.projects import authorize_project, ensure_project, project_uuid, validate_project_id
 from app.core.chunking import chunk_text
 from app.core.extraction import MAX_FILE_BYTES, ExtractedDocument, ExtractionError, extract_file
 from app.core.normalization import clean_text, detect_churn_intent, normalize_and_deduplicate
@@ -32,35 +34,6 @@ router = APIRouter(prefix="/sources", tags=["Sources"])
 MAX_FILES_PER_REQUEST = 100
 MAX_PASSAGES_PER_REQUEST = 10_000
 SOURCE_KINDS = {"document", "note", "meeting", "table"}
-# Project ids that are not UUIDs (older browsers' fallback ids) map to a stable UUID
-PROJECT_NAMESPACE = uuid.UUID("6f0f5d4e-8a57-4d0e-9a53-5b7f3c1d2e10")
-
-
-def project_uuid(project_id: str) -> uuid.UUID:
-    try:
-        return uuid.UUID(project_id)
-    except ValueError:
-        return uuid.uuid5(PROJECT_NAMESPACE, project_id)
-
-
-def _validate_project_id(project_id: str) -> str:
-    project_id = (project_id or "").strip()
-    if not project_id or len(project_id) > 255 or project_id.startswith("__"):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="A project id is required. The demo benchmark cannot take uploads.")
-    return project_id
-
-
-async def _ensure_project(db: AsyncSession, project_id: str, name: Optional[str]) -> uuid.UUID:
-    pid = project_uuid(project_id)
-    stmt = insert(Project).values(id=pid, name=(name or "").strip()[:200] or "Untitled project")
-    if name and name.strip():
-        stmt = stmt.on_conflict_do_update(index_elements=[Project.id], set_={"name": name.strip()[:200]})
-    else:
-        stmt = stmt.on_conflict_do_nothing(index_elements=[Project.id])
-    await db.execute(stmt)
-    return pid
-
-
 def _content_hash(document: ExtractedDocument) -> str:
     payload = document.text if not document.rows else json.dumps(document.rows, sort_keys=True, ensure_ascii=False)
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
@@ -140,6 +113,7 @@ async def upload_sources(
     kind: str = Form(default="document"),
     files: List[UploadFile] = File(...),
     db: AsyncSession = Depends(get_db),
+    user: Optional[CurrentUser] = Depends(get_current_user),
 ):
     """
     Add files to a project. Accepts PDF, Word, PowerPoint, Excel, HTML, Markdown,
@@ -147,12 +121,13 @@ async def upload_sources(
     Each file is reported as imported, duplicate, skipped or failed; one bad file
     does not stop the others.
     """
-    project_id = _validate_project_id(project_id)
+    project_id = validate_project_id(project_id)
     kind = kind if kind in SOURCE_KINDS else "document"
     if len(files) > MAX_FILES_PER_REQUEST:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Upload at most {MAX_FILES_PER_REQUEST} files at a time.")
 
-    pid = await _ensure_project(db, project_id, project_name)
+    await authorize_project(db, project_id, user)
+    pid = await ensure_project(db, project_id, project_name, user)
     await db.commit()
 
     results: List[Dict[str, Any]] = []
@@ -230,9 +205,10 @@ async def upload_sources(
 
 
 @router.get("", response_model=List[Dict[str, Any]])
-async def list_sources(project_id: str, db: AsyncSession = Depends(get_db)):
+async def list_sources(project_id: str, db: AsyncSession = Depends(get_db), user: Optional[CurrentUser] = Depends(get_current_user)):
     """Sources in a project, newest first, with how many passages each one produced."""
-    project_id = _validate_project_id(project_id)
+    project_id = validate_project_id(project_id)
+    await authorize_project(db, project_id, user)
     passages = (
         select(func.count(FeedbackItem.id))
         .where(FeedbackItem.source_id == Source.id)
@@ -250,9 +226,10 @@ async def list_sources(project_id: str, db: AsyncSession = Depends(get_db)):
 
 
 @router.delete("/{source_id}", response_model=Dict[str, Any])
-async def delete_source(source_id: uuid.UUID, project_id: str, db: AsyncSession = Depends(get_db)):
+async def delete_source(source_id: uuid.UUID, project_id: str, db: AsyncSession = Depends(get_db), user: Optional[CurrentUser] = Depends(get_current_user)):
     """Remove a source and its passages from the project. Themes are rebuilt on the next analysis."""
-    project_id = _validate_project_id(project_id)
+    project_id = validate_project_id(project_id)
+    await authorize_project(db, project_id, user)
     source = await db.scalar(select(Source).where(Source.id == source_id, Source.project_id == project_uuid(project_id)))
     if source is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Source not found in this project.")

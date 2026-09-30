@@ -45,6 +45,9 @@ class Settings(BaseSettings):
     SUPABASE_URL: str | None = None
     SUPABASE_PUBLISHABLE_KEY: str | None = None
     SUPABASE_SECRET_KEY: str | None = None  # server-side only
+    SUPABASE_JWT_SECRET: str | None = None  # only for older projects that sign tokens with HS256
+    # Sign-in required on the API. Default (unset): on whenever SUPABASE_URL is set.
+    AUTH_REQUIRED: bool | None = None
 
     GITHUB_TOKEN: str | None = None
     GITHUB_REPO_OWNER: str | None = None

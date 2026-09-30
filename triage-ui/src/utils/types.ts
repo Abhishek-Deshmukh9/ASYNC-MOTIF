@@ -25,6 +25,8 @@ export type ProjectSource = {
   passages?: number; // how many passages the backend split it into
 };
 
+export type ServerProject = { id: string; name: string; github_repo: string | null; created_at: string | null };
+
 export type Project = { id: string; name: string; repo?: string; driveFolder?: string; sources: ProjectSource[] };
 
 // Benchmark metrics from GET /api/v1/metrics/eval. A metric is null when there is nothing

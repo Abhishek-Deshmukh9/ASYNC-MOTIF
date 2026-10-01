@@ -1,198 +1,171 @@
 'use client';
 
 import { useState } from 'react';
-import { ChevronDown, ChevronRight, Info, ShieldCheck, TriangleAlert } from 'lucide-react';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 import type { ScoreBreakdown as Breakdown, ScoreSignal } from '@/utils/types';
 
-// One colour per signal, used in the bar and next to each row so the two read together
-const COLORS: Record<string, string> = {
-  reach: 'bg-teal-600',
-  revenue: 'bg-emerald-500',
-  urgency: 'bg-rose-500',
-  breadth: 'bg-sky-500',
-  momentum: 'bg-amber-500',
-  strategic: 'bg-violet-500',
-};
-const color = (key: string) => COLORS[key] ?? 'bg-slate-400';
+// Same order on every theme so a PM can compare down the list
+const ORDER = ['reach', 'revenue', 'urgency', 'breadth', 'momentum', 'strategic'];
+// The letter each parameter goes by in the formula
+const SYMBOLS: Record<string, string> = { reach: 'R', revenue: 'V', urgency: 'U', breadth: 'S', momentum: 'M', strategic: 'E' };
+const pts = (n: number) => (Math.abs(n - Math.round(n)) < 0.05 ? Math.round(n).toString() : n.toFixed(1));
 
 type Row = Record<string, unknown>;
 const text = (value: unknown) => (typeof value === 'string' || typeof value === 'number' ? String(value) : '');
 
 function evidenceLine(key: string, row: Row): string {
   const name = text(row.name);
+  const mentions = (n: unknown) => `${text(n)} mention${n === 1 ? '' : 's'}`;
   switch (key) {
-    case 'reach': return `${name} · ${text(row.kind)} · ${text(row.mentions)} mention${row.mentions === 1 ? '' : 's'}`;
-    case 'revenue': return `${name}${row.tier ? ` · ${text(row.tier)}` : ''} · $${Number(row.arr ?? 0).toLocaleString('en-US')} ARR`;
+    case 'reach': return `${name}, ${mentions(row.mentions)}`;
+    case 'revenue': return `${name}${row.tier ? ` (${text(row.tier)})` : ''}: $${Number(row.arr ?? 0).toLocaleString('en-US')} a year`;
     case 'urgency': return `${name}: “${text(row.text)}”`;
-    case 'breadth': return `${name} · ${text(row.mentions)} mention${row.mentions === 1 ? '' : 's'}`;
+    case 'breadth': return `${name}, ${mentions(row.mentions)}`;
     case 'momentum': return `${name}: ${text(row.mentions)}`;
     default: return name;
   }
 }
 
-// Same order on every card so a PM can compare themes down the list
-const ORDER = ['reach', 'revenue', 'urgency', 'breadth', 'momentum', 'strategic'];
-const pts = (n: number) => (Math.abs(n - Math.round(n)) < 0.05 ? Math.round(n).toString() : n.toFixed(1));
-
-/** Every parameter behind a theme's rank, written out: its value from the data and the points it earned. */
-export function ScoreStrip({ breakdown, score }: { breakdown?: Breakdown | null; score?: number | null }) {
+/** The parameters behind a theme's rank, as a small table: what the data says and the points it earned. */
+export function ScoreStrip({ breakdown }: { breakdown?: Breakdown | null; score?: number | null }) {
   if (!breakdown) return null;
   const top = [...breakdown.signals].sort((a, b) => b.points - a.points)[0];
-  const thin = breakdown.confidence.level === 'thin';
   return (
-    <div className="mt-3" data-testid="score-strip">
-      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1 text-[11px]">
-        <span className="font-semibold text-slate-900">Score {pts(score ?? breakdown.priority_score)} / 100</span>
-        <span className="text-slate-400">ranked #{breakdown.rank} of {breakdown.of}</span>
-        {thin && <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] text-amber-800" title="Fewer than 2 messages contain a verified quote, or fewer than 3 mentions">Thin evidence</span>}
-      </div>
-      <div className="mt-2 grid grid-cols-2 gap-2 md:grid-cols-3">
-        {ORDER.map((key) => {
-          const signal = breakdown.signals.find((item) => item.key === key);
-          if (signal) {
-            const max = signal.max_points ?? signal.weight * 100;
-            const isTop = top && top.key === key && signal.points > 0;
-            return (
-              <div key={key} data-testid={`param-${key}`} title={`${signal.label}: ${signal.display}. ${signal.how}`} className={`rounded-lg border px-2.5 py-2 ${isTop ? 'border-teal-600 bg-teal-50/60' : 'border-slate-200 bg-white'}`}>
-                <div className="flex flex-wrap items-center justify-between gap-x-1">
-                  <span className="text-[9px] font-semibold uppercase tracking-[.12em] text-slate-500">{signal.label}</span>
-                  {isTop && <span className="text-[9px] font-medium text-teal-700">top factor</span>}
-                </div>
-                <div className="mt-1 truncate text-sm font-semibold text-slate-900">{signal.value ?? signal.display}</div>
-                {signal.note && <div className="line-clamp-2 text-[10px] leading-4 text-slate-500">{signal.note}</div>}
-                <div className="mt-1.5 font-mono text-[10px] text-slate-700"><span className="font-semibold">+{pts(signal.points)}</span><span className="text-slate-400"> of {pts(max)} pts</span></div>
-              </div>
-            );
-          }
-          const dropped = breakdown.dropped.find((item) => item.key === key);
-          if (!dropped) return null;
+    <dl className="mt-4 grid grid-cols-2 gap-px overflow-hidden rounded-md border border-rule bg-rule sm:grid-cols-3" data-testid="score-strip">
+      {ORDER.map((key) => {
+        const signal = breakdown.signals.find((item) => item.key === key);
+        if (signal) {
+          const max = signal.max_points ?? signal.weight * 100;
+          const isTop = top && top.key === key && signal.points > 0;
           return (
-            <div key={key} data-testid={`param-${key}`} title={dropped.reason} className="rounded-lg border border-dashed border-slate-200 px-2.5 py-2 text-slate-400">
-              <div className="text-[9px] font-semibold uppercase tracking-[.12em]">{dropped.label}</div>
-              <div className="mt-1 text-[12px] font-medium">Not used</div>
-              <div className="text-[10px] leading-4">{dropped.short ?? dropped.reason}</div>
-              <div className="mt-1.5 font-mono text-[10px]">0 pts</div>
+            <div key={key} data-testid={`param-${key}`} title={signal.how} className={`bg-surface px-3 py-2.5 ${isTop ? 'shadow-[inset_0_2px_0_var(--color-action)]' : ''}`}>
+              <dt className="flex items-baseline justify-between gap-2 text-[12px] text-muted">
+                <span>{signal.label}</span>
+                {isTop && <span className="text-[11px] font-medium text-action">biggest factor</span>}
+              </dt>
+              <dd className="mt-0.5 truncate text-[15px] font-semibold text-ink">{signal.value ?? signal.display}</dd>
+              {signal.note && <dd className="line-clamp-2 text-[12px] leading-snug text-muted">{signal.note}</dd>}
+              <dd className="mt-1 text-[12px] text-ink"><span className="font-semibold">+{pts(signal.points)}</span><span className="text-muted"> of {pts(max)}</span></dd>
             </div>
           );
-        })}
-      </div>
-    </div>
+        }
+        const dropped = breakdown.dropped.find((item) => item.key === key);
+        if (!dropped) return null;
+        return (
+          <div key={key} data-testid={`param-${key}`} title={dropped.reason} className="bg-paper px-3 py-2.5">
+            <dt className="text-[12px] text-muted">{dropped.label}</dt>
+            <dd className="mt-0.5 text-[14px] font-medium text-faint">Not used</dd>
+            <dd className="text-[12px] leading-snug text-muted">{dropped.short ?? dropped.reason}</dd>
+          </div>
+        );
+      })}
+    </dl>
   );
 }
 
-/** One line above the list: what the ranking depends on and how much each part can add. */
+/** One expandable line above the list: what the ranking depends on and how much each part can add. */
 export function RankingKey({ breakdown }: { breakdown?: Breakdown | null }) {
   if (!breakdown) return null;
+  const used = ORDER.map((key) => breakdown.signals.find((item) => item.key === key)).filter(Boolean) as ScoreSignal[];
   return (
-    <div className="border-b border-slate-200 bg-slate-50/70 px-5 py-3 text-[11px] leading-5 text-slate-600 sm:px-6" data-testid="ranking-key">
-      <div><span className="font-semibold text-slate-800">How themes are ranked</span> <span className="text-slate-400">({breakdown.profile_label})</span>: the score out of 100 adds up these parameters.</div>
-      <div className="mt-1.5 flex flex-wrap gap-1.5">
-        {ORDER.map((key) => {
-          const signal = breakdown.signals.find((item) => item.key === key);
-          if (signal) return <span key={key} className="rounded-full border border-slate-200 bg-white px-2 py-0.5">{signal.label} <span className="font-mono text-slate-500">up to {pts(signal.max_points ?? signal.weight * 100)}</span></span>;
-          const dropped = breakdown.dropped.find((item) => item.key === key);
-          return dropped ? <span key={key} title={dropped.reason} className="rounded-full border border-dashed border-slate-200 px-2 py-0.5 text-slate-400">{dropped.label}: not used, {dropped.short ?? 'no data'}</span> : null;
-        })}
+    <details className="group border-b border-rule px-5 py-3.5 text-[13px] text-muted sm:px-7" data-testid="ranking-key">
+      <summary className="flex cursor-pointer list-none items-start gap-1.5 text-ink marker:hidden">
+        <ChevronRight size={15} className="mt-0.5 shrink-0 text-muted transition-transform group-open:rotate-90"/>
+        <span>
+          Ranked for {breakdown.profile_label} by{' '}
+          {used.map((signal, index) => (
+            <span key={signal.key}>
+              {signal.label.toLowerCase()} <span className="tnum text-muted">({pts(signal.max_points ?? signal.weight * 100)})</span>
+              {index < used.length - 2 ? ', ' : index === used.length - 2 ? ' and ' : ''}
+            </span>
+          ))}
+          . The numbers in brackets are the most points each can add.
+        </span>
+      </summary>
+      <div className="mt-3 max-w-[72ch] space-y-2 pl-6 leading-relaxed">
+        <p>Each parameter earns its points by how a theme compares with the other {breakdown.of - 1} theme{breakdown.of === 2 ? '' : 's'} in this project: the highest gets the full amount, the lowest gets none, and a theme with none of something (no churn talk, a falling trend) gets nothing for it. The points add up to the score out of 100.</p>
+        {breakdown.dropped.length > 0 && (
+          <p>Not used here: {breakdown.dropped.map((item) => `${item.label.toLowerCase()} (${item.short ?? item.reason})`).join(', ')}. Their points were shared among the others.</p>
+        )}
+        <p>Open a theme to see the customers, quotes and sources behind every number, and the formula with its own values.</p>
       </div>
-      <p className="mt-1.5 text-[10px] text-slate-500">Each parameter earns its points by how the theme compares with the rest of the {breakdown.of} themes in this project: the highest gets the full amount, the lowest gets none, and a theme with none of something (no churn talk, a falling trend) gets 0 for it. Open Review &amp; edit for the proof behind each number and the formula.</p>
-    </div>
+    </details>
   );
 }
 
 function SignalRow({ signal }: { signal: ScoreSignal }) {
   const [open, setOpen] = useState(false);
+  const max = signal.max_points ?? signal.weight * 100;
   return (
-    <li className="rounded-lg border border-slate-200 bg-white">
-      <button onClick={() => setOpen(!open)} aria-expanded={open} className="flex w-full items-center gap-3 px-3 py-2.5 text-left">
-        <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${color(signal.key)}`} />
+    <li className="border-b border-rule last:border-b-0">
+      <button onClick={() => setOpen(!open)} aria-expanded={open} className="flex w-full items-center gap-3 py-2.5 text-left">
         <span className="min-w-0 flex-1">
-          <span className="flex items-baseline justify-between gap-2">
-            <span className="text-[11px] font-semibold text-slate-800">{signal.label}</span>
-            <span className="font-mono text-[10px] text-slate-500">+{signal.points.toFixed(1)} <span className="text-slate-300">/ {(signal.weight * 100).toFixed(0)}</span></span>
-          </span>
-          <span className="mt-0.5 block text-[11px] text-slate-600">{signal.display}</span>
-          <span className="mt-1.5 block h-1 overflow-hidden rounded-full bg-slate-100"><span className={`block h-full ${color(signal.key)}`} style={{ width: `${Math.round(signal.percentile * 100)}%` }} /></span>
+          <span className="block text-[13px] font-semibold text-ink">{signal.label}</span>
+          <span className="block text-[13px] text-muted">{signal.display}</span>
         </span>
-        {open ? <ChevronDown size={14} className="shrink-0 text-slate-400" /> : <ChevronRight size={14} className="shrink-0 text-slate-400" />}
+        <span className="tnum shrink-0 text-[13px] text-ink"><span className="font-semibold">+{pts(signal.points)}</span><span className="text-muted"> of {pts(max)}</span></span>
+        {open ? <ChevronDown size={15} className="shrink-0 text-muted"/> : <ChevronRight size={15} className="shrink-0 text-muted"/>}
       </button>
       {open && (
-        <div className="space-y-3 border-t border-slate-100 px-3 py-3 text-[11px] leading-5 text-slate-600">
+        <div className="space-y-3 pb-3.5 text-[13px] leading-relaxed text-muted">
           <div>
-            <div className="text-[10px] font-semibold uppercase tracking-[.14em] text-slate-400">Proof from your data</div>
+            <p className="font-medium text-ink">From your data</p>
             {signal.evidence.length ? (
-              <ul className="mt-1 space-y-1">{signal.evidence.map((row, index) => <li key={index} className="break-words rounded bg-slate-50 px-2 py-1">{evidenceLine(signal.key, row as Row)}</li>)}</ul>
-            ) : <p className="mt-1 text-slate-400">No rows to show: this theme has none for this signal.</p>}
+              <ul className="mt-1 list-disc space-y-0.5 pl-5">{signal.evidence.map((row, index) => <li key={index} className="break-words">{evidenceLine(signal.key, row as Row)}</li>)}</ul>
+            ) : <p className="mt-1">Nothing in this theme for this parameter.</p>}
           </div>
-          <div><div className="text-[10px] font-semibold uppercase tracking-[.14em] text-slate-400">Why this signal</div><p className="mt-0.5">{signal.why}</p></div>
-          <div><div className="text-[10px] font-semibold uppercase tracking-[.14em] text-slate-400">How it is computed</div><p className="mt-0.5">{signal.how}</p></div>
+          <div><p className="font-medium text-ink">Why it counts</p><p>{signal.why}</p></div>
+          <div><p className="font-medium text-ink">How it is worked out</p><p>{signal.how}</p></div>
         </div>
       )}
     </li>
   );
 }
 
-// The letter each signal goes by in the formula
-const SYMBOLS: Record<string, string> = { reach: 'R', revenue: 'V', urgency: 'U', breadth: 'S', momentum: 'M', strategic: 'E' };
-
 /** The score written out as maths, then again with this theme's numbers plugged in. */
 function Formula({ breakdown }: { breakdown: Breakdown }) {
   const terms = breakdown.signals;
-  const symbolic = terms.map((s) => `${s.weight.toFixed(2)}·${SYMBOLS[s.key] ?? s.key}\u0302`);
-  const plugged = terms.map((s) => `${s.weight.toFixed(2)}×${s.percentile.toFixed(2)}`);
-  // Each term stays on one line; lines break between terms so nothing is cut off on narrow screens
-  const line = (lead: string, parts: string[], className = '') => (
-    <div className={`flex flex-wrap gap-x-1 ${className}`}>
+  const total = terms.reduce((sum, s) => sum + s.points, 0);
+  const line = (lead: string, parts: string[]) => (
+    <div className="flex flex-wrap gap-x-1">
       <span className="whitespace-nowrap">{lead} 100 × (</span>
       {parts.map((part, index) => <span key={index} className="whitespace-nowrap">{part}{index < parts.length - 1 ? ' +' : ')'}</span>)}
     </div>
   );
-  const total = terms.reduce((sum, s) => sum + s.points, 0);
   return (
-    <div className="mt-3 rounded-lg bg-slate-900 px-3 py-3 text-slate-100" data-testid="score-formula">
-      <div className="text-[10px] font-semibold uppercase tracking-[.14em] text-slate-400">The maths</div>
-      <div className="mt-2 space-y-1.5 font-mono text-[11px] leading-5">
-        {line('Score =', symbolic)}
-        {line('=', plugged, 'text-slate-300')}
+    <div className="mt-4 rounded-md bg-paper px-4 py-3.5 text-[13px] text-ink" data-testid="score-formula">
+      <p className="font-semibold">The formula</p>
+      <div className="tnum mt-2 space-y-1">
+        {line('Score =', terms.map((s) => `${s.weight.toFixed(2)}·${SYMBOLS[s.key] ?? s.key}̂`))}
+        {line('=', terms.map((s) => `${s.weight.toFixed(2)}×${s.percentile.toFixed(2)}`))}
         <div className="font-semibold">= {total.toFixed(1)}</div>
       </div>
-      <ul className="mt-2 grid grid-cols-1 gap-x-4 text-[10px] leading-4 text-slate-400 sm:grid-cols-2">
-        {terms.map((s) => <li key={s.key}><span className="font-mono text-slate-200">{SYMBOLS[s.key]}̂</span> = {s.label} ({s.display})</li>)}
-      </ul>
-      <p className="mt-2 text-[10px] leading-4 text-slate-400">
-        Each value x̂ = (rank of this theme&apos;s value − 1) ÷ (N − 1) among the {breakdown.of} themes in this project, so 0 is the lowest and 1 the highest; ties share their average rank, and a value of zero scores 0.
-        {breakdown.dropped.length > 0 && <> Weights were rescaled to add up to 1 because {breakdown.dropped.map((d) => d.label.toLowerCase()).join(', ')} could not be computed.</>}
+      <p className="mt-2.5 text-[12px] leading-relaxed text-muted">
+        {terms.map((s) => `${SYMBOLS[s.key]}̂ is ${s.label.toLowerCase()}`).join(', ')}. Each is this theme&apos;s position among the {breakdown.of} themes, from 0 (lowest) to 1 (highest); none of something counts as 0.
+        {breakdown.dropped.length > 0 && <> Weights were rescaled to add up to 1 because {breakdown.dropped.map((d) => d.label.toLowerCase()).join(' and ')} could not be worked out.</>}
       </p>
     </div>
   );
 }
 
-/** Full explanation for the review dialog: every signal with its proof, what was left out and why. */
+/** Full explanation for the review dialog: every parameter with its proof, what was left out and why. */
 export function ScoreProof({ breakdown }: { breakdown?: Breakdown | null }) {
   if (!breakdown) return null;
   const thin = breakdown.confidence.level === 'thin';
   return (
-    <section className="mt-5" aria-label="Why this theme ranked here" data-testid="score-proof">
+    <section className="mt-6" aria-label="Why this theme ranked here" data-testid="score-proof">
       <div className="flex items-baseline justify-between gap-3">
-        <h3 className="text-[11px] font-semibold uppercase tracking-[.16em] text-slate-500">Why it ranked #{breakdown.rank} of {breakdown.of}</h3>
-        <span className="font-mono text-xs font-semibold text-slate-900">{breakdown.priority_score.toFixed(0)}<span className="text-slate-400"> / 100</span></span>
+        <h3 className="text-[15px] font-semibold text-ink">Why it ranked {breakdown.rank} of {breakdown.of}</h3>
+        <span className="tnum text-[13px] text-muted"><span className="text-[17px] font-semibold text-ink">{pts(breakdown.priority_score)}</span> / 100</span>
       </div>
-      <p className="mt-1 text-[11px] leading-5 text-slate-600">{breakdown.verdict}</p>
-      <ul className="mt-3 space-y-2">{breakdown.signals.map((signal) => <SignalRow key={signal.key} signal={signal} />)}</ul>
-
-      <Formula breakdown={breakdown} />
-
+      <ul className="mt-2">{breakdown.signals.map((signal) => <SignalRow key={signal.key} signal={signal} />)}</ul>
       {breakdown.dropped.length > 0 && (
-        <div className="mt-3 rounded-lg border border-dashed border-slate-300 px-3 py-2.5">
-          <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[.14em] text-slate-400"><Info size={11} /> Not used for this project</div>
-          <ul className="mt-1.5 space-y-1 text-[11px] leading-5 text-slate-600">{breakdown.dropped.map((item) => <li key={item.key}><span className="font-medium text-slate-700">{item.label}:</span> {item.reason}</li>)}</ul>
-        </div>
+        <p className="mt-3 text-[13px] leading-relaxed text-muted">Not used for this project: {breakdown.dropped.map((item) => `${item.label.toLowerCase()} (${item.reason.replace(/\.$/, '').toLowerCase()})`).join('; ')}.</p>
       )}
-
-      <div className={`mt-3 flex items-start gap-2 rounded-lg px-3 py-2.5 text-[11px] leading-5 ${thin ? 'bg-amber-50 text-amber-800' : 'bg-emerald-50 text-emerald-900'}`}>
-        {thin ? <TriangleAlert size={13} className="mt-0.5 shrink-0" /> : <ShieldCheck size={13} className="mt-0.5 shrink-0" />}
-        <span>{thin ? 'Thin evidence: ' : 'Well supported: '}{breakdown.confidence.verified_quotes} verified quote{breakdown.confidence.verified_quotes === 1 ? '' : 's'} across {breakdown.confidence.mentions} mentions; cluster cohesion {breakdown.confidence.cohesion.toFixed(2)}.</span>
-      </div>
-      <p className="mt-2 text-[10px] leading-4 text-slate-400">Ranking profile: {breakdown.profile_label}. Weights are product choices shown with every score, not measured constants; no AI model sets a number here.</p>
+      <Formula breakdown={breakdown} />
+      <p className={`mt-3 text-[13px] leading-relaxed ${thin ? 'text-caution' : 'text-muted'}`}>
+        {thin ? 'Thin evidence: ' : 'Evidence: '}{breakdown.confidence.verified_quotes} message{breakdown.confidence.verified_quotes === 1 ? '' : 's'} with a verified quote out of {breakdown.confidence.mentions}. Ranking profile: {breakdown.profile_label}. The weights are product choices, shown with every score; no AI model sets a number here.
+      </p>
     </section>
   );
 }

@@ -1,59 +1,105 @@
 @import "tailwindcss";
 
-:root {
-  --background: #f4f6f8;
-  --foreground: #17202f;
+/* Motif design tokens. One accent (action teal) for the main action only; the marker yellow is
+   reserved for verified customer quotes, which are the thing Motif is about. */
+@theme {
+  --color-paper: #f5f6f8;
+  --color-surface: #ffffff;
+  --color-ink: #1f2633;
+  --color-muted: #5a6372;
+  --color-faint: #8a93a3;
+  --color-rule: #e1e4ea;
+  --color-action: #0e6b5f;
+  --color-action-strong: #0a5249;
+  --color-action-soft: #e4f1ee;
+  --color-marker: #ffe58a;
+  --color-danger: #b42318;
+  --color-danger-soft: #fdecea;
+  --color-caution: #8a5a00;
+  --color-caution-soft: #fff5d6;
+
+  --font-sans: "Schibsted Grotesk Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-serif: "Newsreader Variable", Georgia, "Times New Roman", serif;
 }
 
 html {
-  background: var(--background);
+  background: var(--color-paper);
 }
 
 body {
   min-height: 100vh;
-  background-color: var(--background);
-  color: var(--foreground);
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
 }
 
 ::selection {
-  background: #cce9df;
-  color: #124b43;
+  background: var(--color-marker);
+  color: var(--color-ink);
 }
 
+:focus-visible {
+  outline: 2px solid var(--color-action);
+  outline-offset: 2px;
+}
+
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Buttons: one primary per screen, everything else quiet */
+.btn {
+  @apply inline-flex items-center justify-center gap-1.5 rounded-md border border-rule bg-surface px-3 py-2 text-[13px] font-medium text-ink transition-colors hover:bg-paper disabled:cursor-not-allowed disabled:opacity-45;
+}
+.btn-primary {
+  @apply inline-flex items-center justify-center gap-1.5 rounded-md border border-action bg-action px-3.5 py-2 text-[13px] font-semibold text-white transition-colors hover:bg-action-strong disabled:cursor-not-allowed disabled:opacity-45;
+}
+.btn-text {
+  @apply inline-flex items-center gap-1.5 rounded-md px-2 py-1.5 text-[13px] font-medium text-muted transition-colors hover:bg-paper hover:text-ink disabled:cursor-not-allowed disabled:opacity-45;
+}
+.btn-danger {
+  @apply inline-flex items-center gap-1.5 rounded-md px-2 py-1.5 text-[13px] font-medium text-danger transition-colors hover:bg-danger-soft disabled:cursor-not-allowed disabled:opacity-45;
+}
 .icon-btn {
-  @apply flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:bg-slate-50 hover:text-slate-900;
+  @apply flex h-8 w-8 items-center justify-center rounded-md text-muted transition-colors hover:bg-paper hover:text-ink disabled:opacity-45;
 }
 
 .field {
-  @apply rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-xs text-slate-800 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/10;
+  @apply rounded-md border border-rule bg-surface px-3 py-2 text-[14px] text-ink outline-none transition placeholder:text-faint focus:border-action focus:ring-2 focus:ring-action/15;
+}
+
+.panel {
+  @apply rounded-lg border border-rule bg-surface;
+}
+
+/* The customer's own words: a reading serif with a highlighter mark, like a marked-up transcript */
+.quote {
+  font-family: var(--font-serif);
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--color-ink);
+}
+.marked {
+  background: linear-gradient(transparent 34%, var(--color-marker) 34%, var(--color-marker) 94%, transparent 94%);
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  padding: 0 0.12em;
 }
 
 .modal-backdrop {
-  @apply fixed inset-0 z-50 flex items-center justify-center bg-slate-900/35 p-4 backdrop-blur-sm;
+  @apply fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4;
 }
-
 .modal-card {
-  @apply w-full max-w-md rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl shadow-slate-900/15 sm:p-6;
+  @apply w-full max-w-lg rounded-lg border border-rule bg-surface p-6 shadow-xl shadow-ink/10;
 }
 
-::-webkit-scrollbar {
-  width: 7px;
-  height: 7px;
-}
-
-::-webkit-scrollbar-track {
-  background: #eef1f4;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #cbd3dc;
-  border: 2px solid #eef1f4;
-  border-radius: 999px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #9aa7b6;
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }

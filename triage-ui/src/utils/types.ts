@@ -82,6 +82,7 @@ export type ApprovalResult = {
   github_dispatch?: 'live' | 'simulated';
   github_message?: string | null;
   prd_markdown?: string | null;
+  audit_logged?: boolean; // false for a preview on the read-only shared demo
 };
 
 // A source stored on the backend (POST /sources/upload, GET /sources)

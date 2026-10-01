@@ -58,6 +58,36 @@ Score = 100 × (0.35·R̂ + 0.05·V̂ + 0.15·Û + 0.15·Ŝ + 0.25·M̂ + 0.05·
 If a signal cannot be computed for the project, it is removed and the remaining weights are divided by their sum so
 they still add up to 1: w′ₖ = wₖ ÷ Σⱼ wⱼ over the signals that remain.
 
+**5. Weights that follow the kind of problem**
+
+Each theme is tagged as a **bug**, **security** problem, **UX friction**, **feature request** or **general**, from the
+words its customers used ("crashes", "fails", "please add", "confusing", "password"…). A type is chosen when at least
+30% of the theme's messages use its words (whole words only); on a tie the more urgent kind wins (security, then bug,
+then UX friction, then feature request). The matching words are shown as evidence, and a PM can change the type on any
+theme; that re-weights it and re-ranks the project, and is recorded in its history. No model decides the type.
+
+The type adjusts the company profile's weights instead of replacing them:
+
+w′ₖ(type) = bₖ × mₖ(type) ÷ Σⱼ bⱼ × mⱼ(type)
+
+where bₖ is the base weight (B2B SaaS or developer tools) and mₖ the multiplier below (1 where blank).
+
+| Kind of problem | Reach | Revenue | Churn urgency | Source spread | Momentum | Enterprise | Why |
+|---|---|---|---|---|---|---|---|
+| Bug | ×1.4 | ×0.6 | ×1.3 | | ×2 | ×0.8 | A bug costs more the more people hit it and the faster it spreads, whoever they are |
+| UX friction | ×1.5 | ×0.6 | | ×1.4 | | ×0.6 | Friction matters by how widely it is felt across people and channels |
+| Feature request | | ×1.4 | ×0.6 | ×0.8 | ×0.6 | ×2 | A request is an investment: who is asking counts more than how fast mentions grow |
+| Security | as bug | | | | | | Listed first, whatever the score |
+| General | | | | | | | Base weights unchanged |
+
+**Security goes first, it is not just weighted up.** A bigger weight would still let a widespread feature request
+outrank a security hole. Teams handle this as a separate class of work that is done first (Kanban calls it the
+"expedite" class of service), so Motif lists security problems in a **Fix first** group above the ranked list.
+
+Because every type's weights add up to 1 and every parameter is on the same 0-to-1 scale, all scores stay on the same
+0-to-100 scale and can be compared. Two themes with identical data can rank differently if they are different kinds
+of problem; that is the point, and the card shows which weights each theme was scored with.
+
 **Worked example** (top theme in a test project with 3 themes):
 
 Score = 100 × (0.25×1.00 + 0.30×1.00 + 0.20×1.00 + 0.10×0.50 + 0.10×1.00 + 0.05×1.00) = 95.0
@@ -103,8 +133,9 @@ its cluster is shown next to it. This is a warning beside the score, not a weigh
 - Reach counts named customers or speakers. Feedback with neither (a pasted document) counts per source, and the screen
   says "sources" instead of "customers".
 - GitHub Issues and Slack do not carry event dates into the pipeline yet, so momentum is dropped for them.
-- Severity ("is it a blocker?") and workaround friction need a model to judge the text. They are deliberately **not**
-  in the score yet: when added, they will appear as labelled tags with the supporting quote, never as hidden weights.
+- The kind of problem is matched on English words. Feedback in other languages is tagged General until a PM sets it.
+- The multipliers are product choices like the base weights; Motif records every type change and decision, so they can
+  later be fitted to what PMs actually do.
 - The weights have not been calibrated against real product decisions. Motif records every approve, edit and reject in
   the audit log, so the weights can later be fitted to what product managers actually approve.
 

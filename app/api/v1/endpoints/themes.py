@@ -4,11 +4,16 @@ from typing import Any, Dict, List, Optional
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, desc, func
+import copy
+
+from pydantic import BaseModel
+from sqlalchemy import Integer, desc, func, select
+from sqlalchemy.orm.attributes import flag_modified
 from sqlalchemy.orm import selectinload
 
 from app.api.deps import get_db
 from app.core.auth import CurrentUser, get_current_user
+from app.core.scoring import ISSUE_TYPES, retype_breakdowns
 from app.core.issue_target import DEMO_READ_ONLY_MESSAGE, demo_is_locked, resolve_issue_target
 from app.core.projects import authorize_project, project_uuid
 from app.models.project import Project
@@ -90,7 +95,7 @@ async def list_themes(
     )
     query = (
         select(Theme)
-        .order_by(Theme.priority_score.desc().nulls_last(), desc(Theme.revenue_at_risk), desc(mentions), desc(Theme.created_at))
+        .order_by(Theme.score_breakdown['rank'].astext.cast(Integer).asc().nulls_last(), Theme.priority_score.desc().nulls_last(), desc(Theme.revenue_at_risk), desc(mentions), desc(Theme.created_at))
         .offset(offset)
         .limit(limit)
     )
@@ -520,4 +525,60 @@ async def reject_theme(
         "status": "rejected",
         "theme_id": str(theme.id),
         "message": "Theme rejected and archived from active queue.",
+    }
+
+
+class IssueTypeChange(BaseModel):
+    issue_type: str
+
+
+@router.patch("/{theme_id}/type", response_model=Dict[str, Any])
+async def change_issue_type(
+    theme_id: UUID,
+    body: IssueTypeChange,
+    db: AsyncSession = Depends(get_db),
+    user: Optional[CurrentUser] = Depends(get_current_user),
+):
+    """
+    A PM says what kind of problem a theme really is. Its weights change to that type's (base x multiplier,
+    rescaled) and every theme in the project is re-ranked; Security goes to Fix first. Recorded in the history.
+    """
+    if body.issue_type not in ISSUE_TYPES:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=f"Type must be one of: {', '.join(ISSUE_TYPES)}.")
+    theme = await db.scalar(select(Theme).where(Theme.id == theme_id))
+    if theme is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Theme {theme_id} not found")
+    await authorize_project(db, theme.project_id, user, need="edit")
+    if demo_is_locked(project_id=theme.project_id, signed_in=user is not None, writable=settings.DEMO_WRITABLE):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=DEMO_READ_ONLY_MESSAGE)
+    theme = await _lock_undecided(db, theme_id)
+    if not theme.score_breakdown or not theme.score_breakdown.get("signals"):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="This theme has no score yet. Analyze the project again first.")
+
+    # Every scored theme in the same project, locked, so two people re-typing at once are handled in turn
+    same_scope = Theme.project_id == theme.project_id if theme.project_id is not None else Theme.project_id.is_(None)
+    peers = (await db.scalars(
+        select(Theme).where(same_scope, Theme.score_breakdown.isnot(None)).order_by(Theme.id).with_for_update()
+    )).all()
+    breakdowns = [copy.deepcopy(peer.score_breakdown) for peer in peers]
+    index = next(i for i, peer in enumerate(peers) if peer.id == theme.id)
+    previous = (breakdowns[index].get("issue_type") or {}).get("label", "General")
+    retype_breakdowns(breakdowns, index, body.issue_type)
+    for peer, breakdown in zip(peers, breakdowns):
+        peer.score_breakdown = breakdown
+        peer.priority_score = breakdown["priority_score"]
+        flag_modified(peer, "score_breakdown")
+
+    db.add(ApprovalAuditLog(
+        id=uuid.uuid4(), theme_id=theme.id, pm_user_id=(user.email or user.id) if user else "pm_lead",
+        action="type_changed", original_title=previous, final_title=ISSUE_TYPES[body.issue_type]["label"],
+    ))
+    await db.commit()
+    updated = breakdowns[index]
+    return {
+        "theme_id": str(theme.id),
+        "issue_type": updated["issue_type"],
+        "rank": updated["rank"],
+        "of": updated["of"],
+        "priority_score": updated["priority_score"],
     }

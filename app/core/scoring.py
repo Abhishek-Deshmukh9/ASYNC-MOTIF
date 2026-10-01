@@ -14,6 +14,7 @@ How a theme's priority is built:
 
 The weights are product choices (see PROFILES), not scientific constants; they are shown with every score.
 """
+import re
 from collections import Counter, defaultdict
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional, Sequence, Tuple
@@ -66,6 +67,106 @@ PROFILES: Dict[str, Dict[str, Any]] = {
     },
 }
 DEFAULT_PROFILE = "b2b_saas"
+
+
+# ---------------------------------------------------------------- issue types
+# The kind of problem shifts the weights: final weight = base weight (company profile) x type multiplier,
+# rescaled so the weights still add up to 1. The type comes from the customers' own words, never from a
+# model, and the matching words are kept as evidence. A PM can change it, which re-ranks the project.
+ISSUE_TYPES: Dict[str, Dict[str, Any]] = {
+    "security": {
+        "label": "Security",
+        "phrases": ["security", "vulnerability", "vulnerable", "exploit", "breach", "leak", "leaked", "leaking",
+                    "exposed", "exposure", "unauthorized", "unauthorised", "password", "credentials", "phishing",
+                    "xss", "injection", "csrf", "2fa", "mfa", "hacked", "malicious"],
+        "multipliers": {"reach": 1.4, "urgency": 1.3, "momentum": 2.0, "revenue": 0.6, "strategic": 0.8},
+        "why": "A security problem is fixed before anything else, whatever its score: it is listed first.",
+        "lane": "fix_first",
+    },
+    "bug": {
+        "label": "Bug",
+        "phrases": ["bug", "crash", "crashes", "crashed", "crashing", "error", "errors", "fails", "failed", "failing",
+                    "failure", "broken", "breaks", "doesn't work", "does not work", "not working", "stopped working",
+                    "times out", "timed out", "timeout", "time out", "freezes", "frozen", "hangs", "exception",
+                    "data loss", "lost data", "silently", "drops", "truncates", "truncated", "wrong", "incorrect",
+                    "slow", "lag", "laggy", "takes forever"],
+        "multipliers": {"reach": 1.4, "urgency": 1.3, "momentum": 2.0, "revenue": 0.6, "strategic": 0.8},
+        "why": "A bug costs more the more people hit it and the faster it spreads, whoever they are, so reach and momentum count more and revenue less.",
+    },
+    "ux": {
+        "label": "UX friction",
+        "phrases": ["confusing", "confused", "unclear", "hard to find", "can't find", "cannot find", "couldn't find",
+                    "could not tell", "couldn't tell", "hard to", "difficult to", "not intuitive", "unintuitive",
+                    "clunky", "too many clicks", "too many steps", "cluttered", "frustrating"],
+        "multipliers": {"reach": 1.5, "breadth": 1.4, "revenue": 0.6, "strategic": 0.6},
+        "why": "Friction matters by how widely it is felt, across people and channels, more than by who pays most.",
+    },
+    "feature": {
+        "label": "Feature request",
+        "phrases": ["please add", "would love", "wish", "feature request", "add support", "support for", "it would be great",
+                    "would be nice", "we need", "missing", "can you add", "ability to", "integration", "integrate",
+                    "no way to", "there is no", "doesn't have", "does not have", "looking at competitors"],
+        "multipliers": {"revenue": 1.4, "strategic": 2.0, "breadth": 0.8, "momentum": 0.6, "urgency": 0.6},
+        "why": "A feature request is an investment: who is asking (revenue, enterprise accounts) counts more than how fast mentions grow.",
+    },
+    "general": {
+        "label": "General",
+        "phrases": [],
+        "multipliers": {},
+        "why": "No clear kind of problem in the words used, so the base weights apply unchanged.",
+    },
+}
+TYPE_ORDER = ["security", "bug", "ux", "feature"]   # tie-break: the more urgent kind wins
+MIN_TYPE_SHARE = 0.3                                # at least 30% of the theme's messages must use the words
+
+
+def _phrase_pattern(phrase: str) -> "re.Pattern[str]":
+    return re.compile(r"(?<![a-z0-9])" + re.escape(phrase) + r"(?![a-z0-9])")
+
+
+_PATTERNS = {key: [(p, _phrase_pattern(p)) for p in spec["phrases"]] for key, spec in ISSUE_TYPES.items()}
+
+
+def classify_issue(items: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """The kind of problem a theme is, from the words its messages use, with those words as evidence."""
+    hits: Dict[str, List[Dict[str, str]]] = {key: [] for key in TYPE_ORDER}
+    for item in items:
+        text = (item.get("content") or item.get("clean_content") or "").lower()
+        if not text:
+            continue
+        for key in TYPE_ORDER:
+            for phrase, pattern in _PATTERNS[key]:
+                if pattern.search(text):
+                    hits[key].append({"term": phrase, "text": _snippet(item.get("content") or text, 140), "name": _reporter_key(item)[1]})
+                    break  # one hit per message per type
+    total = len(items) or 1
+    counts = {key: len(hits[key]) for key in TYPE_ORDER}
+    best = max(TYPE_ORDER, key=lambda key: (counts[key], -TYPE_ORDER.index(key)))
+    chosen = best if counts[best] / total >= MIN_TYPE_SHARE else "general"
+    return _type_payload(chosen, source="words", counts=counts, total=len(items), evidence=hits.get(chosen, [])[:4])
+
+
+def _type_payload(key: str, source: str, counts: Optional[Dict[str, int]] = None, total: int = 0, evidence: Optional[List[Dict[str, str]]] = None) -> Dict[str, Any]:
+    spec = ISSUE_TYPES[key]
+    return {
+        "type": key,
+        "label": spec["label"],
+        "source": source,                     # "words" (from the messages) or "pm" (changed by a person)
+        "counts": counts or {},
+        "messages": total,
+        "evidence": evidence or [],
+        "multipliers": spec["multipliers"],
+        "why": spec["why"],
+        "lane": spec.get("lane"),
+    }
+
+
+def type_weights(base: Dict[str, float], active: List[str], issue_type: str) -> Dict[str, float]:
+    """w_k = base_k x multiplier_k(type), divided by the sum over the parameters in use."""
+    multipliers = ISSUE_TYPES.get(issue_type, ISSUE_TYPES["general"])["multipliers"]
+    adjusted = {k: base[k] * multipliers.get(k, 1.0) for k in active}
+    total = sum(adjusted.values()) or 1.0
+    return {k: v / total for k, v in adjusted.items()}
 
 
 # ---------------------------------------------------------------- helpers
@@ -251,19 +352,17 @@ def score_themes(
         else:
             active.append(key)
 
-    total_weight = sum(weights[k] for k in active) or 1.0
-    effective = {k: weights[k] / total_weight for k in active}
     percentile = {k: _percentiles([r[k]["raw"] for r in raw]) for k in active}
+    type_table = {key: {k: round(w, 4) for k, w in type_weights(weights, active, key).items()} for key in ISSUE_TYPES}
 
     results: List[Dict[str, Any]] = []
     for idx, theme in enumerate(themes):
+        issue = classify_issue(theme["items"])
+        effective = type_weights(weights, active, issue["type"])
         signals = []
-        priority = 0.0
         for key in active:
             # A theme with none of something (no churn talk, no revenue, a falling trend) earns nothing for it
             share = percentile[key][idx] if raw[idx][key]["raw"] > 0 else 0.0
-            points = 100 * effective[key] * share
-            priority += points
             info = SIGNAL_INFO[key]
             signals.append({
                 "key": key,
@@ -272,21 +371,20 @@ def score_themes(
                 "display": raw[idx][key]["display"],
                 "value": raw[idx][key]["value"],
                 "note": raw[idx][key]["note"],
-                "max_points": round(100 * effective[key], 2),
                 "percentile": round(share, 3),
-                "weight": round(effective[key], 4),
-                "points": round(points, 2),
                 "evidence": raw[idx][key]["evidence"],
                 "why": info["why"],
                 "how": info["how"],
             })
         verified = int(theme.get("verified_quotes", 0))
         mentions = len(theme["items"])
-        results.append({
-            "version": 1,
+        breakdown = {
+            "version": 2,
             "profile": profile,
             "profile_label": PROFILES[profile]["label"],
-            "priority_score": round(priority, 2),
+            "base_weights": {k: weights[k] for k in active},
+            "type_table": type_table,
+            "issue_type": issue,
             "signals": signals,
             "dropped": dropped,
             "confidence": {
@@ -295,21 +393,63 @@ def score_themes(
                 "mentions": mentions,
                 "level": "supported" if verified >= 2 and mentions >= 3 else "thin",
             },
-        })
+        }
+        _apply_weights(breakdown, effective)
+        results.append(breakdown)
 
-    order = sorted(range(len(results)), key=lambda i: -results[i]["priority_score"])
+    rank_breakdowns(results)
+    return results
+
+
+def _apply_weights(breakdown: Dict[str, Any], effective: Dict[str, float]) -> None:
+    """Points for each parameter = 100 x weight x its 0..1 value; the score is their sum."""
+    priority = 0.0
+    for signal in breakdown["signals"]:
+        weight = effective.get(signal["key"], 0.0)
+        points = 100 * weight * signal["percentile"]
+        signal["weight"] = round(weight, 4)
+        signal["max_points"] = round(100 * weight, 2)
+        signal["points"] = round(points, 2)
+        priority += points
+    breakdown["priority_score"] = round(priority, 2)
+
+
+def rank_breakdowns(results: List[Dict[str, Any]]) -> None:
+    """Security problems first (Fix first), then everything else by score."""
+    def lane(b: Dict[str, Any]) -> int:
+        return 0 if (b.get("issue_type") or {}).get("lane") == "fix_first" else 1
+    order = sorted(range(len(results)), key=lambda i: (lane(results[i]), -results[i]["priority_score"]))
     for position, i in enumerate(order, start=1):
         results[i]["rank"] = position
         results[i]["of"] = len(results)
+        results[i]["lane"] = "fix_first" if lane(results[i]) == 0 else "ranked"
         results[i]["verdict"] = _verdict(results[i])
-    return results
+
+
+def retype_breakdowns(results: List[Dict[str, Any]], index: int, new_type: str) -> None:
+    """A PM changed one theme's kind of problem: re-weight that theme from its stored values and re-rank all."""
+    if new_type not in ISSUE_TYPES:
+        raise ValueError(f"Unknown issue type: {new_type}")
+    breakdown = results[index]
+    base = breakdown.get("base_weights") or {s["key"]: s["weight"] for s in breakdown["signals"]}
+    active = [s["key"] for s in breakdown["signals"]]
+    previous = breakdown.get("issue_type") or {}
+    breakdown["issue_type"] = _type_payload(new_type, source="pm", counts=previous.get("counts"), total=previous.get("messages", 0))
+    breakdown["issue_type"]["detected"] = previous.get("detected") or previous.get("type")
+    _apply_weights(breakdown, type_weights(base, active, new_type))
+    rank_breakdowns(results)
 
 
 def _verdict(breakdown: Dict[str, Any]) -> str:
     """One sentence built from the numbers behind the score: top contributors first."""
     top = sorted(breakdown["signals"], key=lambda s: -s["points"])[:3]
     parts = [s["display"] for s in top if s["points"] > 0 and s["raw"] > 0]
+    issue = breakdown.get("issue_type") or {}
     base = f"Ranked #{breakdown['rank']} of {breakdown['of']}"
+    if breakdown.get("lane") == "fix_first":
+        base += " (security, fixed first)"
+    elif issue.get("type") and issue.get("type") != "general":
+        base += " as " + {"bug": "a bug", "ux": "UX friction", "feature": "a feature request"}.get(issue["type"], issue["label"].lower())
     if parts:
         base += ": " + "; ".join(parts)
     if breakdown["confidence"]["level"] == "thin":

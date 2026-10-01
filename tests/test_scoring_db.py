@@ -179,3 +179,54 @@ def test_evidence_count_matches_the_messages_the_quotes_were_verified_in(client,
     assert sync["score_breakdown"]["confidence"]["verified_quotes"] == 6    # what the score uses
     assert sync["score_breakdown"]["confidence"]["level"] == "supported"
     assert "Thin evidence" not in sync["score_breakdown"]["verdict"]
+
+
+
+def seed_texts(db, project, axis, texts, arr):
+    for i, text in enumerate(texts):
+        with db.cursor() as cur:
+            cur.execute(
+                "insert into feedback_items (id, project_id, source_type, content, clean_content, customer_id, customer_tier, arr_value, "
+                "churn_risk_flag, embedding, metadata) values (%s,%s,'email',%s,%s,%s,'growth',%s,false,%s::vector,%s)",
+                (str(uuid.uuid4()), project, text, text, f"{axis}-cust-{i}", arr, vector(axis, 0.01 * i), json.dumps({"source_name": f"src-{i % 2}"})),
+            )
+
+
+def test_types_come_out_of_the_pipeline_and_a_pm_can_change_one(client, db, monkeypatch):
+    async def no_embedding(batch_size=50):
+        return 0
+
+    async def label(items, exemplars=None):
+        return SimpleNamespace(title=items[0]["content"][:40], problem_statement="x", cited_quotes=[items[0]["content"]])
+
+    monkeypatch.setattr(pipeline_module, "embed_all_unembedded_items", no_embedding)
+    monkeypatch.setattr(pipeline_module, "synthesize_cluster_theme", label)
+    project = f"proj-{uuid.uuid4().hex[:8]}"
+    seed_texts(db, project, 3, [f"Login crashes on step {i}" for i in range(6)], arr=1000)
+    seed_texts(db, project, 11, [f"Please add SSO for team {i}" for i in range(4)], arr=90000)
+    run_pipeline(client, project_id=project, min_cluster_size=4, min_samples=2)
+
+    me = {"Authorization": f"Bearer {token(str(uuid.uuid4()))}"}
+    themes = client.get(f"{API}/themes", params={"project_id": project}, headers=me).json()
+    types = {t["score_breakdown"]["issue_type"]["type"]: t for t in themes}
+    assert set(types) == {"bug", "feature"}
+    bug = types["bug"]["score_breakdown"]
+    assert bug["issue_type"]["evidence"][0]["term"] == "crashes" and bug["issue_type"]["source"] == "words"
+    assert {s["key"]: s["weight"] for s in bug["signals"]} != {s["key"]: s["weight"] for s in types["feature"]["score_breakdown"]["signals"]}
+    assert set(bug["type_table"]) == {"security", "bug", "ux", "feature", "general"}
+
+    # the PM says the feature request is really a security problem: it moves to Fix first, rank 1
+    fid = types["feature"]["id"]
+    r = client.patch(f"{API}/themes/{fid}/type", headers=me, json={"issue_type": "security"})
+    assert r.status_code == 200, r.text
+    assert r.json()["rank"] == 1 and r.json()["issue_type"]["source"] == "pm"
+    listed = client.get(f"{API}/themes", params={"project_id": project}, headers=me).json()
+    assert listed[0]["id"] == fid and listed[0]["score_breakdown"]["lane"] == "fix_first"
+    assert listed[1]["score_breakdown"]["rank"] == 2
+    history = listed[0]["activity"][0]
+    assert history["action"] == "type_changed" and history["title"] == "Security"
+
+    assert client.patch(f"{API}/themes/{fid}/type", headers=me, json={"issue_type": "nonsense"}).status_code == 422
+    # once a theme is decided its type can no longer change
+    assert client.post(f"{API}/themes/{fid}/reject", headers=me).status_code == 200
+    assert client.patch(f"{API}/themes/{fid}/type", headers=me, json={"issue_type": "bug"}).status_code == 409

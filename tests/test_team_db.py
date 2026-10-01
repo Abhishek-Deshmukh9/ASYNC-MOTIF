@@ -1,6 +1,7 @@
 """Team projects against a real database: invites by email, roles, outsiders, and two people acting on the same
 theme at once. Skipped unless TEST_DB=1."""
 import asyncio
+import json
 import os
 import time
 import uuid
@@ -218,3 +219,18 @@ def test_someone_invited_before_they_ever_signed_up_gets_access_on_first_sign_in
     assert client.get(f"{API}/themes", params={"project_id": pid}, headers=newcomer.h).status_code == 200
     statuses = {m["email"]: m["status"] for m in client.get(f"{API}/projects/{pid}/members", headers=aanya.h).json()["members"]}
     assert statuses[newcomer.email] == "joined"
+
+
+
+def test_only_editors_change_the_kind_of_problem(client, db, team):
+    from app.core.scoring import score_themes
+    pid, bob, carol = team["pid"], team["bob"], team["carol"]
+    items = [{"id": str(i), "customer_id": f"c{i}", "content": "Checkout crashes", "arr_value": 0, "source_type": "email"} for i in range(4)]
+    breakdown = score_themes([{"items": items, "cohesion": 0.5, "verified_quotes": 2}])[0]
+    tid = seed_theme(db, pid, "Checkout crashes")
+    with db.cursor() as cur:
+        cur.execute("update themes set score_breakdown=%s, priority_score=%s where id=%s", (json.dumps(breakdown), breakdown["priority_score"], tid))
+    r = client.patch(f"{API}/themes/{tid}/type", headers=carol.h, json={"issue_type": "feature"})
+    assert r.status_code == 403 and "view-only" in r.json()["detail"]
+    r = client.patch(f"{API}/themes/{tid}/type", headers=bob.h, json={"issue_type": "feature"})
+    assert r.status_code == 200 and r.json()["issue_type"]["type"] == "feature"

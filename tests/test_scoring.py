@@ -5,7 +5,7 @@ import pytest
 from app.core.scoring import PROFILES, _percentiles, compute_signals, score_themes
 
 
-def item(customer=None, arr=0.0, churn=False, source="email", speaker=None, tier="free", when=None, text="Exports keep failing"):
+def item(customer=None, arr=0.0, churn=False, source="email", speaker=None, tier="free", when=None, text="Feedback about exports"):
     return {
         "id": f"{customer}-{speaker}-{source}-{text}-{when}",
         "customer_id": customer,
@@ -139,3 +139,82 @@ def test_a_theme_with_none_of_a_parameter_earns_nothing_for_it():
     urgency = [next(s for s in r["signals"] if s["key"] == "urgency") for r in result]
     assert urgency[0]["points"] > 0
     assert urgency[1]["points"] == 0 and urgency[2]["points"] == 0  # 0% churn language -> +0, even though tied
+
+
+# ---------------------------------------------------------------- issue types
+
+from app.core.scoring import ISSUE_TYPES, classify_issue, retype_breakdowns, type_weights
+
+
+def test_issue_type_comes_from_the_customers_words_with_evidence():
+    bug = classify_issue([item("a", text="The export fails on Mondays"), item("b", text="CSV export crashes"), item("c", text="Love it")])
+    assert bug["type"] == "bug" and bug["counts"]["bug"] == 2 and bug["source"] == "words"
+    assert {e["term"] for e in bug["evidence"]} == {"fails", "crashes"}
+    assert classify_issue([item("a", text="Please add bulk edit"), item("b", text="There is no way to edit in bulk")])["type"] == "feature"
+    assert classify_issue([item("a", text="The pricing page is confusing")])["type"] == "ux"
+    assert classify_issue([item("a", text="Nice product")])["type"] == "general"
+
+
+def test_words_must_match_whole_words_and_enough_messages():
+    assert classify_issue([item("a", text="The errors page is fine")])["type"] == "bug"      # "errors" is in the list
+    assert classify_issue([item("a", text="terrorist attack movie")])["type"] == "general"   # not "error" inside another word
+    one_in_five = [item("a", text="it crashed once")] + [item(f"x{i}", text="all good") for i in range(4)]
+    assert classify_issue(one_in_five)["type"] == "general"                                # 20% is below the 30% bar
+
+
+def test_security_beats_bug_on_a_tie():
+    assert classify_issue([item("a", text="password reset fails")])["type"] == "security"
+
+
+def test_weights_are_base_times_multiplier_rescaled_to_one():
+    base = {"reach": 0.25, "revenue": 0.30, "urgency": 0.20, "breadth": 0.10, "momentum": 0.10, "strategic": 0.05}
+    active = list(base)
+    w = type_weights(base, active, "bug")
+    raw = {k: base[k] * ISSUE_TYPES["bug"]["multipliers"].get(k, 1.0) for k in active}
+    assert w["momentum"] == pytest.approx(raw["momentum"] / sum(raw.values()))
+    assert sum(w.values()) == pytest.approx(1.0)
+    assert w["momentum"] > base["momentum"] and w["revenue"] < base["revenue"]
+    f = type_weights(base, active, "feature")
+    assert f["strategic"] > base["strategic"] and f["momentum"] < base["momentum"]
+    assert type_weights(base, active, "general") == pytest.approx(base)
+
+
+def test_same_data_ranks_differently_as_a_bug_or_a_feature_request():
+    # few rich accounts vs many small ones; only the words differ
+    rich_feature = theme([item("a", 100000, text="Please add SSO"), item("b", 100000, text="We need SSO")])
+    crowd_bug = theme([item(f"s{i}", 1000, text="Login crashes") for i in range(8)])
+    result = score_themes([rich_feature, crowd_bug], project_source_count=2)
+    assert result[0]["issue_type"]["type"] == "feature" and result[1]["issue_type"]["type"] == "bug"
+    rev_feature = next(s for s in result[0]["signals"] if s["key"] == "revenue")["weight"]
+    rev_bug = next(s for s in result[1]["signals"] if s["key"] == "revenue")["weight"]
+    assert rev_feature > rev_bug                              # each theme is scored with its own type's weights
+    for b in result:
+        assert sum(s["weight"] for s in b["signals"]) == pytest.approx(1.0, abs=1e-3)
+        assert sum(s["points"] for s in b["signals"]) == pytest.approx(b["priority_score"], abs=0.05)
+    assert "as a bug" in result[1]["verdict"] and "as a feature request" in result[0]["verdict"]
+
+
+def test_security_goes_first_even_with_a_lower_score():
+    big = theme([item(f"c{i}", 50000, text="Please add dark mode") for i in range(6)])
+    small_security = theme([item("x", 100, text="Password visible in the URL")])
+    result = score_themes([big, small_security], project_source_count=2)
+    assert result[1]["priority_score"] < result[0]["priority_score"]
+    assert result[1]["rank"] == 1 and result[1]["lane"] == "fix_first" and result[0]["lane"] == "ranked"
+    assert "security, fixed first" in result[1]["verdict"]
+
+
+def test_pm_can_change_the_type_and_the_project_is_re_ranked():
+    a = theme([item(f"c{i}", 1000, text="It crashes") for i in range(5)])
+    b = theme([item("r1", 90000, text="Please add audit logs"), item("r2", 90000, text="We need audit logs")])
+    result = score_themes([a, b], project_source_count=2)
+    before = result[1]["priority_score"]
+    retype_breakdowns(result, 1, "bug")
+    assert result[1]["issue_type"]["type"] == "bug" and result[1]["issue_type"]["source"] == "pm"
+    assert result[1]["issue_type"]["detected"] == "feature"
+    assert result[1]["priority_score"] != before
+    assert sum(s["points"] for s in result[1]["signals"]) == pytest.approx(result[1]["priority_score"], abs=0.05)
+    assert sorted(r["rank"] for r in result) == [1, 2]
+    retype_breakdowns(result, 0, "security")
+    assert result[0]["rank"] == 1 and result[0]["lane"] == "fix_first"
+    with pytest.raises(ValueError):
+        retype_breakdowns(result, 0, "nonsense")

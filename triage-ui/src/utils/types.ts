@@ -4,8 +4,18 @@ export type ScoreSignal = {
   value?: string; note?: string; max_points?: number; // short form for the theme card
 };
 
+// The kind of problem a theme is: tagged from the customers' words (source "words") or set by a PM ("pm")
+export type IssueTypeKey = 'security' | 'bug' | 'ux' | 'feature' | 'general';
+export type IssueType = {
+  type: IssueTypeKey; label: string; source: 'words' | 'pm'; counts: Record<string, number>; messages: number;
+  evidence: { term: string; text: string; name: string }[]; multipliers: Record<string, number>; why: string;
+  lane?: string | null; detected?: string;
+};
+
 export type ScoreBreakdown = {
   version: number; profile: string; profile_label: string; priority_score: number; rank: number; of: number; verdict: string;
+  issue_type?: IssueType; lane?: 'fix_first' | 'ranked';
+  base_weights?: Record<string, number>; type_table?: Record<string, Record<string, number>>;
   signals: ScoreSignal[];
   dropped: { key: string; label: string; reason: string; short?: string }[];
   confidence: { cohesion: number; verified_quotes: number; mentions: number; level: 'supported' | 'thin' };
@@ -107,3 +117,27 @@ export type Connection = {
 };
 export type ConnectionOption = { id: string; name: string; is_member?: boolean };
 export type SyncResult = { imported: number; updated: number; unchanged: number; skipped: number; failed: number; removed: number; passages: number; errors: string[] };
+
+// Live inbox: one message at a time, typed in the app or sent to the project's webhook (GET/POST /inbox)
+export type InboxMatch = {
+  status?: 'joined' | 'waiting';
+  reason?: string;                  // why a message is waiting
+  theme_id?: string; theme_title?: string; theme_status?: string; github_issue_url?: string | null;
+  similarity?: number; threshold?: number; closest_text?: string | null;
+  closest?: { theme_id: string; title: string; similarity: number; status: string }[];
+  rank_before?: number; rank_after?: number; of?: number; score_before?: number; score_after?: number;
+  lane?: string | null; type_before?: string | null; type_after?: string | null;
+  signals?: { key: string; label: string; value_before: string | null; value_after: string; points_before: number; points_after: number }[];
+  newly_used?: string[];
+  moved?: { theme_id: string; title: string; status: string; from: number; to: number }[];
+};
+export type InboxItem = {
+  id: string; text: string; author: string | null; customer: string | null; source: string | null; via: 'app' | 'webhook' | null;
+  received_at: string | null; received_by?: string | null; churn: boolean; arr: number; arr_from?: string | null;
+  match: InboxMatch; now_in: { theme_id: string; title: string; status: string } | null; duplicate?: boolean;
+};
+export type InboxState = {
+  items: InboxItem[]; webhook: { available: boolean; enabled: boolean; hint: string | null }; sources: Record<string, string>;
+  threshold: number; can_send: boolean; can_manage_webhook: boolean; analysis_running: boolean;
+};
+export type InboxMessage = { text: string; source: string; customer?: string; author?: string };

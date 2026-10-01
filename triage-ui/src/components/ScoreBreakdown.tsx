@@ -8,6 +8,8 @@ import type { ScoreBreakdown as Breakdown, ScoreSignal } from '@/utils/types';
 const ORDER = ['reach', 'revenue', 'urgency', 'breadth', 'momentum', 'strategic'];
 // The letter each parameter goes by in the formula
 const SYMBOLS: Record<string, string> = { reach: 'R', revenue: 'V', urgency: 'U', breadth: 'S', momentum: 'M', strategic: 'E' };
+// "a bug", "UX friction", "a feature request": how to name a kind of problem in a sentence
+const KIND: Record<string, string> = { bug: 'a bug', ux: 'UX friction', feature: 'a feature request', security: 'a security problem', general: 'a general theme' };
 const pts = (n: number) => (Math.abs(n - Math.round(n)) < 0.05 ? Math.round(n).toString() : n.toFixed(1));
 
 type Row = Record<string, unknown>;
@@ -38,10 +40,10 @@ export function ScoreStrip({ breakdown }: { breakdown?: Breakdown | null; score?
           const max = signal.max_points ?? signal.weight * 100;
           const isTop = top && top.key === key && signal.points > 0;
           return (
-            <div key={key} data-testid={`param-${key}`} title={signal.how} className={`bg-surface px-3 py-2.5 ${isTop ? 'shadow-[inset_0_2px_0_var(--color-action)]' : ''}`}>
+            <div key={key} data-testid={`param-${key}`} title={signal.how} className={`bg-surface px-3 py-2.5 ${isTop ? 'shadow-[inset_0_3px_0_var(--color-action)]' : ''}`}>
               <dt className="flex items-baseline justify-between gap-2 text-[12px] text-muted">
                 <span>{signal.label}</span>
-                {isTop && <span className="text-[11px] font-medium text-action">biggest factor</span>}
+                {isTop && <span className="text-[11px] font-medium text-link">biggest factor</span>}
               </dt>
               <dd className="mt-0.5 truncate text-[15px] font-semibold text-ink">{signal.value ?? signal.display}</dd>
               {signal.note && <dd className="line-clamp-2 text-[12px] leading-snug text-muted">{signal.note}</dd>}
@@ -63,31 +65,52 @@ export function ScoreStrip({ breakdown }: { breakdown?: Breakdown | null; score?
   );
 }
 
-/** One expandable line above the list: what the ranking depends on and how much each part can add. */
+const TYPE_ROWS: { key: string; label: string }[] = [
+  { key: 'bug', label: 'Bug' }, { key: 'ux', label: 'UX friction' }, { key: 'feature', label: 'Feature request' }, { key: 'general', label: 'General' },
+];
+const SHORT: Record<string, string> = { reach: 'Reach', revenue: 'Revenue', urgency: 'Churn', breadth: 'Spread', momentum: 'Momentum', strategic: 'Enterprise' };
+
+/** One expandable line above the list: what the ranking depends on, and the weights each kind of problem gets. */
 export function RankingKey({ breakdown }: { breakdown?: Breakdown | null }) {
   if (!breakdown) return null;
-  const used = ORDER.map((key) => breakdown.signals.find((item) => item.key === key)).filter(Boolean) as ScoreSignal[];
+  const used = ORDER.filter((key) => breakdown.signals.some((item) => item.key === key));
+  const table = breakdown.type_table;
   return (
     <details className="group border-b border-rule px-5 py-3.5 text-[13px] text-muted sm:px-7" data-testid="ranking-key">
       <summary className="flex cursor-pointer list-none items-start gap-1.5 text-ink marker:hidden">
         <ChevronRight size={15} className="mt-0.5 shrink-0 text-muted transition-transform group-open:rotate-90"/>
         <span>
-          Ranked for {breakdown.profile_label} by{' '}
-          {used.map((signal, index) => (
-            <span key={signal.key}>
-              {signal.label.toLowerCase()} <span className="tnum text-muted">({pts(signal.max_points ?? signal.weight * 100)})</span>
-              {index < used.length - 2 ? ', ' : index === used.length - 2 ? ' and ' : ''}
-            </span>
-          ))}
-          . The numbers in brackets are the most points each can add.
+          {table
+            ? <>Ranked for {breakdown.profile_label}. Each theme is weighted for its kind of problem: bugs lean on reach and momentum, feature requests on revenue and enterprise accounts, friction on reach and spread. Security problems are listed first. Open to see the weights.</>
+            : <>Ranked for {breakdown.profile_label} by {used.map((key) => SHORT[key].toLowerCase()).join(', ')}. Open to see how the points work.</>}
         </span>
       </summary>
-      <div className="mt-3 max-w-[72ch] space-y-2 pl-6 leading-relaxed">
-        <p>Each parameter earns its points by how a theme compares with the other {breakdown.of - 1} theme{breakdown.of === 2 ? '' : 's'} in this project: the highest gets the full amount, the lowest gets none, and a theme with none of something (no churn talk, a falling trend) gets nothing for it. The points add up to the score out of 100.</p>
-        {breakdown.dropped.length > 0 && (
-          <p>Not used here: {breakdown.dropped.map((item) => `${item.label.toLowerCase()} (${item.short ?? item.reason})`).join(', ')}. Their points were shared among the others.</p>
+      <div className="mt-3 space-y-3 pl-6 leading-relaxed">
+        {table && (
+          <div className="overflow-x-auto">
+            <table className="tnum w-full min-w-[520px] text-left text-[13px]">
+              <caption className="mb-1.5 text-left text-muted">Most points each parameter can add, by kind of problem (weights × 100)</caption>
+              <thead><tr className="border-b border-rule text-muted"><th className="py-1.5 pr-3 font-medium">Kind of problem</th>{used.map((key) => <th key={key} className="py-1.5 pr-3 font-medium">{SHORT[key]}</th>)}</tr></thead>
+              <tbody>
+                {TYPE_ROWS.map((row) => (
+                  <tr key={row.key} className="border-b border-rule last:border-b-0">
+                    <td className="py-1.5 pr-3 text-ink">{row.label}</td>
+                    {used.map((key) => {
+                      const w = table[row.key]?.[key] ?? 0;
+                      const base = breakdown.base_weights?.[key] ?? 0;
+                      const total = used.reduce((sum, k) => sum + (breakdown.base_weights?.[k] ?? 0), 0) || 1;
+                      const shifted = Math.abs(w - base / total) > 0.005;
+                      return <td key={key} className={`py-1.5 pr-3 ${shifted ? (w > base / total ? 'font-semibold text-ink' : 'text-faint') : 'text-muted'}`}>{pts(w * 100)}</td>;
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
-        <p>Open a theme to see the customers, quotes and sources behind every number, and the formula with its own values.</p>
+        <p className="max-w-[72ch]">Each weight is the {breakdown.profile_label} base weight times a multiplier for the kind of problem, rescaled so they add up to 100. Bold means it counts for more than the base, faint means less. The kind of problem comes from the customers&apos; words, and a PM can change it on any theme.</p>
+        <p className="max-w-[72ch]">Each parameter earns its points by how a theme compares with the other {breakdown.of - 1} theme{breakdown.of === 2 ? '' : 's'}: the highest gets the full amount, the lowest gets none, and none of something (no churn talk, a falling trend) earns nothing.</p>
+        {breakdown.dropped.length > 0 && <p className="max-w-[72ch]">Not used here: {breakdown.dropped.map((item) => `${item.label.toLowerCase()} (${item.short ?? item.reason})`).join(', ')}.</p>}
       </div>
     </details>
   );
@@ -132,9 +155,16 @@ function Formula({ breakdown }: { breakdown: Breakdown }) {
       {parts.map((part, index) => <span key={index} className="whitespace-nowrap">{part}{index < parts.length - 1 ? ' +' : ')'}</span>)}
     </div>
   );
+  const issue = breakdown.issue_type;
+  const shifts = issue ? terms.map((s) => ({ key: s.key, m: issue.multipliers?.[s.key] ?? 1 })).filter((x) => x.m !== 1) : [];
   return (
     <div className="mt-4 rounded-md bg-paper px-4 py-3.5 text-[13px] text-ink" data-testid="score-formula">
       <p className="font-semibold">The formula</p>
+      {issue && (
+        <p className="mt-1 text-[12px] leading-relaxed text-muted" data-testid="weight-recipe">
+          Weights for {KIND[issue.type] ?? issue.label}: {breakdown.profile_label} base weights{shifts.length ? ` with ${shifts.map((x) => `${SHORT[x.key].toLowerCase()} ×${x.m}`).join(', ')}` : ' unchanged'}, rescaled to add up to 1.
+        </p>
+      )}
       <div className="tnum mt-2 space-y-1">
         {line('Score =', terms.map((s) => `${s.weight.toFixed(2)}·${SYMBOLS[s.key] ?? s.key}̂`))}
         {line('=', terms.map((s) => `${s.weight.toFixed(2)}×${s.percentile.toFixed(2)}`))}
@@ -155,7 +185,7 @@ export function ScoreProof({ breakdown }: { breakdown?: Breakdown | null }) {
   return (
     <section className="mt-6" aria-label="Why this theme ranked here" data-testid="score-proof">
       <div className="flex items-baseline justify-between gap-3">
-        <h3 className="text-[15px] font-semibold text-ink">Why it ranked {breakdown.rank} of {breakdown.of}</h3>
+        <h3 className="text-[15px] font-semibold text-ink">Why it ranked {breakdown.rank} of {breakdown.of}{breakdown.lane === 'fix_first' ? ', in Fix first' : breakdown.issue_type && breakdown.issue_type.type !== 'general' ? ` as ${KIND[breakdown.issue_type.type] ?? breakdown.issue_type.label}` : ''}</h3>
         <span className="tnum text-[13px] text-muted"><span className="text-[17px] font-semibold text-ink">{pts(breakdown.priority_score)}</span> / 100</span>
       </div>
       <ul className="mt-2">{breakdown.signals.map((signal) => <SignalRow key={signal.key} signal={signal} />)}</ul>

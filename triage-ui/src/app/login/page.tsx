@@ -54,19 +54,19 @@ export default function LoginPage() {
   };
 
   return <main className="grid min-h-screen bg-paper lg:grid-cols-[minmax(0,1fr)_480px]">
-    <section className="flex flex-col justify-between px-6 py-8 sm:px-12 lg:py-14">
-      <span className="text-[22px] font-bold tracking-[-0.02em] text-ink"><span className="marked">motif</span></span>
+    <section className="flex flex-col justify-between bg-chrome px-6 py-8 text-on-chrome sm:px-12 lg:py-14">
+      <span className="text-[22px] font-bold tracking-[-0.02em] text-brand">motif</span>
       <div className="my-10 max-w-[34rem] lg:my-0">
-        <h1 className="text-[34px] font-semibold leading-[1.1] tracking-[-0.02em] text-ink sm:text-[44px]">Your users already wrote the roadmap.</h1>
-        <p className="mt-4 max-w-[52ch] text-[16px] leading-relaxed text-muted">Motif reads your call notes, tickets and docs, groups what customers keep telling you, ranks it, and shows their exact words as proof before anything reaches your backlog.</p>
-        <figure className="mt-8 hidden border-l-2 border-rule pl-5 sm:block" aria-label="Example of a theme in Motif">
+        <h1 className="text-[34px] font-semibold leading-[1.1] tracking-[-0.02em] text-on-chrome sm:text-[44px]">Your users already wrote the roadmap.</h1>
+        <p className="mt-4 max-w-[52ch] text-[16px] leading-relaxed text-on-chrome-muted">Motif reads your call notes, tickets and docs, groups what customers keep telling you, ranks it, and shows their exact words as proof before anything reaches your backlog.</p>
+        <figure className="mt-8 hidden max-w-[34rem] rounded-lg bg-surface px-5 py-4 text-ink shadow-xl shadow-black/20 sm:block" aria-label="Example of a theme in Motif">
           <p className="text-[13px] text-muted">Example theme, ranked 1 of 12</p>
           <p className="mt-1 text-[16px] font-semibold text-ink">Exports drop rows without warning</p>
           <blockquote className="quote mt-2">“<span className="marked">Export to Excel drops rows without an error. We only noticed in an audit.</span>”</blockquote>
           <figcaption className="mt-1 text-[13px] text-muted">Enterprise customer, support ticket</figcaption>
         </figure>
       </div>
-      <p className="hidden text-[13px] text-muted lg:block">Every quote is checked word for word against your sources.</p>
+      <p className="hidden text-[13px] text-on-chrome-muted lg:block">Every quote is checked word for word against your sources.</p>
     </section>
 
     <section className="flex items-center border-t border-rule bg-surface px-6 py-10 sm:px-12 lg:border-l lg:border-t-0">
@@ -83,7 +83,7 @@ export default function LoginPage() {
           {error && <p role="alert" className="mt-4 rounded-md bg-danger-soft px-3 py-2 text-[13px] text-danger">{error}</p>}
           {info && <p role="status" className="mt-4 rounded-md bg-action-soft px-3 py-2 text-[13px] text-ink">{info}</p>}
           <button disabled={busy} className="btn-primary mt-6 w-full py-2.5">{busy && <LoaderCircle size={14} className="animate-spin"/>}{mode === 'signin' ? 'Sign in' : 'Create account'}</button>
-          <p className="mt-4 text-center text-[13px] text-muted">{mode === 'signin' ? 'New to Motif? ' : 'Already have an account? '}<button type="button" onClick={() => { setMode(mode === 'signin' ? 'signup' : 'signin'); setError(''); setInfo(''); }} className="font-medium text-action hover:underline">{mode === 'signin' ? 'Create an account' : 'Sign in'}</button></p>
+          <p className="mt-4 text-center text-[13px] text-muted">{mode === 'signin' ? 'New to Motif? ' : 'Already have an account? '}<button type="button" onClick={() => { setMode(mode === 'signin' ? 'signup' : 'signin'); setError(''); setInfo(''); }} className="font-medium text-link hover:underline">{mode === 'signin' ? 'Create an account' : 'Sign in'}</button></p>
         </form>}
       </div>
     </section>

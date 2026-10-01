@@ -1,25 +1,87 @@
 @import "tailwindcss";
 
-/* Motif design tokens. One accent (action teal) for the main action only; the marker yellow is
-   reserved for verified customer quotes, which are the thing Motif is about. */
+/* Motif design tokens. The brand is a highlighter: verified customer quotes are marked like a
+   transcript, and the same marker colours the main button and the wordmark. Three themes share one
+   set of names; [data-theme] on <html> swaps the values (see layout.tsx and ThemePicker). */
 @theme {
-  --color-paper: #f5f6f8;
+  /* "Highlighter" (default): deep navy frame, marker-yellow action */
+  --color-chrome: #18213a;          /* top bar and sidebar */
+  --color-chrome-active: #263152;
+  --color-chrome-rule: #2c3858;
+  --color-on-chrome: #f3f5fa;
+  --color-on-chrome-muted: #a7b1c6;
+  --color-brand: #ffd23f;           /* wordmark and selection bar on the frame */
+
+  --color-paper: #edf0f6;
   --color-surface: #ffffff;
-  --color-ink: #1f2633;
-  --color-muted: #5a6372;
-  --color-faint: #8a93a3;
-  --color-rule: #e1e4ea;
-  --color-action: #0e6b5f;
-  --color-action-strong: #0a5249;
-  --color-action-soft: #e4f1ee;
-  --color-marker: #ffe58a;
+  --color-ink: #18213a;
+  --color-muted: #535e77;
+  --color-faint: #8790a6;
+  --color-rule: #dbe0ea;
+
+  --color-action: #ffd23f;          /* main button fill, active tab, progress */
+  --color-action-strong: #f5c518;
+  --color-on-action: #18213a;
+  --color-action-soft: #fff6d2;
+  --color-link: #2450c8;            /* accent used as text: links, "biggest factor", focus */
+
+  --color-marker: #ffe066;          /* the highlight behind customer quotes */
   --color-danger: #b42318;
   --color-danger-soft: #fdecea;
   --color-caution: #8a5a00;
-  --color-caution-soft: #fff5d6;
+  --color-caution-soft: #fff3cc;
 
   --font-sans: "Schibsted Grotesk Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-serif: "Newsreader Variable", Georgia, "Times New Roman", serif;
+}
+
+/* "Evergreen": deep green frame, lime marker */
+[data-theme="evergreen"] {
+  --color-chrome: #10372f;
+  --color-chrome-active: #1b4a40;
+  --color-chrome-rule: #22554a;
+  --color-on-chrome: #eef6f2;
+  --color-on-chrome-muted: #9fc0b4;
+  --color-brand: #d6f26e;
+  --color-paper: #ecf3ef;
+  --color-surface: #ffffff;
+  --color-ink: #13261f;
+  --color-muted: #4c6157;
+  --color-faint: #84968d;
+  --color-rule: #d3e1da;
+  --color-action: #0f6b57;
+  --color-action-strong: #0a5242;
+  --color-on-action: #ffffff;
+  --color-action-soft: #e0efe8;
+  --color-link: #0f6b57;
+  --color-marker: #d9f27a;
+}
+
+/* "Night": dark navy for dim rooms; the marker turns amber so light text stays readable on it */
+[data-theme="night"] {
+  color-scheme: dark;
+  --color-chrome: #0c111a;
+  --color-chrome-active: #1a2233;
+  --color-chrome-rule: #1f2838;
+  --color-on-chrome: #e7ebf2;
+  --color-on-chrome-muted: #8c97ab;
+  --color-brand: #ffd23f;
+  --color-paper: #121824;
+  --color-surface: #19212f;
+  --color-ink: #e7ebf2;
+  --color-muted: #a5afc0;
+  --color-faint: #6f7a8f;
+  --color-rule: #283244;
+  --color-action: #ffd23f;
+  --color-action-strong: #f5c518;
+  --color-on-action: #121824;
+  --color-action-soft: #2c2913;
+  --color-link: #8fb0ff;
+  --color-marker: #6a5300;
+  --color-danger: #ff8a80;
+  --color-danger-soft: #3b1e1e;
+  --color-caution: #f2c36b;
+  --color-caution-soft: #33290f;
 }
 
 html {
@@ -43,7 +105,7 @@ body {
 }
 
 :focus-visible {
-  outline: 2px solid var(--color-action);
+  outline: 2px solid var(--color-link);
   outline-offset: 2px;
 }
 
@@ -56,7 +118,7 @@ body {
   @apply inline-flex items-center justify-center gap-1.5 rounded-md border border-rule bg-surface px-3 py-2 text-[13px] font-medium text-ink transition-colors hover:bg-paper disabled:cursor-not-allowed disabled:opacity-45;
 }
 .btn-primary {
-  @apply inline-flex items-center justify-center gap-1.5 rounded-md border border-action bg-action px-3.5 py-2 text-[13px] font-semibold text-white transition-colors hover:bg-action-strong disabled:cursor-not-allowed disabled:opacity-45;
+  @apply inline-flex items-center justify-center gap-1.5 rounded-md border border-action bg-action px-3.5 py-2 text-[13px] font-semibold text-on-action transition-colors hover:bg-action-strong disabled:cursor-not-allowed disabled:opacity-45;
 }
 .btn-text {
   @apply inline-flex items-center gap-1.5 rounded-md px-2 py-1.5 text-[13px] font-medium text-muted transition-colors hover:bg-paper hover:text-ink disabled:cursor-not-allowed disabled:opacity-45;
@@ -64,12 +126,15 @@ body {
 .btn-danger {
   @apply inline-flex items-center gap-1.5 rounded-md px-2 py-1.5 text-[13px] font-medium text-danger transition-colors hover:bg-danger-soft disabled:cursor-not-allowed disabled:opacity-45;
 }
+.btn-chrome {
+  @apply inline-flex items-center gap-1.5 rounded-md px-2 py-1.5 text-[13px] font-medium text-on-chrome-muted transition-colors hover:bg-chrome-active hover:text-on-chrome;
+}
 .icon-btn {
   @apply flex h-8 w-8 items-center justify-center rounded-md text-muted transition-colors hover:bg-paper hover:text-ink disabled:opacity-45;
 }
 
 .field {
-  @apply rounded-md border border-rule bg-surface px-3 py-2 text-[14px] text-ink outline-none transition placeholder:text-faint focus:border-action focus:ring-2 focus:ring-action/15;
+  @apply rounded-md border border-rule bg-surface px-3 py-2 text-[14px] text-ink outline-none transition placeholder:text-faint focus:border-link focus:ring-2 focus:ring-link/15;
 }
 
 .panel {
@@ -91,10 +156,20 @@ body {
 }
 
 .modal-backdrop {
-  @apply fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4;
+  @apply fixed inset-0 z-50 flex items-center justify-center p-4;
+  background: rgb(8 12 20 / 0.55);
 }
 .modal-card {
-  @apply w-full max-w-lg rounded-lg border border-rule bg-surface p-6 shadow-xl shadow-ink/10;
+  @apply w-full max-w-lg rounded-lg border border-rule bg-surface p-6 shadow-xl shadow-black/20;
+}
+
+/* A theme that a live message just changed: the marker colour fades out */
+.live-flash {
+  animation: live-flash 2.6s ease-out 1;
+}
+@keyframes live-flash {
+  0%, 18% { background-color: var(--color-action-soft); box-shadow: inset 3px 0 0 var(--color-link); }
+  100% { background-color: transparent; box-shadow: inset 3px 0 0 transparent; }
 }
 
 @media (prefers-reduced-motion: reduce) {

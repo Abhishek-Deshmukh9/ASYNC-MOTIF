@@ -1,5 +1,5 @@
 import { getAccessToken } from './supabase';
-import { ApprovalResult, Connection, ConnectionOption, Member, MemberList, ProviderId, SyncResult, EvalMetrics, ProjectSource, ServerProject, Theme, UploadResult, UploadedSource } from './types';
+import { ApprovalResult, Connection, ConnectionOption, InboxItem, InboxMessage, InboxState, Member, MemberList, ProviderId, SyncResult, EvalMetrics, ProjectSource, ServerProject, Theme, UploadResult, UploadedSource } from './types';
 
 export const SIGN_IN_REQUIRED = 'motif:sign-in-required';
 
@@ -42,6 +42,7 @@ export async function runPipeline(projectId?: string, onProgress?: (progress: Pi
 }
 export const fetchMetrics = (projectId?: string) => request<EvalMetrics>(`/metrics/eval${scopeQuery(projectId)}`);
 export const approveTheme = (id: string, title?: string, repo?: string, summary?: string) => request<ApprovalResult>(`/themes/${id}/approve`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pm_user_id: 'workspace_user', ...(title ? { final_title: title } : {}), ...(summary ? { final_summary: summary } : {}), ...(repo ? { github_repo: repo } : {}) }) });
+export const changeIssueType = (id: string, issueType: string) => request<{ rank: number; of: number; priority_score: number }>(`/themes/${id}/type`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ issue_type: issueType }) });
 export const rejectTheme = (id: string) => request<{ status: string }>(`/themes/${id}/reject?pm_user_id=workspace_user`, { method: 'POST' });
 export const fetchPipelineStatus = (projectId?: string) => pipelineStatus(projectId);
 
@@ -89,3 +90,10 @@ export const fetchMembers = (projectId: string) => request<MemberList>(membersPa
 export const inviteMember = (projectId: string, email: string, role: 'editor' | 'viewer') => request<Member>(membersPath(projectId), { method: 'POST', ...json({ email, role }) });
 export const changeMemberRole = (projectId: string, memberId: string, role: 'editor' | 'viewer') => request<Member>(`${membersPath(projectId)}/${memberId}`, { method: 'PATCH', ...json({ role }) });
 export const removeMember = (projectId: string, memberId: string) => request<{ removed: boolean; left: boolean }>(`${membersPath(projectId)}/${memberId}`, { method: 'DELETE' });
+
+// Live inbox: add one message, see which theme it joins; owners can make a secret webhook link for other tools
+export const fetchInbox = (projectId?: string) => request<InboxState>(`/inbox${scopeQuery(projectId)}`);
+export const sendToInbox = (projectId: string | undefined, message: InboxMessage) =>
+  request<InboxItem>('/inbox', { method: 'POST', ...json({ project_id: projectId ?? null, text: message.text, source: message.source, customer: message.customer || null, author: message.author || null }) });
+export const createInboxWebhook = (projectId: string) => request<{ token: string; path: string; hint: string }>(`/inbox/webhook?project_id=${encodeURIComponent(projectId)}`, { method: 'POST' });
+export const deleteInboxWebhook = (projectId: string) => request<{ enabled: boolean }>(`/inbox/webhook?project_id=${encodeURIComponent(projectId)}`, { method: 'DELETE' });

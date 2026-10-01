@@ -1,17 +1,19 @@
 'use client';
 
-import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
+import { ChangeEvent, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   ArrowDown, Check, Clipboard, ExternalLink, FolderOpen, LoaderCircle, Mic, MicOff, Plus, RefreshCw, Search, Trash2, Upload, Users, X,
 } from 'lucide-react';
-import { SIGN_IN_REQUIRED, approveTheme, deleteSource, fetchMetrics, fetchProjects, fetchPipelineStatus, fetchSources, fetchThemes, ingestSource, rejectTheme, runPipeline, saveProject, uploadSources } from '@/utils/api';
+import { SIGN_IN_REQUIRED, approveTheme, changeIssueType, deleteSource, fetchMetrics, fetchProjects, fetchPipelineStatus, fetchSources, fetchThemes, ingestSource, rejectTheme, runPipeline, saveProject, uploadSources } from '@/utils/api';
 import { authEnabled, getSupabase } from '@/utils/supabase';
 import type { PipelineProgress } from '@/utils/api';
 import Connectors from '@/components/Connectors';
+import LiveInbox from '@/components/LiveInbox';
 import ShareProject from '@/components/ShareProject';
 import { RankingKey, ScoreProof, ScoreStrip } from '@/components/ScoreBreakdown';
-import type { EvalMetrics, Project, ProjectSource, Theme, ThemeActivity, UploadFileResult, UploadedSource } from '@/utils/types';
+import ThemePicker from '@/components/ThemePicker';
+import type { EvalMetrics, InboxItem, IssueType, Project, ProjectSource, Theme, ThemeActivity, UploadFileResult, UploadedSource } from '@/utils/types';
 
 const STORE_KEY = 'motif-project-workspaces-v1';
 const REPO_PATTERN = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
@@ -73,8 +75,17 @@ function since(iso?: string | null) {
   return `${Math.round(hours / 24)} d ago`;
 }
 function describeActivity(item: ThemeActivity) {
+  if (item.action === 'type_changed') return `Marked as ${item.title || 'another kind of problem'} by ${item.by}${item.at ? `, ${since(item.at)}` : ''}`;
   const verb = item.action === 'approved' && item.changed_title ? 'Approved with edits' : item.action.charAt(0).toUpperCase() + item.action.slice(1);
   return `${verb} by ${item.by}${item.at ? `, ${since(item.at)}` : ''}`;
+}
+
+// "Bug: 4 of 6 messages use words like “crashes”, “fails”" or "Set by a PM (the words suggested Feature request)"
+function typeReason(issue: IssueType) {
+  if (issue.source === 'pm') return `Set by a PM${issue.detected && issue.detected !== issue.type ? ` (the words suggested ${issue.detected === 'ux' ? 'UX friction' : issue.detected === 'feature' ? 'a feature request' : issue.detected})` : ''}.`;
+  if (issue.type === 'general') return 'No single kind of problem stands out in the words used.';
+  const terms = [...new Set(issue.evidence.map((e) => `“${e.term}”`))].slice(0, 3).join(', ');
+  return `${issue.counts[issue.type] ?? issue.evidence.length} of ${issue.messages} messages use words like ${terms}.`;
 }
 
 function makeId() { return typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`; }
@@ -137,6 +148,10 @@ export default function Workspace() {
   const [progress, setProgress] = useState<PipelineProgress | null>(null);
   const [lastRunSeconds, setLastRunSeconds] = useState<number | null>(null);
   const [copied, setCopied] = useState(false);
+  // Live inbox: themes a new message just changed, and where each row stood before (so rows can slide to their new place)
+  const [flash, setFlash] = useState<Record<string, { from?: number; to?: number }>>({});
+  const rowTops = useRef<Map<string, number>>(new Map());
+  const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const folderInput = useRef<HTMLInputElement>(null);
   const recognitionRef = useRef<BrowserRecognition | null>(null);
@@ -232,6 +247,41 @@ export default function Workspace() {
   const refresh = () => {
     fetchThemes(isDemo ? undefined : activeProject?.id).then((value) => { setThemes(value); setApiOnline(true); }).catch(() => setApiOnline(false));
     if (isDemo) fetchMetrics().then(setMetrics).catch(() => setMetrics(null));
+  };
+
+  // A message reached the live inbox (typed here, or sent from another tool): re-read the ranking, slide rows to
+  // their new places and mark the themes that changed
+  useLayoutEffect(() => {
+    // Runs after the new order is on screen: move each row from where it was to where it is now
+    const before = rowTops.current;
+    if (!before.size) return;
+    rowTops.current = new Map();
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+    document.querySelectorAll<HTMLElement>('[data-theme-row]').forEach((row) => {
+      const was = before.get(row.dataset.themeRow || '');
+      if (was === undefined) return;
+      const shift = was - row.getBoundingClientRect().top;
+      if (Math.abs(shift) > 2) row.animate([{ transform: `translateY(${shift}px)` }, { transform: 'none' }], { duration: 520, easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)' });
+    });
+  }, [themes]);
+
+  const liveArrived = (entries: InboxItem[]) => {
+    const marks: Record<string, { from?: number; to?: number }> = {};
+    for (const entry of entries) {
+      const match = entry.match;
+      if (match.status !== 'joined') continue;
+      if (match.theme_id && !marks[match.theme_id]) marks[match.theme_id] = {};
+      for (const moved of match.moved ?? []) {
+        const mark = marks[moved.theme_id];
+        marks[moved.theme_id] = { from: mark?.from ?? moved.from, to: moved.to };
+      }
+    }
+    rowTops.current = new Map(Array.from(document.querySelectorAll<HTMLElement>('[data-theme-row]')).map((row) => [row.dataset.themeRow || '', row.getBoundingClientRect().top]));
+    fetchThemes(isDemo ? undefined : activeProject?.id).then((value) => {
+      setThemes(value); setApiOnline(true); setFlash(marks);
+      if (flashTimer.current) clearTimeout(flashTimer.current);
+      flashTimer.current = setTimeout(() => setFlash({}), 9000);
+    }).catch(() => { rowTops.current = new Map(); });
   };
 
   useEffect(() => {
@@ -460,6 +510,20 @@ export default function Workspace() {
     finally { setWorking(''); }
   };
 
+  // A PM corrects the kind of problem: the backend re-weights it and re-ranks every theme in the project
+  const retypeTheme = async (theme: Theme, issueType: string) => {
+    setWorking(`type:${theme.id}`); setError('');
+    try {
+      const result = await changeIssueType(theme.id, issueType);
+      const updated = await fetchThemes(isDemo ? undefined : activeProject?.id);
+      setThemes(updated);
+      const fresh = updated.find((item) => item.id === theme.id);
+      if (fresh) setReviewTheme(fresh);
+      setNotice(`Marked as ${fresh?.score_breakdown?.issue_type?.label ?? issueType}. It now ranks ${result.rank} of ${result.of}.`);
+    } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not change the kind of problem.'); }
+    finally { setWorking(''); }
+  };
+
   const dismissTheme = async (theme: Theme) => {
     setWorking(theme.id); setError('');
     try {
@@ -496,7 +560,7 @@ export default function Workspace() {
     <div className="panel mb-5 px-4 py-3.5" role="status" aria-live="polite">
       <div className="flex items-center justify-between gap-3 text-[13px]">
         <span className="flex items-center gap-2 font-medium text-ink">
-          <LoaderCircle size={14} className="animate-spin text-action"/>
+          <LoaderCircle size={14} className="animate-spin text-link"/>
           {progress?.stage ? STAGES[stageIndex][1] : 'Starting the analysis'}
           {progress?.stage === 'labelling' && progress.total > 0 ? ` (${progress.done} of ${progress.total} themes)` : ''}
         </span>
@@ -504,7 +568,7 @@ export default function Workspace() {
       </div>
       <div className="mt-2.5 h-1 overflow-hidden rounded-full bg-paper"><div className="h-full rounded-full bg-action transition-all duration-500" style={{ width: `${Math.max(percent, 4)}%` }}/></div>
       <ol className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[12px] text-muted">
-        {STAGES.map(([key, label], index) => <li key={key} className={index < stageIndex ? 'text-action' : index === stageIndex ? 'font-medium text-ink' : ''}>{index < stageIndex ? <Check size={12} className="mr-1 inline"/> : null}{label}</li>)}
+        {STAGES.map(([key, label], index) => <li key={key} className={index < stageIndex ? 'text-link' : index === stageIndex ? 'font-medium text-ink' : ''}>{index < stageIndex ? <Check size={12} className="mr-1 inline"/> : null}{label}</li>)}
       </ol>
     </div>
   ) : null;
@@ -528,11 +592,14 @@ export default function Workspace() {
     const moreQuotes = (theme.cited_quotes?.length || 0) - 1;
     const last = theme.activity?.[0];
     return (
-      <li key={theme.id} className={`grid grid-cols-[1.75rem_minmax(0,1fr)] gap-x-3 px-4 py-6 sm:grid-cols-[2.5rem_minmax(0,1fr)] sm:px-7 ${index ? 'border-t border-rule' : ''}`}>
+      <li key={theme.id} data-theme-row={theme.id} className={`grid grid-cols-[1.75rem_minmax(0,1fr)] gap-x-3 px-4 py-6 sm:grid-cols-[2.5rem_minmax(0,1fr)] sm:px-7 ${index ? 'border-t border-rule' : ''} ${flash[theme.id] ? 'live-flash' : ''}`}>
         <span className="tnum pt-0.5 text-[22px] font-semibold leading-none text-faint" aria-label={`Rank ${rank}`}>{rank}</span>
         <div className="min-w-0">
           <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
-            <h3 className="text-[16px] font-semibold leading-snug text-ink">{theme.title}</h3>
+            <h3 className="text-[16px] font-semibold leading-snug text-ink">
+              {theme.title}
+              {theme.score_breakdown?.issue_type && <span title={typeReason(theme.score_breakdown.issue_type)} data-testid="issue-type" className={`ml-2 inline-block translate-y-[-1px] rounded border px-1.5 py-px align-middle text-[12px] font-medium ${theme.score_breakdown.issue_type.type === 'security' ? 'border-danger/40 text-danger' : 'border-rule text-muted'}`}>{theme.score_breakdown.issue_type.label}{theme.score_breakdown.issue_type.source === 'pm' ? ' (set by PM)' : ''}</span>}
+            </h3>
             {typeof theme.priority_score === 'number' && <span className="tnum text-[13px] text-muted"><span className="text-[20px] font-semibold text-ink">{Math.round(theme.priority_score)}</span> / 100</span>}
           </div>
           <p className="mt-1 max-w-[70ch] text-muted">{theme.summary}</p>
@@ -542,6 +609,13 @@ export default function Workspace() {
               <blockquote className="quote">“<span className="marked">{quote.quote_text}</span>”</blockquote>
               <figcaption className="mt-1.5 text-[13px] text-muted">{whoSaid(quote)}{moreQuotes > 0 ? `, and ${plural(moreQuotes, 'more verified quote')}` : ''}</figcaption>
             </figure>
+          )}
+          {flash[theme.id] && (
+            <p className="mt-3 text-[13px] font-medium text-link" data-testid="live-chip">
+              {flash[theme.id].from !== undefined && flash[theme.id].to !== undefined && flash[theme.id].from !== flash[theme.id].to
+                ? `${(flash[theme.id].to as number) < (flash[theme.id].from as number) ? 'Moved up' : 'Moved down'}: #${flash[theme.id].from} to #${flash[theme.id].to}, after a new message`
+                : 'A new message joined this theme'}
+            </p>
           )}
           <ScoreStrip breakdown={theme.score_breakdown}/>
           <div className="mt-4 flex flex-wrap items-center gap-x-1.5 gap-y-2">
@@ -557,10 +631,24 @@ export default function Workspace() {
     );
   };
 
-  const roadmapPanel = (
-    <section className="panel overflow-hidden" aria-label="Themes to review">
+  // On wide screens the ranking sits beside the live inbox, so you can watch rows move while you type
+  const roadmapPanel = (<div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_24rem]">
+    <div className="xl:order-2 xl:sticky xl:top-4 xl:max-h-[calc(100vh-2rem)] xl:overflow-y-auto xl:overflow-x-hidden">
+      <LiveInbox key={activeId} projectId={isDemo ? undefined : activeProject?.id} onArrived={liveArrived}/>
+    </div>
+    <section className="panel overflow-hidden xl:order-1" aria-label="Themes to review">
       <RankingKey breakdown={pendingThemes.find((theme) => theme.score_breakdown)?.score_breakdown}/>
-      {pendingThemes.length ? <ol>{pendingThemes.map(themeRow)}</ol> : (
+      {pendingThemes.length ? (() => {
+        const fixFirst = pendingThemes.filter((theme) => theme.score_breakdown?.lane === 'fix_first');
+        const ranked = pendingThemes.filter((theme) => theme.score_breakdown?.lane !== 'fix_first');
+        if (!fixFirst.length) return <ol>{ranked.map(themeRow)}</ol>;
+        return <>
+          <div className="border-b border-rule bg-danger-soft px-5 py-2.5 text-[13px] sm:px-7" data-testid="fix-first"><span className="font-semibold text-danger">Fix first</span><span className="text-muted">: security problems come before everything else, whatever their score.</span></div>
+          <ol>{fixFirst.map(themeRow)}</ol>
+          {ranked.length > 0 && <div className="border-y border-rule bg-paper px-5 py-2.5 text-[13px] font-semibold text-ink sm:px-7">Ranked by score</div>}
+          <ol>{ranked.map(themeRow)}</ol>
+        </>;
+      })() : (
         <div className="px-5 py-12 text-center sm:px-7">
           <p className="font-medium text-ink">{themes.length ? 'Nothing left to review' : 'No themes yet'}</p>
           <p className="mx-auto mt-1 max-w-[52ch] text-muted">{themes.length ? 'Every theme has a decision. Approved ones are listed under Approved.' : isDemo ? 'Click Analyze feedback to group the demo data into themes.' : 'Add sources, then click Analyze feedback. A theme needs at least four passages about the same problem.'}</p>
@@ -568,7 +656,7 @@ export default function Workspace() {
         </div>
       )}
     </section>
-  );
+  </div>);
 
   const approvedPanel = (
     <section className="panel overflow-hidden" aria-label="Approved themes">
@@ -579,7 +667,7 @@ export default function Workspace() {
             <div className="min-w-0 flex-1">
               <p className="font-medium text-ink">{theme.title}</p>
               <p className="text-[13px] text-muted">
-                {theme.github_issue_url ? <a href={theme.github_issue_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 font-medium text-action hover:underline">Issue #{theme.github_issue_number} <ExternalLink size={12}/></a> : 'PRD written, no GitHub issue'}
+                {theme.github_issue_url ? <a href={theme.github_issue_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 font-medium text-link hover:underline">Issue #{theme.github_issue_number} <ExternalLink size={12}/></a> : 'PRD written, no GitHub issue'}
                 {decided ? `. ${describeActivity(decided)}` : ''}
               </p>
             </div>
@@ -664,7 +752,7 @@ export default function Workspace() {
           <div key={cell.label} className="bg-surface px-4 py-3.5">
             <dt className="text-[13px] text-muted">{cell.label}</dt>
             <dd className="tnum mt-1 text-[24px] font-semibold leading-tight text-ink">{cell.value}</dd>
-            {cell.target && <dd className={`text-[12px] font-medium ${!cell.measured ? 'text-muted' : cell.met ? 'text-action' : 'text-caution'}`}>Target {cell.target}{cell.measured ? (cell.met ? ', met' : ', not yet') : ''}</dd>}
+            {cell.target && <dd className={`text-[12px] font-medium ${!cell.measured ? 'text-muted' : cell.met ? 'text-link' : 'text-caution'}`}>Target {cell.target}{cell.measured ? (cell.met ? ', met' : ', not yet') : ''}</dd>}
             <dd className="text-[12px] leading-snug text-muted">{cell.sub}</dd>
           </div>
         ))}
@@ -678,7 +766,7 @@ export default function Workspace() {
               <span className="tnum w-5 text-faint">{index + 1}</span>
               <span className="min-w-0 flex-1 truncate text-ink">{row.title}</span>
               <span className="hidden text-muted sm:inline">{row.matched_ground_truth_theme ? `${row.matched_ground_truth_theme.replaceAll('_', ' ')}, ${row.purity}% pure` : 'no label'}</span>
-              {row.is_in_ground_truth_top_3 ? <span className="font-medium text-action">hit</span> : <span className="font-medium text-caution">miss</span>}
+              {row.is_in_ground_truth_top_3 ? <span className="font-medium text-link">hit</span> : <span className="font-medium text-caution">miss</span>}
             </li>
           ))}</ol>
         </section>
@@ -696,53 +784,55 @@ export default function Workspace() {
     { key: 'sources' as const, label: 'Sources', count: sources.length },
     { key: 'approved' as const, label: 'Approved', count: approvedThemes.length },
   ];
-  const navItem = (selected: boolean) => `flex w-full shrink-0 items-center gap-2 rounded-md px-2.5 py-2 text-left text-[14px] transition-colors md:w-full ${selected ? 'bg-paper font-medium text-ink shadow-[inset_2px_0_0_var(--color-action)]' : 'text-muted hover:bg-paper hover:text-ink'}`;
+  const navItem = (selected: boolean) => `flex w-full shrink-0 items-center gap-2 rounded-md px-2.5 py-2 text-left text-[14px] transition-colors md:w-full ${selected ? 'bg-chrome-active font-medium text-on-chrome shadow-[inset_3px_0_0_var(--color-brand)]' : 'text-on-chrome-muted hover:bg-chrome-active hover:text-on-chrome'}`;
 
   return <div className="min-h-screen bg-paper text-ink">
-    <header className="sticky top-0 z-30 border-b border-rule bg-surface">
+    <header className="sticky top-0 z-30 border-b border-chrome-rule bg-chrome text-on-chrome">
       <div className="mx-auto flex h-14 max-w-[1440px] items-center justify-between gap-3 px-4 md:px-6">
         <div className="flex min-w-0 items-center gap-3">
-          <span className="text-[20px] font-bold tracking-[-0.02em] text-ink"><span className="marked">motif</span></span>
-          {!apiOnline && <span className="truncate text-[12px] font-medium text-caution">Not connected to the API</span>}
+          <span className="text-[20px] font-bold tracking-[-0.02em] text-brand">motif</span>
+          {!apiOnline && <span className="truncate rounded bg-caution-soft px-2 py-0.5 text-[12px] font-medium text-caution">Not connected to the API</span>}
         </div>
         <div className="flex items-center gap-1">
-          {userEmail && <span className="mr-2 hidden max-w-[220px] truncate text-[13px] text-muted md:inline" title={userEmail}>{userEmail}</span>}
-          <button onClick={refresh} className="btn-text" title="Load the latest themes"><RefreshCw size={14}/><span className="hidden sm:inline">Refresh</span></button>
-          {authEnabled && <button onClick={signOut} className="btn-text">Sign out</button>}
+          <div className="mr-3 hidden sm:block"><ThemePicker/></div>
+          {userEmail && <span className="mr-2 hidden max-w-[220px] truncate text-[13px] text-on-chrome-muted md:inline" title={userEmail}>{userEmail}</span>}
+          <button onClick={refresh} className="btn-chrome" title="Load the latest themes"><RefreshCw size={14}/><span className="hidden sm:inline">Refresh</span></button>
+          {authEnabled && <button onClick={signOut} className="btn-chrome">Sign out</button>}
         </div>
       </div>
     </header>
 
     <div className="mx-auto grid max-w-[1440px] grid-cols-1 md:min-h-[calc(100vh-57px)] md:grid-cols-[232px_minmax(0,1fr)]">
-      <aside className="border-b border-rule bg-surface md:border-b-0 md:border-r">
+      <aside className="border-b border-chrome-rule bg-chrome text-on-chrome md:border-b-0 md:border-r">
         <div className="px-3 py-3 md:py-5">
           <div className="mb-1.5 flex items-center justify-between px-2.5">
-            <h2 className="text-[13px] font-semibold text-ink">Projects</h2>
-            <button onClick={() => { setShowCreate(true); setError(''); }} className="btn-text -mr-2 px-1.5 py-1"><Plus size={14}/> New</button>
+            <h2 className="text-[13px] font-semibold text-on-chrome">Projects</h2>
+            <button onClick={() => { setShowCreate(true); setError(''); }} className="btn-chrome -mr-2 px-1.5 py-1"><Plus size={14}/> New</button>
           </div>
           <div className="flex gap-1 overflow-x-auto md:flex-col">
             {projects.length ? projects.map((project) => (
               <button key={project.id} onClick={() => { setActiveId(project.id); setError(''); }} className={`${navItem(!isDemo && activeProject?.id === project.id)} max-w-[70vw] md:max-w-none`}>
                 <span className="min-w-0 flex-1 truncate">{project.name}</span>
-                {project.role && project.role !== 'owner' && <span className="shrink-0 text-[12px] text-muted">{project.role === 'viewer' ? 'view only' : 'shared'}</span>}
+                {project.role && project.role !== 'owner' && <span className="shrink-0 text-[12px] text-on-chrome-muted">{project.role === 'viewer' ? 'view only' : 'shared'}</span>}
               </button>
-            )) : <p className="px-2.5 py-1 text-[13px] text-muted">No projects yet.</p>}
+            )) : <p className="px-2.5 py-1 text-[13px] text-on-chrome-muted">No projects yet.</p>}
           </div>
-          <h2 className="mb-1.5 mt-4 hidden px-2.5 text-[13px] font-semibold text-ink md:mt-7 md:block">Example data</h2>
+          <div className="mt-3 flex items-center justify-between px-2.5 sm:hidden"><span className="text-[13px] text-on-chrome-muted">Theme</span><ThemePicker/></div>
+          <h2 className="mb-1.5 mt-4 hidden px-2.5 text-[13px] font-semibold text-on-chrome md:mt-7 md:block">Example data</h2>
           <button onClick={() => { setActiveId(DEMO_ID); setError(''); }} className={`${navItem(isDemo)} mt-1 md:mt-0`}>
-            <span className="min-w-0 flex-1 truncate">Demo benchmark</span><span className="tnum shrink-0 text-[12px] text-muted">300</span>
+            <span className="min-w-0 flex-1 truncate">Demo benchmark</span><span className="tnum shrink-0 text-[12px] text-on-chrome-muted">300</span>
           </button>
         </div>
       </aside>
 
       <main className="min-w-0 px-4 py-6 md:px-10 md:py-9">
-        <div className="mx-auto max-w-[1040px]">
+        <div className="mx-auto max-w-[1128px]">
           {isDemo ? demoView : !activeProject ? (
             <div className="max-w-[60ch] py-16">
               <h1 className="text-[28px] font-semibold leading-tight text-ink">Create your first project</h1>
               <p className="mt-2 text-muted">A project holds the feedback for one product: call notes, research docs, support exports. Motif groups it into themes, ranks them, and backs each one with your customers&apos; own words.</p>
               <button onClick={() => setShowCreate(true)} className="btn-primary mt-6"><Plus size={14}/> New project</button>
-              <p className="mt-4 text-[13px] text-muted">Or look around the <button onClick={() => setActiveId(DEMO_ID)} className="font-medium text-action underline-offset-2 hover:underline">demo benchmark</button> first.</p>
+              <p className="mt-4 text-[13px] text-muted">Or look around the <button onClick={() => setActiveId(DEMO_ID)} className="font-medium text-link underline-offset-2 hover:underline">demo benchmark</button> first.</p>
             </div>
           ) : <>
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -765,7 +855,7 @@ export default function Workspace() {
 
             <div className="mt-6 flex gap-6 overflow-x-auto border-b border-rule" role="tablist" aria-label="Project sections">
               {tabs.map((item) => (
-                <button key={item.key} role="tab" aria-selected={tab === item.key} onClick={() => setTab(item.key)} className={`-mb-px shrink-0 border-b-2 pb-2.5 text-[14px] font-medium transition-colors ${tab === item.key ? 'border-action text-ink' : 'border-transparent text-muted hover:text-ink'}`}>
+                <button key={item.key} role="tab" aria-selected={tab === item.key} onClick={() => setTab(item.key)} className={`-mb-px shrink-0 border-b-[3px] pb-2.5 text-[14px] font-medium transition-colors ${tab === item.key ? 'border-action text-ink' : 'border-transparent text-muted hover:text-ink'}`}>
                   {item.label} <span className="tnum font-normal text-muted">{item.count}</span>
                 </button>
               ))}
@@ -812,6 +902,23 @@ export default function Workspace() {
           {(editTitle.trim() !== reviewTheme.title || editSummary.trim() !== reviewTheme.summary) && <p className="mt-2 text-[12px] text-caution">Edited. Approving now records it as approved with edits.</p>}
           {!canEdit && <p className="mt-3 text-[13px] text-muted">You have view-only access, so you can read the evidence but not approve or reject.</p>}
 
+          {reviewTheme.score_breakdown?.issue_type && (
+            <section className="mt-5 rounded-md bg-paper px-4 py-3" aria-label="Kind of problem">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <label htmlFor="issue-type" className="text-[13px] font-semibold text-ink">Kind of problem</label>
+                <select id="issue-type" value={reviewTheme.score_breakdown.issue_type.type} disabled={!canEdit || demoLocked || working === `type:${reviewTheme.id}`} onChange={(event) => retypeTheme(reviewTheme, event.target.value)} className="field py-1.5 text-[13px]">
+                  <option value="security">Security (fixed first)</option>
+                  <option value="bug">Bug</option>
+                  <option value="ux">UX friction</option>
+                  <option value="feature">Feature request</option>
+                  <option value="general">General</option>
+                </select>
+              </div>
+              <p className="mt-1.5 text-[13px] leading-relaxed text-muted">{typeReason(reviewTheme.score_breakdown.issue_type)} {reviewTheme.score_breakdown.issue_type.why}</p>
+              {canEdit && !demoLocked && <p className="mt-1 text-[12px] text-muted">Changing it re-weights this theme and re-ranks the project. It is recorded in the history.</p>}
+            </section>
+          )}
+
           <h3 className="mt-6 text-[15px] font-semibold text-ink">What customers said</h3>
           {reviewTheme.cited_quotes?.length ? (
             <ul className="mt-2">{reviewTheme.cited_quotes.map((quote, index) => (
@@ -848,7 +955,7 @@ export default function Workspace() {
             <button onClick={() => setPrdTheme(null)} aria-label="Close" className="icon-btn -mr-2 -mt-1"><X size={16}/></button>
           </div>
           {prdTheme.github_issue_url
-            ? <a href={prdTheme.github_issue_url} target="_blank" rel="noreferrer" className="mt-4 inline-flex items-center gap-1.5 font-medium text-action hover:underline">Issue #{prdTheme.github_issue_number} is open in GitHub <ExternalLink size={13}/></a>
+            ? <a href={prdTheme.github_issue_url} target="_blank" rel="noreferrer" className="mt-4 inline-flex items-center gap-1.5 font-medium text-link hover:underline">Issue #{prdTheme.github_issue_number} is open in GitHub <ExternalLink size={13}/></a>
             : <p className="mt-4 rounded-md border-l-[3px] border-caution bg-caution-soft px-4 py-3 text-[13px] text-caution">Not sent to GitHub. To open real issues, set GITHUB_TOKEN, GITHUB_REPO_OWNER and GITHUB_REPO_NAME in the backend .env file.</p>}
           <pre className="mt-4 max-h-[50vh] overflow-auto whitespace-pre-wrap rounded-md bg-paper p-4 font-mono text-[12.5px] leading-relaxed text-ink">{prdTheme.prd_markdown || 'No PRD text came back for this theme.'}</pre>
           <div className="mt-5 flex justify-end gap-2">

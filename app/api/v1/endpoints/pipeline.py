@@ -8,6 +8,7 @@ from app.api.deps import get_db
 from app.core.auth import CurrentUser, get_current_user
 from app.core.projects import authorize_project
 from app.core.pipeline import run_ai_pipeline
+from app.core.scoring import DEFAULT_PROFILE, PROFILES
 
 from pydantic import BaseModel, Field
 
@@ -21,6 +22,7 @@ class PipelineRunRequest(BaseModel):
     min_cluster_size: Optional[int] = Field(default=4, ge=2)
     min_samples: Optional[int] = Field(default=2, ge=1)
     project_id: Optional[str] = Field(default=None, max_length=255)
+    profile: Optional[str] = Field(default=None, pattern="^(b2b_saas|dev_tools)$")
 
 
 # In-memory run tracker, one entry per scope (a project id, or the demo corpus).
@@ -62,6 +64,7 @@ async def trigger_pipeline(
     min_cluster_size: Optional[int] = None,
     min_samples: Optional[int] = None,
     background: bool = False,
+    profile: Optional[str] = None,
     db: AsyncSession = Depends(get_db),
     user: Optional[CurrentUser] = Depends(get_current_user),
 ):
@@ -89,9 +92,12 @@ async def trigger_pipeline(
         else (min_samples if min_samples is not None else 2)
     )
     project_id = payload.project_id if payload else None
-    await authorize_project(db, project_id, user)
+    chosen_profile = (payload.profile if payload and payload.profile else profile) or DEFAULT_PROFILE
+    if chosen_profile not in PROFILES:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Unknown ranking profile.")
+    await authorize_project(db, project_id, user, need="edit")
     scope = project_id or DEMO_SCOPE
-    kwargs = dict(batch_size=eff_batch_size, min_cluster_size=eff_min_cluster_size, min_samples=eff_min_samples, project_id=project_id)
+    kwargs = dict(batch_size=eff_batch_size, min_cluster_size=eff_min_cluster_size, min_samples=eff_min_samples, project_id=project_id, profile=chosen_profile)
 
     run = _run_for(scope)
     if run["status"] == "running":

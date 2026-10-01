@@ -53,26 +53,39 @@ export default function LoginPage() {
     } finally { setBusy(false); }
   };
 
-  return <main className="flex min-h-screen items-center justify-center bg-[#f4f6f8] px-4">
-    <div className="w-full max-w-sm">
-      <div className="mb-6 flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#0f766e] to-[#2ca58d] text-lg font-black text-white shadow-md shadow-emerald-900/15">m</div>
-        <div><div className="text-lg font-semibold tracking-tight">motif</div><div className="text-xs text-slate-500">Your users already wrote the roadmap.</div></div>
+  return <main className="grid min-h-screen bg-paper lg:grid-cols-[minmax(0,1fr)_480px]">
+    <section className="flex flex-col justify-between px-6 py-8 sm:px-12 lg:py-14">
+      <span className="text-[22px] font-bold tracking-[-0.02em] text-ink"><span className="marked">motif</span></span>
+      <div className="my-10 max-w-[34rem] lg:my-0">
+        <h1 className="text-[34px] font-semibold leading-[1.1] tracking-[-0.02em] text-ink sm:text-[44px]">Your users already wrote the roadmap.</h1>
+        <p className="mt-4 max-w-[52ch] text-[16px] leading-relaxed text-muted">Motif reads your call notes, tickets and docs, groups what customers keep telling you, ranks it, and shows their exact words as proof before anything reaches your backlog.</p>
+        <figure className="mt-8 hidden border-l-2 border-rule pl-5 sm:block" aria-label="Example of a theme in Motif">
+          <p className="text-[13px] text-muted">Example theme, ranked 1 of 12</p>
+          <p className="mt-1 text-[16px] font-semibold text-ink">Exports drop rows without warning</p>
+          <blockquote className="quote mt-2">“<span className="marked">Export to Excel drops rows without an error. We only noticed in an audit.</span>”</blockquote>
+          <figcaption className="mt-1 text-[13px] text-muted">Enterprise customer, support ticket</figcaption>
+        </figure>
       </div>
-      {!authEnabled ? <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h1 className="text-base font-semibold text-slate-900">Sign-in is not set up</h1>
-        <p className="mt-2 text-xs leading-5 text-slate-500">Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY to triage-ui/.env.local, restart the frontend, and this page will let you sign in. Until then Motif opens without accounts.</p>
-        <button onClick={() => router.replace('/')} className="mt-4 rounded-lg bg-[#0f766e] px-4 py-2 text-xs font-semibold text-white">Open the workspace</button>
-      </div> : <form onSubmit={submit} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h1 className="text-base font-semibold text-slate-900">{mode === 'signin' ? 'Sign in to Motif' : 'Create your account'}</h1>
-        <p className="mt-1 text-xs text-slate-500">{mode === 'signin' ? 'Your projects are private to your account.' : 'Projects you create stay private to you.'}</p>
-        <label className="mt-5 block text-[11px] font-medium text-slate-600">Email<input type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="field mt-2 w-full" placeholder="you@company.com"/></label>
-        <label className="mt-4 block text-[11px] font-medium text-slate-600">Password<input type="password" autoComplete={mode === 'signin' ? 'current-password' : 'new-password'} required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} className="field mt-2 w-full" placeholder="At least 6 characters"/></label>
-        {error && <p role="alert" className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">{error}</p>}
-        {info && <p role="status" className="mt-4 rounded-lg bg-emerald-50 px-3 py-2 text-xs text-emerald-800">{info}</p>}
-        <button disabled={busy} className="mt-5 flex w-full items-center justify-center gap-2 rounded-lg bg-[#0f766e] px-4 py-2.5 text-xs font-semibold text-white disabled:opacity-60">{busy && <LoaderCircle size={14} className="animate-spin"/>}{mode === 'signin' ? 'Sign in' : 'Create account'}</button>
-        <button type="button" onClick={() => { setMode(mode === 'signin' ? 'signup' : 'signin'); setError(''); setInfo(''); }} className="mt-4 w-full text-center text-xs text-slate-500 hover:text-slate-900">{mode === 'signin' ? 'New here? Create an account' : 'Already have an account? Sign in'}</button>
-      </form>}
-    </div>
+      <p className="hidden text-[13px] text-muted lg:block">Every quote is checked word for word against your sources.</p>
+    </section>
+
+    <section className="flex items-center border-t border-rule bg-surface px-6 py-10 sm:px-12 lg:border-l lg:border-t-0">
+      <div className="mx-auto w-full max-w-sm">
+        {!authEnabled ? <div>
+          <h2 className="text-[20px] font-semibold text-ink">Sign-in is not set up</h2>
+          <p className="mt-2 text-[14px] leading-relaxed text-muted">Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY to triage-ui/.env.local and restart the frontend. Until then Motif opens without accounts.</p>
+          <button onClick={() => router.replace('/')} className="btn-primary mt-5">Open Motif</button>
+        </div> : <form onSubmit={submit}>
+          <h2 className="text-[20px] font-semibold text-ink">{mode === 'signin' ? 'Sign in' : 'Create your account'}</h2>
+          <p className="mt-1 text-[14px] text-muted">{mode === 'signin' ? 'Your projects, and the ones shared with you.' : 'Projects you create are private until you share them.'}</p>
+          <label className="mt-6 block text-[13px] font-medium text-ink">Email<input type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="field mt-1.5 w-full" placeholder="you@company.com"/></label>
+          <label className="mt-4 block text-[13px] font-medium text-ink">Password<input type="password" autoComplete={mode === 'signin' ? 'current-password' : 'new-password'} required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} className="field mt-1.5 w-full" placeholder="At least 6 characters"/></label>
+          {error && <p role="alert" className="mt-4 rounded-md bg-danger-soft px-3 py-2 text-[13px] text-danger">{error}</p>}
+          {info && <p role="status" className="mt-4 rounded-md bg-action-soft px-3 py-2 text-[13px] text-ink">{info}</p>}
+          <button disabled={busy} className="btn-primary mt-6 w-full py-2.5">{busy && <LoaderCircle size={14} className="animate-spin"/>}{mode === 'signin' ? 'Sign in' : 'Create account'}</button>
+          <p className="mt-4 text-center text-[13px] text-muted">{mode === 'signin' ? 'New to Motif? ' : 'Already have an account? '}<button type="button" onClick={() => { setMode(mode === 'signin' ? 'signup' : 'signin'); setError(''); setInfo(''); }} className="font-medium text-action hover:underline">{mode === 'signin' ? 'Create an account' : 'Sign in'}</button></p>
+        </form>}
+      </div>
+    </section>
   </main>;
 }

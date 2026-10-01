@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional, List
+from typing import Any, Dict, Optional, List
 from uuid import UUID
 from pydantic import BaseModel, Field
 
@@ -30,6 +30,9 @@ class ThemeResponse(ThemeBase):
     created_at: datetime
     updated_at: datetime
     cited_quotes: List[CitedQuote] = Field(default_factory=list)
+    priority_score: Optional[float] = None  # 0-100, from the signals in score_breakdown
+    score_breakdown: Optional[Dict[str, Any]] = None  # signals, evidence, reasons, verdict (see app/core/scoring.py)
+    activity: List[Dict[str, Any]] = Field(default_factory=list)  # who approved, edited or rejected it, newest first
     mention_count: int = 0  # passages grouped into this theme
     source_count: int = 0  # distinct uploaded sources among them (0 for items without a source)
 

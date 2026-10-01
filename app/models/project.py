@@ -19,7 +19,23 @@ class Project(Base):
     owner_id = Column(UUID(as_uuid=True), nullable=True, index=True)  # Supabase auth user id
     name = Column(Text, nullable=False)
     github_repo = Column(Text, nullable=True)
+    owner_email = Column(Text, nullable=True)  # shown to teammates (migration 005)
     created_at = Column(DateTime(timezone=True), default=_now, nullable=False)
+
+
+class ProjectMember(Base):
+    """A teammate invited to a project by email. user_id is filled in when they first sign in (migration 005)."""
+    __tablename__ = "project_members"
+    __table_args__ = (UniqueConstraint("project_id", "email", name="project_members_unique_email"),)
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True)
+    email = Column(Text, nullable=False)  # stored lower-case
+    user_id = Column(UUID(as_uuid=True), nullable=True, index=True)
+    role = Column(String(20), nullable=False, default="editor")  # editor | viewer (the owner lives on projects.owner_id)
+    invited_by = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), default=_now, nullable=False)
+    joined_at = Column(DateTime(timezone=True), nullable=True)
 
 
 class Connection(Base):

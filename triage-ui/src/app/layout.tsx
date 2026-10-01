@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
+import "@fontsource-variable/schibsted-grotesk";
+import "@fontsource-variable/newsreader";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Motif — Feedback Intelligence",
-  description: "Turn customer feedback into an evidence-backed roadmap.",
+  title: "Motif",
+  description: "Turn customer feedback into a ranked, evidence-backed roadmap.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

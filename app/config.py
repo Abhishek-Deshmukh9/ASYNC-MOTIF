@@ -54,6 +54,8 @@ class Settings(BaseSettings):
     GITHUB_TOKEN: str | None = None
     GITHUB_REPO_OWNER: str | None = None
     GITHUB_REPO_NAME: str | None = None
+    # Let signed-in users edit, approve and reject the shared demo (and open real issues from it). Off by default.
+    DEMO_WRITABLE: bool = False
 
     @field_validator("CORS_ORIGINS", mode="before")
     @classmethod

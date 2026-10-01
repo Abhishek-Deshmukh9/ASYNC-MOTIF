@@ -12,13 +12,14 @@ type Props = {
   onClose: () => void;
   onSynced: () => void;        // reload the project's sources after a sync
   onMessage: (text: string, isError?: boolean) => void;
+  role?: 'owner' | 'editor' | 'viewer'; // owner connects and disconnects; editors can sync; viewers only look
 };
 
 const PROVIDERS: { id: ProviderId; name: string; blurb: string; icon: React.ReactNode }[] = [
-  { id: 'notion', name: 'Notion', blurb: 'Pages and databases you share with Motif', icon: <FileText size={15}/> },
-  { id: 'gdrive', name: 'Google Drive', blurb: 'Docs, Sheets, PDFs in one folder you choose', icon: <HardDrive size={15}/> },
-  { id: 'slack', name: 'Slack', blurb: 'Public channels you pick (never DMs)', icon: <Hash size={15}/> },
-  { id: 'github', name: 'GitHub Issues', blurb: 'Issues and comments from a repository', icon: <GitBranch size={15}/> },
+  { id: 'notion', name: 'Notion', blurb: 'Pages and databases you share with Motif', icon: <FileText size={16}/> },
+  { id: 'gdrive', name: 'Google Drive', blurb: 'Docs, Sheets, PDFs in one folder you choose', icon: <HardDrive size={16}/> },
+  { id: 'slack', name: 'Slack', blurb: 'Public channels you pick (never DMs)', icon: <Hash size={16}/> },
+  { id: 'github', name: 'GitHub Issues', blurb: 'Issues and comments from a repository', icon: <GitBranch size={16}/> },
 ];
 
 const HELP: Record<ProviderId, { steps: string[]; field: string; placeholder: string; multiline?: boolean }> = {
@@ -54,7 +55,9 @@ const summary = (r: SyncResult) => {
   return `${parts.length ? parts.join(', ') : 'Nothing to import yet'}.${failed}`;
 };
 
-export default function Connectors({ projectId, projectName, open, onClose, onSynced, onMessage }: Props) {
+export default function Connectors({ projectId, projectName, open, onClose, onSynced, onMessage, role = 'owner' }: Props) {
+  const isOwner = role === 'owner';
+  const canSync = role !== 'viewer';
   const [connections, setConnections] = useState<Connection[]>([]);
   const [busy, setBusy] = useState('');
   const [picker, setPicker] = useState<ProviderId | null>(null);     // credential form for a provider
@@ -138,65 +141,72 @@ export default function Connectors({ projectId, projectName, open, onClose, onSy
   const toggle = (id: string) => setChosen((current) => current.includes(id) ? current.filter((x) => x !== id) : [...current, id]);
   const showPicker = open && !picker && !scope;
 
+  const close = <button type="button" onClick={closeAll} aria-label="Close" className="icon-btn -mr-2 -mt-1"><X size={16}/></button>;
+
   return <>
-    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_2px_8px_rgba(15,23,42,0.035)] sm:p-6">
-      <div className="flex items-center justify-between gap-2"><span className="text-sm font-semibold text-slate-900">Connect your tools</span><span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] text-slate-500">read-only</span></div>
-      <p className="mt-2 text-xs leading-5 text-slate-500">Pull notes, docs and conversations in automatically. Motif reads only what you choose.</p>
-      <div className="mt-4 space-y-2.5">
-        {PROVIDERS.map((provider) => {
-          const connection = connections.find((item) => item.provider === provider.id);
-          return <div key={provider.id} className="flex items-center gap-3 rounded-xl border border-slate-200 px-3 py-2.5">
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-700">{provider.icon}</span>
-            <div className="min-w-0 flex-1">
-              <div className="text-xs font-semibold text-slate-900">{provider.name}{connection?.display_name ? <span className="ml-2 font-normal text-slate-500">{connection.display_name}</span> : null}</div>
-              <div className={`truncate text-[11px] ${connection?.status === 'error' ? 'text-rose-600' : 'text-slate-500'}`}>
-                {connection ? (connection.status === 'error' && connection.last_error ? connection.last_error : `${connection.sources} source${connection.sources === 1 ? '' : 's'} · ${ago(connection.last_synced_at)}`) : provider.blurb}
-              </div>
-            </div>
-            {connection ? <div className="flex items-center gap-1">
-              <button onClick={() => runSync(connection)} disabled={busy === connection.id} title="Sync now" aria-label={`Sync ${provider.name}`} className="icon-btn !h-8 !w-8">{busy === connection.id ? <LoaderCircle size={14} className="animate-spin"/> : <RefreshCw size={14}/>}</button>
-              {provider.id !== 'github' && <button onClick={() => openScope(connection)} className="rounded-lg border border-slate-200 px-2.5 py-1.5 text-[11px] font-medium text-slate-700 hover:bg-slate-50">Choose</button>}
-              <button onClick={() => disconnect(connection)} title="Disconnect" aria-label={`Disconnect ${provider.name}`} className="icon-btn !h-8 !w-8"><Trash2 size={14}/></button>
-            </div> : <button onClick={() => { setPicker(provider.id); setSecret(''); setRepo(''); setFormError(''); }} className="rounded-lg bg-[#0f766e] px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-[#115e59]">Connect</button>}
-          </div>;
-        })}
+    <section className="panel overflow-hidden" aria-label="Connected tools">
+      <div className="border-b border-rule px-5 py-4 sm:px-7">
+        <h2 className="text-[15px] font-semibold text-ink">Connected tools</h2>
+        <p className="text-[13px] text-muted">Motif reads only what you choose and never writes back to these tools.</p>
       </div>
-    </div>
+      <ul>
+        {PROVIDERS.map((provider, index) => {
+          const connection = connections.find((item) => item.provider === provider.id);
+          const failed = connection?.status === 'error' && connection.last_error;
+          return <li key={provider.id} className={`flex items-center gap-3 px-5 py-3 sm:px-7 ${index ? 'border-t border-rule' : ''}`}>
+            <span className="shrink-0 text-muted">{provider.icon}</span>
+            <div className="min-w-0 flex-1">
+              <p className="font-medium text-ink">{provider.name}{connection?.display_name ? <span className="font-normal text-muted"> ({connection.display_name})</span> : null}</p>
+              <p className={`truncate text-[13px] ${failed ? 'text-danger' : 'text-muted'}`}>
+                {connection ? (failed ? connection.last_error : `${connection.sources} source${connection.sources === 1 ? '' : 's'}, synced ${ago(connection.last_synced_at)}`) : provider.blurb}
+              </p>
+            </div>
+            {connection ? <div className="flex shrink-0 items-center gap-1">
+              {canSync && <button onClick={() => runSync(connection)} disabled={busy === connection.id} aria-label={`Sync ${provider.name}`} className="btn-text">{busy === connection.id ? <LoaderCircle size={14} className="animate-spin"/> : <RefreshCw size={14}/>}<span className="hidden sm:inline">Sync</span></button>}
+              {isOwner && provider.id !== 'github' && <button onClick={() => openScope(connection)} className="btn-text">Choose</button>}
+              {isOwner && <button onClick={() => disconnect(connection)} title="Disconnect" aria-label={`Disconnect ${provider.name}`} className="icon-btn hover:text-danger"><Trash2 size={15}/></button>}
+            </div> : !isOwner ? <span className="shrink-0 text-[13px] text-muted">The owner connects tools</span> : <button onClick={() => { setPicker(provider.id); setSecret(''); setRepo(''); setFormError(''); }} className="btn shrink-0">Connect</button>}
+          </li>;
+        })}
+      </ul>
+    </section>
 
-    {showPicker && <div className="modal-backdrop"><div className="modal-card"><div className="flex items-start justify-between"><h2 className="text-lg font-semibold text-slate-900">Connect a tool</h2><button onClick={closeAll} aria-label="Close" className="text-slate-500 hover:text-slate-900"><X size={17}/></button></div>
-      <div className="mt-4 space-y-2.5">{PROVIDERS.map((provider) => <button key={provider.id} onClick={() => { setPicker(provider.id); setSecret(''); setFormError(''); }} className="flex w-full items-center gap-3 rounded-xl border border-slate-200 px-3 py-3 text-left hover:bg-slate-50"><span className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-700">{provider.icon}</span><span><span className="block text-xs font-semibold text-slate-900">{provider.name}</span><span className="block text-[11px] text-slate-500">{provider.blurb}</span></span></button>)}</div></div></div>}
+    {showPicker && <div className="modal-backdrop" role="dialog" aria-modal="true" aria-label="Connect a tool"><div className="modal-card">
+      <div className="flex items-start justify-between gap-3"><h2 className="text-[18px] font-semibold text-ink">Connect a tool</h2>{close}</div>
+      <ul className="mt-3">{PROVIDERS.map((provider, index) => <li key={provider.id} className={index ? 'border-t border-rule' : ''}><button onClick={() => { setPicker(provider.id); setSecret(''); setFormError(''); }} className="flex w-full items-center gap-3 px-1 py-3 text-left hover:bg-paper"><span className="text-muted">{provider.icon}</span><span><span className="block font-medium text-ink">{provider.name}</span><span className="block text-[13px] text-muted">{provider.blurb}</span></span></button></li>)}</ul>
+    </div></div>}
 
-    {picker && <div className="modal-backdrop"><form onSubmit={connect} className="modal-card">
-      <div className="flex items-start justify-between"><h2 className="text-lg font-semibold text-slate-900">Connect {PROVIDERS.find((p) => p.id === picker)?.name}</h2><button type="button" onClick={closeAll} aria-label="Close" className="text-slate-500 hover:text-slate-900"><X size={17}/></button></div>
-      <ol className="mt-4 list-decimal space-y-1.5 pl-4 text-xs leading-5 text-slate-600">{HELP[picker].steps.map((step) => <li key={step}>{step}</li>)}</ol>
-      {picker === 'github' && <label className="mt-5 block text-[11px] font-medium text-slate-600">Repository<input required value={repo} onChange={(e) => setRepo(e.target.value)} className="field mt-2 w-full" placeholder="acme/product"/></label>}
-      <label className="mt-4 block text-[11px] font-medium text-slate-600">{HELP[picker].field}
+    {picker && <div className="modal-backdrop" role="dialog" aria-modal="true" aria-label={`Connect ${PROVIDERS.find((p) => p.id === picker)?.name}`}><form onSubmit={connect} className="modal-card">
+      <div className="flex items-start justify-between gap-3"><h2 className="text-[18px] font-semibold text-ink">Connect {PROVIDERS.find((p) => p.id === picker)?.name}</h2>{close}</div>
+      <ol className="mt-3 list-decimal space-y-1.5 pl-5 text-[13px] leading-relaxed text-muted">{HELP[picker].steps.map((step) => <li key={step}>{step}</li>)}</ol>
+      {picker === 'github' && <label className="mt-5 block text-[13px] font-medium text-ink">Repository<input required value={repo} onChange={(e) => setRepo(e.target.value)} className="field mt-1.5 w-full" placeholder="owner/repo"/></label>}
+      <label className="mt-4 block text-[13px] font-medium text-ink">{HELP[picker].field}
         {HELP[picker].multiline
-          ? <textarea required value={secret} onChange={(e) => setSecret(e.target.value)} rows={5} spellCheck={false} className="field mt-2 w-full font-mono !text-[11px]" placeholder={HELP[picker].placeholder}/>
-          : <input required={picker !== 'github'} type="password" autoComplete="off" value={secret} onChange={(e) => setSecret(e.target.value)} className="field mt-2 w-full" placeholder={HELP[picker].placeholder}/>}
+          ? <textarea required value={secret} onChange={(e) => setSecret(e.target.value)} rows={5} spellCheck={false} className="field mt-1.5 w-full font-mono !text-[12px]" placeholder={HELP[picker].placeholder}/>
+          : <input required={picker !== 'github'} type="password" autoComplete="off" value={secret} onChange={(e) => setSecret(e.target.value)} className="field mt-1.5 w-full" placeholder={HELP[picker].placeholder}/>}
       </label>
-      <p className="mt-2 text-[10px] leading-4 text-slate-400">Stored encrypted on the Motif server and never shown again. Motif only reads; it never writes to your tools.</p>
-      {formError && <p role="alert" className="mt-3 rounded-lg bg-rose-50 px-3 py-2 text-xs text-rose-700">{formError}</p>}
-      <div className="mt-5 flex justify-end gap-2"><button type="button" onClick={closeAll} className="rounded-lg border border-slate-200 px-3 py-2 text-xs text-slate-700">Cancel</button><button disabled={busy === 'connect'} className="flex items-center gap-2 rounded-lg bg-[#0f766e] px-4 py-2 text-xs font-semibold text-white disabled:opacity-60">{busy === 'connect' && <LoaderCircle size={13} className="animate-spin"/>}Connect</button></div>
+      <p className="mt-2 text-[12px] leading-snug text-muted">Stored encrypted on the Motif server and never shown again.</p>
+      {formError && <p role="alert" className="mt-3 rounded-md bg-danger-soft px-3 py-2 text-[13px] text-danger">{formError}</p>}
+      <div className="mt-5 flex justify-end gap-2"><button type="button" onClick={closeAll} className="btn-text">Cancel</button><button disabled={busy === 'connect'} className="btn-primary">{busy === 'connect' && <LoaderCircle size={14} className="animate-spin"/>}Connect</button></div>
     </form></div>}
 
-    {scope && <div className="modal-backdrop"><form onSubmit={saveScope} className="modal-card">
-      <div className="flex items-start justify-between"><div><h2 className="text-lg font-semibold text-slate-900">Choose what to import</h2><p className="mt-1 text-xs text-slate-500">{scope.label}{scope.display_name ? ` · ${scope.display_name}` : ''}</p></div><button type="button" onClick={closeAll} aria-label="Close" className="text-slate-500 hover:text-slate-900"><X size={17}/></button></div>
-      {scope.provider === 'gdrive' && <p className="mt-4 rounded-lg bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-900">In Google Drive, share your folder with <b className="break-all">{scope.display_name}</b> as Viewer. It then appears in the list below.</p>}
-      {scope.provider === 'notion' && <div className="mt-4 space-y-2 text-xs text-slate-700">
+    {scope && <div className="modal-backdrop" role="dialog" aria-modal="true" aria-label="Choose what to import"><form onSubmit={saveScope} className="modal-card">
+      <div className="flex items-start justify-between gap-3"><div><h2 className="text-[18px] font-semibold text-ink">Choose what to import</h2><p className="mt-0.5 text-[13px] text-muted">{scope.label}{scope.display_name ? `, ${scope.display_name}` : ''}</p></div>{close}</div>
+      {scope.provider === 'gdrive' && <p className="mt-4 rounded-md bg-caution-soft px-3 py-2 text-[13px] leading-relaxed text-caution">In Google Drive, share your folder with <b className="break-all">{scope.display_name}</b> as Viewer. It then appears in the list below.</p>}
+      {scope.provider === 'notion' && <div className="mt-4 space-y-2 text-[14px] text-ink">
         <label className="flex items-center gap-2"><input type="radio" checked={everything} onChange={() => setEverything(true)}/> Everything shared with Motif</label>
         <label className="flex items-center gap-2"><input type="radio" checked={!everything} onChange={() => setEverything(false)}/> Only the pages I select</label></div>}
-      {scope.provider === 'slack' && <p className="mt-4 text-xs text-slate-500">Public channels only. The last 90 days are imported.</p>}
-      <div className="mt-3 max-h-56 space-y-1 overflow-y-auto rounded-lg border border-slate-200 p-2">
-        {!options.length && !optionsError && <div className="flex items-center gap-2 px-2 py-2 text-xs text-slate-500"><LoaderCircle size={13} className="animate-spin"/> Loading…</div>}
-        {!options.length && optionsError && <p className="px-2 py-2 text-xs text-rose-700">{optionsError}</p>}
+      {scope.provider === 'slack' && <p className="mt-4 text-[13px] text-muted">Public channels only. The last 90 days are imported.</p>}
+      <div className="mt-3 max-h-56 space-y-0.5 overflow-y-auto rounded-md border border-rule p-1.5">
+        {!options.length && !optionsError && <p className="flex items-center gap-2 px-2 py-2 text-[13px] text-muted"><LoaderCircle size={14} className="animate-spin"/> Loading</p>}
+        {!options.length && optionsError && <p className="px-2 py-2 text-[13px] text-danger">{optionsError}</p>}
         {options.map((option) => scope.provider === 'gdrive'
-          ? <label key={option.id} className="flex items-center gap-2 rounded px-2 py-1.5 text-xs text-slate-700 hover:bg-slate-50"><input type="radio" name="folder" checked={chosen[0] === option.id && !folderLink} onChange={() => { setChosen([option.id]); setFolderLink(''); }}/> {option.name}</label>
-          : <label key={option.id} className={`flex items-center gap-2 rounded px-2 py-1.5 text-xs text-slate-700 hover:bg-slate-50 ${scope.provider === 'notion' && everything ? 'opacity-40' : ''}`}><input type="checkbox" disabled={scope.provider === 'notion' && everything} checked={chosen.includes(option.id)} onChange={() => toggle(option.id)}/> {option.name}</label>)}
+          ? <label key={option.id} className="flex items-center gap-2 rounded px-2 py-1.5 text-[14px] text-ink hover:bg-paper"><input type="radio" name="folder" checked={chosen[0] === option.id && !folderLink} onChange={() => { setChosen([option.id]); setFolderLink(''); }}/> {option.name}</label>
+          : <label key={option.id} className={`flex items-center gap-2 rounded px-2 py-1.5 text-[14px] text-ink hover:bg-paper ${scope.provider === 'notion' && everything ? 'opacity-40' : ''}`}><input type="checkbox" disabled={scope.provider === 'notion' && everything} checked={chosen.includes(option.id)} onChange={() => toggle(option.id)}/> {option.name}</label>)}
       </div>
-      {scope.provider === 'gdrive' && <label className="mt-3 block text-[11px] font-medium text-slate-600">Or paste a folder link<input value={folderLink} onChange={(e) => setFolderLink(e.target.value)} className="field mt-2 w-full" placeholder="https://drive.google.com/drive/folders/…"/></label>}
-      {options.length > 0 && optionsError && <p role="alert" className="mt-3 rounded-lg bg-rose-50 px-3 py-2 text-xs text-rose-700">{optionsError}</p>}
-      <div className="mt-5 flex justify-end gap-2"><button type="button" onClick={closeAll} className="rounded-lg border border-slate-200 px-3 py-2 text-xs text-slate-700">Later</button><button disabled={busy === 'scope'} className="flex items-center gap-2 rounded-lg bg-[#0f766e] px-4 py-2 text-xs font-semibold text-white disabled:opacity-60">{busy === 'scope' ? <LoaderCircle size={13} className="animate-spin"/> : <Check size={13}/>}Save and import</button></div>
+      {scope.provider === 'gdrive' && <label className="mt-3 block text-[13px] font-medium text-ink">Or paste a folder link<input value={folderLink} onChange={(e) => setFolderLink(e.target.value)} className="field mt-1.5 w-full" placeholder="https://drive.google.com/drive/folders/…"/></label>}
+      {options.length > 0 && optionsError && <p role="alert" className="mt-3 rounded-md bg-danger-soft px-3 py-2 text-[13px] text-danger">{optionsError}</p>}
+      <div className="mt-5 flex justify-end gap-2"><button type="button" onClick={closeAll} className="btn-text">Later</button><button disabled={busy === 'scope'} className="btn-primary">{busy === 'scope' ? <LoaderCircle size={14} className="animate-spin"/> : <Check size={14}/>}Save and import</button></div>
     </form></div>}
   </>;
 }

@@ -56,6 +56,8 @@ class Settings(BaseSettings):
     GITHUB_REPO_NAME: str | None = None
     # Let signed-in users edit, approve and reject the shared demo (and open real issues from it). Off by default.
     DEMO_WRITABLE: bool = False
+    # Live inbox: how similar (cosine, 0 to 1) a new message must be to a theme's closest message to join it. Higher joins fewer.
+    LIVE_MATCH_MIN_SIMILARITY: float = 0.6
 
     @field_validator("CORS_ORIGINS", mode="before")
     @classmethod

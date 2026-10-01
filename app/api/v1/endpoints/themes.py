@@ -16,6 +16,7 @@ from app.core.auth import CurrentUser, get_current_user
 from app.core.scoring import ISSUE_TYPES, retype_breakdowns
 from app.core.issue_target import DEMO_READ_ONLY_MESSAGE, demo_is_locked, resolve_issue_target
 from app.core.projects import authorize_project, project_uuid
+from app.core.rescore import scoring_peers
 from app.models.project import Project
 from app.models.theme import Theme
 from app.models.feedback import FeedbackItem, theme_feedback_associations
@@ -555,11 +556,10 @@ async def change_issue_type(
     if not theme.score_breakdown or not theme.score_breakdown.get("signals"):
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="This theme has no score yet. Analyze the project again first.")
 
-    # Every scored theme in the same project, locked, so two people re-typing at once are handled in turn
-    same_scope = Theme.project_id == theme.project_id if theme.project_id is not None else Theme.project_id.is_(None)
-    peers = (await db.scalars(
-        select(Theme).where(same_scope, Theme.score_breakdown.isnot(None)).order_by(Theme.id).with_for_update()
-    )).all()
+    # The themes ranked with it (the latest analysis), locked, so two people re-typing at once are handled in turn
+    peers = await scoring_peers(db, theme.project_id)
+    if all(peer.id != theme.id for peer in peers):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="This theme is from an older analysis. Analyze the project again first.")
     breakdowns = [copy.deepcopy(peer.score_breakdown) for peer in peers]
     index = next(i for i, peer in enumerate(peers) if peer.id == theme.id)
     previous = (breakdowns[index].get("issue_type") or {}).get("label", "General")

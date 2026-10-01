@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends
-from app.api.v1.endpoints import health, connections, feedback, members, pipeline, projects, sources, themes, metrics
+from app.api.v1.endpoints import health, connections, feedback, inbox, members, pipeline, projects, sources, themes, metrics
 from app.core.auth import get_current_user
 
 api_router = APIRouter()
@@ -16,3 +16,6 @@ api_router.include_router(connections.router, dependencies=protected)
 api_router.include_router(pipeline.router, dependencies=protected)
 api_router.include_router(themes.router, dependencies=protected)
 api_router.include_router(metrics.router, dependencies=protected)
+api_router.include_router(inbox.router, dependencies=protected)
+# The webhook link is its own credential (only its hash is stored), so it sits outside sign-in
+api_router.include_router(inbox.hook_router)

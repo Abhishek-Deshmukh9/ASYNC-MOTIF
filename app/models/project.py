@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 
 from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy.orm import deferred
 
 from app.db.base import Base
 
@@ -20,6 +21,10 @@ class Project(Base):
     name = Column(Text, nullable=False)
     github_repo = Column(Text, nullable=True)
     owner_email = Column(Text, nullable=True)  # shown to teammates (migration 005)
+    # Live inbox webhook (migration 006): sha256 of the secret link, and its last characters to recognise it
+    # Deferred: loaded only when used, so a database that has not run migration 006 yet still works elsewhere.
+    inbox_token_hash = deferred(Column(String(64), nullable=True, unique=True))
+    inbox_token_hint = deferred(Column(String(12), nullable=True))
     created_at = Column(DateTime(timezone=True), default=_now, nullable=False)
 
 

@@ -23,14 +23,38 @@ Progress = Callable[[str, int, int], None]
 
 
 def _event_date(item: Any, project_id: Optional[str]) -> Optional[datetime]:
-    raw = (item.metadata_ or {}).get("occurred_at")
+    meta = item.metadata_ or {}
+    raw = meta.get("occurred_at")
     if raw:
         try:
             parsed = datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
             return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
         except ValueError:
             return None
+    if meta.get("live"):
+        return None  # when a message reached the live inbox is not when it happened, like upload time
     return item.created_at if project_id is None else None
+
+
+def scoring_item(item: Any, project_id: Optional[str]) -> Dict[str, Any]:
+    """The fields of one stored message that clustering and scoring read."""
+    return {
+        "id": item.id,
+        "content": item.content,
+        "clean_content": item.clean_content,
+        "customer_id": item.customer_id,
+        "customer_tier": item.customer_tier,
+        "arr_value": float(item.arr_value or 0.0),
+        "churn_risk_flag": bool(item.churn_risk_flag),
+        "source_type": item.source_type,
+        "source_name": (item.metadata_ or {}).get("source_name"),
+        "speaker": item.speaker,
+        "source_id": str(item.source_id) if item.source_id else None,
+        # Real event date: carried in metadata by connectors; the seeded demo corpus stores it in created_at.
+        # Upload time is not an event date, so projects without a carried date get none.
+        "occurred_at": _event_date(item, project_id),
+        "embedding": item.embedding,
+    }
 
 
 def _verified_count(items: List[Dict[str, Any]], quotes: List[str]) -> int:
@@ -95,26 +119,7 @@ async def run_ai_pipeline(
                 "noise_count": 0,
             }
 
-        items_for_clustering = [
-            {
-                "id": item.id,
-                "content": item.content,
-                "clean_content": item.clean_content,
-                "customer_id": item.customer_id,
-                "customer_tier": item.customer_tier,
-                "arr_value": float(item.arr_value or 0.0),
-                "churn_risk_flag": bool(item.churn_risk_flag),
-                "source_type": item.source_type,
-                "source_name": (item.metadata_ or {}).get("source_name"),
-                "speaker": item.speaker,
-                "source_id": str(item.source_id) if item.source_id else None,
-                # Real event date: carried in metadata by connectors; the seeded demo corpus stores it in created_at.
-                # Upload time is not an event date, so projects without a carried date get none.
-                "occurred_at": _event_date(item, project_id),
-                "embedding": item.embedding,
-            }
-            for item in db_items
-        ]
+        items_for_clustering = [scoring_item(item, project_id) for item in db_items]
 
     # Step 3: HDBSCAN Density Clustering
     report("clustering", 0, len(items_for_clustering))
@@ -174,6 +179,10 @@ async def run_ai_pipeline(
         profile=profile,
         project_source_count=len(all_sources),
     )
+    # Themes ranked together share a run id, so later re-scoring (a type change, a live message) uses the same set
+    run_id = str(uuid.uuid4())
+    for breakdown in breakdowns:
+        breakdown["run_id"] = run_id
     breakdown_by_cluster = {payload[0]: breakdowns[i] for i, payload in enumerate(cluster_payloads)}
 
     # Step 5: Fast atomic persistence to database

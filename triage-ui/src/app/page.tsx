@@ -3,14 +3,19 @@
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
-  ArrowDown, Check, Clipboard, ExternalLink, FolderOpen, LoaderCircle, Mic, MicOff, Plus, RefreshCw, Search, Trash2, Upload, Users, X,
+  ArrowDown, ExternalLink, FolderOpen, Inbox, LoaderCircle, Mic, MicOff, Plus, RefreshCw, Search, Trash2, Upload, Users, X,
 } from 'lucide-react';
 import { SIGN_IN_REQUIRED, approveTheme, deleteSource, fetchMetrics, fetchProjects, fetchPipelineStatus, fetchSources, fetchThemes, ingestSource, rejectTheme, runPipeline, saveProject, uploadSources } from '@/utils/api';
 import { authEnabled, getSupabase } from '@/utils/supabase';
 import type { PipelineProgress } from '@/utils/api';
 import Connectors from '@/components/Connectors';
 import ShareProject from '@/components/ShareProject';
-import { RankingKey, ScoreProof, ScoreStrip } from '@/components/ScoreBreakdown';
+import EvidencePanel from '@/components/EvidencePanel';
+import MetricStrip from '@/components/MetricStrip';
+import PipelineProgressBar from '@/components/PipelineProgress';
+import PrdDialog from '@/components/PrdDialog';
+import ThemeCard from '@/components/ThemeCard';
+import { RankingKey } from '@/components/ScoreBreakdown';
 import type { EvalMetrics, Project, ProjectSource, Theme, ThemeActivity, UploadFileResult, UploadedSource } from '@/utils/types';
 
 const STORE_KEY = 'motif-project-workspaces-v1';
@@ -27,7 +32,7 @@ type SpeechConstructor = new () => BrowserRecognition;
 const API_HINT = 'API is not connected. Start the Motif backend to sync sources and generate themes.';
 // Built-in workspace for the labelled 300-item demo corpus loaded by seed.py (feedback with no project).
 const DEMO_ID = '__demo_benchmark__';
-const pct = (value: number | null | undefined) => (value === null || value === undefined ? '—' : `${value}%`);
+const pct = (value: number | null | undefined) => (value === null || value === undefined ? 'Ã¢â‚¬â€' : `${value}%`);
 const meets = (value: number | null | undefined, target: number) => value !== null && value !== undefined && value >= target;
 
 // File types the backend can read (see app/core/extraction.py)
@@ -131,12 +136,10 @@ export default function Workspace() {
   const [meetingName, setMeetingName] = useState('Customer discovery call');
   const [reviewTheme, setReviewTheme] = useState<Theme | null>(null);
   const [metrics, setMetrics] = useState<EvalMetrics | null>(null);
-  const [editTitle, setEditTitle] = useState('');
-  const [editSummary, setEditSummary] = useState('');
   const [prdTheme, setPrdTheme] = useState<Theme | null>(null);
   const [progress, setProgress] = useState<PipelineProgress | null>(null);
   const [lastRunSeconds, setLastRunSeconds] = useState<number | null>(null);
-  const [copied, setCopied] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
   const folderInput = useRef<HTMLInputElement>(null);
   const recognitionRef = useRef<BrowserRecognition | null>(null);
@@ -267,20 +270,20 @@ export default function Workspace() {
     setProjects((existing) => [...existing, project]);
     setActiveId(project.id);
     setNewName(''); setNewRepo(''); setShowCreate(false);
-    setNotice(`Created “${name}”. Add sources, then analyze them.`); setTab('sources');
+    setNotice(`Created Ã¢â‚¬Å“${name}Ã¢â‚¬Â. Add sources, then analyze them.`); setTab('sources');
     setError('');
   };
 
   const saveSource = async (source: ProjectSource, sync = true) => {
     if (!activeProject) return;
     updateProject(activeProject.id, (project) => ({ ...project, sources: [source, ...project.sources] }));
-    setNotice(`Saved “${source.name}” to ${activeProject.name}.`);
+    setNotice(`Saved Ã¢â‚¬Å“${source.name}Ã¢â‚¬Â to ${activeProject.name}.`);
     setError('');
     if (sync && apiOnline) {
       try {
         const serverId = await ingestSource(source, activeProject.id, activeProject.name);
         updateProject(activeProject.id, (project) => ({ ...project, sources: project.sources.map((item) => item.id === source.id ? { ...item, syncState: 'synced', serverId: serverId ?? undefined } : item) }));
-        setNotice(`Saved “${source.name}” to ${activeProject.name} and synced it to Motif.`);
+        setNotice(`Saved Ã¢â‚¬Å“${source.name}Ã¢â‚¬Â to ${activeProject.name} and synced it to Motif.`);
       } catch { setError('Saved in this browser, but could not sync to the backend. Check that the API and database are running.'); }
     }
   };
@@ -307,11 +310,11 @@ export default function Workspace() {
     }
     if (batch.length) batches.push(batch);
 
-    setWorking('upload'); setError(''); setNotice(`Reading ${plural(usable.length, 'file')}…`);
+    setWorking('upload'); setError(''); setNotice(`Reading ${plural(usable.length, 'file')}Ã¢â‚¬Â¦`);
     const results: UploadFileResult[] = [];
     try {
       for (const [index, files] of batches.entries()) {
-        if (batches.length > 1) setNotice(`Reading files… batch ${index + 1} of ${batches.length}`);
+        if (batches.length > 1) setNotice(`Reading filesÃ¢â‚¬Â¦ batch ${index + 1} of ${batches.length}`);
         const result = await uploadSources(files.map((file) => ({ file, name: relativePath(file) })), project.id, project.name);
         results.push(...result.files);
         const created = result.files.flatMap((item) => item.sources.map(fromServer));
@@ -339,7 +342,7 @@ export default function Workspace() {
     try {
       if (source.serverId) await deleteSource(source.serverId, project.id);
       updateProject(project.id, (current) => ({ ...current, sources: current.sources.filter((item) => item.id !== source.id) }));
-      setNotice(`Removed “${source.name}”. Analyze again to update the themes.`);
+      setNotice(`Removed Ã¢â‚¬Å“${source.name}Ã¢â‚¬Â. Analyze again to update the themes.`);
     } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not remove this source.'); }
     finally { setWorking(''); }
   };
@@ -390,12 +393,12 @@ export default function Workspace() {
       if (audioChunks.current.length) {
         const audio = new Blob(audioChunks.current, { type: recorder.mimeType || 'audio/webm' });
         const audioUrl = URL.createObjectURL(audio);
-        const audioLink = document.createElement('a'); audioLink.href = audioUrl; audioLink.download = `${meetingName.trim() || 'Meeting'} — audio.webm`; audioLink.click(); URL.revokeObjectURL(audioUrl);
+        const audioLink = document.createElement('a'); audioLink.href = audioUrl; audioLink.download = `${meetingName.trim() || 'Meeting'} Ã¢â‚¬â€ audio.webm`; audioLink.click(); URL.revokeObjectURL(audioUrl);
       }
     }
     const text = transcriptRef.current.trim();
     if (!text) { setError('No speech was captured. Check the microphone and try again.'); return; }
-    const filename = `${meetingName.trim() || 'Meeting transcript'} — ${new Date().toLocaleDateString()}.md`;
+    const filename = `${meetingName.trim() || 'Meeting transcript'} Ã¢â‚¬â€ ${new Date().toLocaleDateString()}.md`;
     const content = `# ${meetingName.trim() || 'Meeting transcript'}\n\nRecorded ${new Date().toLocaleString()}\n\n## Transcript\n\n${text}\n`;
     const source: ProjectSource = { id: makeId(), name: filename, kind: 'meeting', createdAt: new Date().toISOString(), content, syncState: 'local' };
     await saveSource(source);
@@ -436,7 +439,7 @@ export default function Workspace() {
   };
 
   const openReview = (theme: Theme) => {
-    setReviewTheme(theme); setEditTitle(theme.title); setEditSummary(theme.summary);
+    setReviewTheme(theme);
   };
 
   // Approve (optionally with the PM's edits), generate the PRD, dispatch to GitHub when configured
@@ -466,7 +469,7 @@ export default function Workspace() {
       await rejectTheme(theme.id);
       setThemes((existing) => existing.map((item) => item.id === theme.id ? { ...item, status: 'rejected' } : item));
       setReviewTheme(null);
-      setNotice(`Rejected “${theme.title}”. It stays in the history.`);
+      setNotice(`Rejected Ã¢â‚¬Å“${theme.title}Ã¢â‚¬Â. It stays in the history.`);
       if (isDemo) fetchMetrics().then(setMetrics).catch(() => undefined);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Could not reject this theme.');
@@ -475,42 +478,15 @@ export default function Workspace() {
     finally { setWorking(''); }
   };
 
-  const copyPrd = async (markdown: string) => {
-    try { await navigator.clipboard.writeText(markdown); setCopied(true); setTimeout(() => setCopied(false), 1500); }
-    catch { setError('Could not copy to the clipboard. Select the text and copy it instead.'); }
-  };
 
+  // Drag-and-drop handlers for file upload
+  const onDragOver = (e: React.DragEvent) => { e.preventDefault(); setIsDragging(true); };
+  const onDragLeave = () => setIsDragging(false);
+  const onDrop = (e: React.DragEvent) => { e.preventDefault(); setIsDragging(false); importFiles(Array.from(e.dataTransfer.files)); };
 
-  const downloadSource = (source: ProjectSource) => {
-    const blob = new Blob([source.content], { type: 'text/markdown' }); const url = URL.createObjectURL(blob);
-    const link = document.createElement('a'); link.href = url; link.download = source.name; link.click(); URL.revokeObjectURL(url);
-  };
-
-
-  const STAGES = [['embedding', 'Reading passages'], ['clustering', 'Finding patterns'], ['labelling', 'Naming themes'], ['saving', 'Saving']] as const;
-  const stageIndex = progress?.stage ? STAGES.findIndex(([key]) => key === progress.stage) : -1;
-  const stageFraction = progress && progress.total > 0 ? Math.min(progress.done / progress.total, 1) : 0;
-  const percent = progress?.stage ? Math.round(((Math.max(stageIndex, 0) + (progress.stage === 'labelling' ? stageFraction : 0)) / STAGES.length) * 100) : 0;
-
-  const progressPanel = working === 'pipeline' ? (
-    <div className="panel mb-5 px-4 py-3.5" role="status" aria-live="polite">
-      <div className="flex items-center justify-between gap-3 text-[13px]">
-        <span className="flex items-center gap-2 font-medium text-ink">
-          <LoaderCircle size={14} className="animate-spin text-action"/>
-          {progress?.stage ? STAGES[stageIndex][1] : 'Starting the analysis'}
-          {progress?.stage === 'labelling' && progress.total > 0 ? ` (${progress.done} of ${progress.total} themes)` : ''}
-        </span>
-        <span className="tnum text-muted">{progress?.elapsed_seconds != null ? `${Math.round(progress.elapsed_seconds)}s` : ''}</span>
-      </div>
-      <div className="mt-2.5 h-1 overflow-hidden rounded-full bg-paper"><div className="h-full rounded-full bg-action transition-all duration-500" style={{ width: `${Math.max(percent, 4)}%` }}/></div>
-      <ol className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[12px] text-muted">
-        {STAGES.map(([key, label], index) => <li key={key} className={index < stageIndex ? 'text-action' : index === stageIndex ? 'font-medium text-ink' : ''}>{index < stageIndex ? <Check size={12} className="mr-1 inline"/> : null}{label}</li>)}
-      </ol>
-    </div>
-  ) : null;
 
   const noticeBanner = (<>
-    {progressPanel}
+    <PipelineProgressBar progress={progress} working={working}/>
     {(notice || error) ? (
       <div role={error ? 'alert' : 'status'} className={`mb-5 flex items-start justify-between gap-3 rounded-md border-l-[3px] px-4 py-3 text-[13px] leading-relaxed ${error ? 'border-danger bg-danger-soft text-danger' : 'border-action bg-action-soft text-ink'}`}>
         <p>{error || notice}</p>
@@ -519,56 +495,27 @@ export default function Workspace() {
     ) : null}
   </>);
 
-  const whoSaid = (quote: NonNullable<Theme['cited_quotes']>[number]) => [quote.customer_id, quote.source_name].filter(Boolean).join(', ') || 'From your sources';
-
-  // One theme in the ranked list: rank, title, the strongest quote, the parameters, and the decisions
-  const themeRow = (theme: Theme, index: number) => {
-    const rank = theme.score_breakdown?.rank ?? index + 1;
-    const quote = theme.cited_quotes?.[0];
-    const moreQuotes = (theme.cited_quotes?.length || 0) - 1;
-    const last = theme.activity?.[0];
-    return (
-      <li key={theme.id} className={`grid grid-cols-[1.75rem_minmax(0,1fr)] gap-x-3 px-4 py-6 sm:grid-cols-[2.5rem_minmax(0,1fr)] sm:px-7 ${index ? 'border-t border-rule' : ''}`}>
-        <span className="tnum pt-0.5 text-[22px] font-semibold leading-none text-faint" aria-label={`Rank ${rank}`}>{rank}</span>
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
-            <h3 className="text-[16px] font-semibold leading-snug text-ink">{theme.title}</h3>
-            {typeof theme.priority_score === 'number' && <span className="tnum text-[13px] text-muted"><span className="text-[20px] font-semibold text-ink">{Math.round(theme.priority_score)}</span> / 100</span>}
-          </div>
-          <p className="mt-1 max-w-[70ch] text-muted">{theme.summary}</p>
-          {!theme.score_breakdown && <p className="mt-1 text-[13px] text-muted">{plural(theme.mention_count || 0, 'mention')} from {plural(theme.source_count || 0, 'source')}{theme.revenue_at_risk > 0 ? `, $${theme.revenue_at_risk.toLocaleString('en-US')} a year at risk` : ''}. Analyze again to see how it ranks.</p>}
-          {quote && (
-            <figure className="mt-4 max-w-[68ch]">
-              <blockquote className="quote">“<span className="marked">{quote.quote_text}</span>”</blockquote>
-              <figcaption className="mt-1.5 text-[13px] text-muted">{whoSaid(quote)}{moreQuotes > 0 ? `, and ${plural(moreQuotes, 'more verified quote')}` : ''}</figcaption>
-            </figure>
-          )}
-          <ScoreStrip breakdown={theme.score_breakdown}/>
-          <div className="mt-4 flex flex-wrap items-center gap-x-1.5 gap-y-2">
-            {demoLocked
-              ? <button onClick={() => launchTheme(theme)} disabled={Boolean(working)} title="Shows the PRD Motif would write; nothing is saved" className="btn">{working === theme.id && <LoaderCircle size={14} className="animate-spin"/>} Preview PRD</button>
-              : <button onClick={() => launchTheme(theme)} disabled={Boolean(working) || !canEdit} title="Writes the PRD and opens a GitHub issue" className="btn">{working === theme.id ? <LoaderCircle size={14} className="animate-spin"/> : <Check size={14}/>} Approve</button>}
-            <button onClick={() => openReview(theme)} className="btn-text">Open evidence</button>
-            {!demoLocked && <button onClick={() => dismissTheme(theme)} disabled={Boolean(working) || !canEdit} className="btn-danger">Reject</button>}
-            {last && <span className="w-full text-[13px] text-muted sm:ml-auto sm:w-auto" data-testid="theme-activity">{describeActivity(last)}</span>}
-          </div>
-        </div>
-      </li>
-    );
+  const downloadSource = (source: ProjectSource) => {
+    const blob = new Blob([source.content], { type: 'text/markdown' }); const url = URL.createObjectURL(blob);
+    const link = document.createElement('a'); link.href = url; link.download = source.name; link.click(); URL.revokeObjectURL(url);
   };
 
   const roadmapPanel = (
     <section className="panel overflow-hidden" aria-label="Themes to review">
-      <RankingKey breakdown={pendingThemes.find((theme) => theme.score_breakdown)?.score_breakdown}/>
-      {pendingThemes.length ? <ol>{pendingThemes.map(themeRow)}</ol> : (
+      <RankingKey breakdown={pendingThemes.find((t) => t.score_breakdown)?.score_breakdown}/>
+      {pendingThemes.length ? <ol>{pendingThemes.map((theme, index) => (
+        <ThemeCard key={theme.id} theme={theme} index={index} working={working} canEdit={canEdit} demoLocked={demoLocked} onApprove={launchTheme} onReject={dismissTheme} onOpenEvidence={openReview}/>
+      ))}</ol> : (
         <div className="px-5 py-12 text-center sm:px-7">
-          <p className="font-medium text-ink">{themes.length ? 'Nothing left to review' : 'No themes yet'}</p>
+          <Inbox size={32} className="mx-auto text-faint"/>
+          <p className="mt-3 font-medium text-ink">{themes.length ? 'Nothing left to review' : 'No themes yet'}</p>
           <p className="mx-auto mt-1 max-w-[52ch] text-muted">{themes.length ? 'Every theme has a decision. Approved ones are listed under Approved.' : isDemo ? 'Click Analyze feedback to group the demo data into themes.' : 'Add sources, then click Analyze feedback. A theme needs at least four passages about the same problem.'}</p>
           {!themes.length && !isDemo && <button onClick={() => setTab('sources')} className="btn mt-4">Add sources</button>}
         </div>
       )}
     </section>
   );
+
 
   const approvedPanel = (
     <section className="panel overflow-hidden" aria-label="Approved themes">
@@ -593,7 +540,8 @@ export default function Workspace() {
 
   const sourceKind = (source: ProjectSource) => source.kind === 'meeting' ? 'Recorded conversation' : source.kind === 'drive' ? 'Google Drive' : 'Document';
   const sourcesPanel = activeProject ? (
-    <div className="space-y-5">
+    <div className="space-y-5" onDragOver={onDragOver} onDragLeave={onDragLeave} onDrop={onDrop}>
+      {isDragging && <div className="flex items-center justify-center rounded-lg border-2 border-dashed border-action bg-action-soft px-6 py-10 text-[14px] font-medium text-action"><Upload size={18} className="mr-2"/> Drop files here to import</div>}
       <section className="panel overflow-hidden" aria-label="Files and notes">
         <div className="flex flex-col gap-3 border-b border-rule px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-7">
           <div>
@@ -639,14 +587,6 @@ export default function Workspace() {
     </div>
   ) : null;
 
-  const metricCells = [
-    { label: 'Theme precision (top 3)', value: pct(metrics?.precision_at_3), target: '90% or more', met: meets(metrics?.precision_at_3, 90), measured: metrics?.precision_at_3 != null, sub: metrics?.precision_at_3 == null ? 'Measured after the first analysis' : 'Top 3 themes against the true top 3' },
-    { label: 'Approved without edits', value: pct(metrics?.acceptance_rate), target: '70% or more', met: meets(metrics?.acceptance_rate, 70), measured: metrics?.acceptance_rate != null, sub: metrics?.acceptance_rate == null ? 'No decisions yet' : `Across ${plural(metrics.pm_decisions_count, 'decision')}` },
-    { label: 'Quotes verified', value: pct(metrics?.citation_validity), target: '100%', met: meets(metrics?.citation_validity, 100), measured: metrics?.citation_validity != null, sub: metrics?.citation_validity == null ? 'No quotes stored yet' : `${metrics.verified_quotes_count} of ${metrics.total_quotes_count} found word for word` },
-    { label: 'Analysis time', value: lastRunSeconds === null ? '—' : `${lastRunSeconds}s`, target: 'under 90s', met: lastRunSeconds !== null && lastRunSeconds < 90, measured: lastRunSeconds !== null, sub: lastRunSeconds === null ? 'Shown after the next analysis' : 'Last run, start to ranked themes' },
-    { label: 'Revenue at risk', value: metrics ? `$${Math.round(metrics.total_revenue_at_risk / 1000).toLocaleString('en-US')}k` : '—', target: '', met: false, measured: Boolean(metrics), sub: `Across ${plural(metrics?.total_themes_discovered ?? 0, 'theme')}, each account once` },
-  ];
-
   const demoView = <>
     <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
       <div className="min-w-0">
@@ -659,16 +599,7 @@ export default function Workspace() {
       {noticeBanner}
       {!apiOnline && <p className="mb-5 rounded-md border-l-[3px] border-caution bg-caution-soft px-4 py-3 text-[13px] text-caution">{API_HINT}</p>}
       {apiOnline && metrics && metrics.total_feedback_items === 0 && <p className="mb-5 rounded-md border-l-[3px] border-caution bg-caution-soft px-4 py-3 text-[13px] text-caution">The demo data is not loaded. Run <code>python seed.py</code> in the project folder, then click Analyze feedback.</p>}
-      <dl className="grid grid-cols-1 gap-px overflow-hidden rounded-lg border border-rule bg-rule sm:grid-cols-2 lg:grid-cols-5">
-        {metricCells.map((cell) => (
-          <div key={cell.label} className="bg-surface px-4 py-3.5">
-            <dt className="text-[13px] text-muted">{cell.label}</dt>
-            <dd className="tnum mt-1 text-[24px] font-semibold leading-tight text-ink">{cell.value}</dd>
-            {cell.target && <dd className={`text-[12px] font-medium ${!cell.measured ? 'text-muted' : cell.met ? 'text-action' : 'text-caution'}`}>Target {cell.target}{cell.measured ? (cell.met ? ', met' : ', not yet') : ''}</dd>}
-            <dd className="text-[12px] leading-snug text-muted">{cell.sub}</dd>
-          </div>
-        ))}
-      </dl>
+      <MetricStrip metrics={metrics} lastRunSeconds={lastRunSeconds} isDemo={true}/>
       {metrics && metrics.top_3_breakdown.length > 0 && (
         <section className="panel mt-5 px-5 py-4 sm:px-7">
           <h2 className="text-[15px] font-semibold text-ink">How theme precision was scored</h2>
@@ -703,7 +634,8 @@ export default function Workspace() {
       <div className="mx-auto flex h-14 max-w-[1440px] items-center justify-between gap-3 px-4 md:px-6">
         <div className="flex min-w-0 items-center gap-3">
           <span className="text-[20px] font-bold tracking-[-0.02em] text-ink"><span className="marked">motif</span></span>
-          {!apiOnline && <span className="truncate text-[12px] font-medium text-caution">Not connected to the API</span>}
+          <span className={`h-2 w-2 shrink-0 rounded-full ${apiOnline ? 'bg-action' : 'bg-caution'}`} title={apiOnline ? 'API connected' : 'Not connected to the API'}/>
+          {activeProject && !isDemo && <span className="hidden truncate text-[13px] font-medium text-ink md:inline">{activeProject.name}</span>}
         </div>
         <div className="flex items-center gap-1">
           {userEmail && <span className="mr-2 hidden max-w-[220px] truncate text-[13px] text-muted md:inline" title={userEmail}>{userEmail}</span>}
@@ -773,6 +705,7 @@ export default function Workspace() {
 
             <div className="mt-5">
               {noticeBanner}
+              {tab === 'roadmap' && <div className="mb-5"><MetricStrip metrics={metrics} lastRunSeconds={lastRunSeconds} isDemo={false}/></div>}
               {tab === 'roadmap' ? roadmapPanel : tab === 'sources' ? sourcesPanel : approvedPanel}
             </div>
           </>}
@@ -780,7 +713,7 @@ export default function Workspace() {
       </main>
     </div>
 
-    {showShare && activeProject && <ShareProject projectId={activeProject.id} projectName={activeProject.name} myEmail={userEmail} onClose={() => setShowShare(false)} onLeft={() => { const name = activeProject.name; setShowShare(false); setProjects((current) => current.filter((project) => project.id !== activeProject.id)); setActiveId(''); setNotice(`You left “${name}”.`); }}/>}
+    {showShare && activeProject && <ShareProject projectId={activeProject.id} projectName={activeProject.name} myEmail={userEmail} onClose={() => setShowShare(false)} onLeft={() => { const name = activeProject.name; setShowShare(false); setProjects((current) => current.filter((project) => project.id !== activeProject.id)); setActiveId(''); setNotice(`You left Ã¢â‚¬Å“${name}Ã¢â‚¬Â.`); }}/>}
 
     {showCreate && (
       <div className="modal-backdrop" role="dialog" aria-modal="true" aria-label="New project">
@@ -800,63 +733,7 @@ export default function Workspace() {
       </div>
     )}
 
-    {reviewTheme && (
-      <div className="modal-backdrop" role="dialog" aria-modal="true" aria-label="Theme evidence">
-        <div className="modal-card max-h-[88vh] max-w-2xl overflow-y-auto">
-          <div className="flex items-start justify-between gap-3">
-            <p className="text-[13px] text-muted">{reviewTheme.score_breakdown ? `Ranked ${reviewTheme.score_breakdown.rank} of ${reviewTheme.score_breakdown.of}` : 'Theme'}</p>
-            <button onClick={() => setReviewTheme(null)} aria-label="Close" className="icon-btn -mr-2 -mt-1"><X size={16}/></button>
-          </div>
-          <label className="mt-1 block text-[13px] font-medium text-muted">Title<input value={editTitle} onChange={(event) => setEditTitle(event.target.value)} disabled={!canEdit || demoLocked} className="field mt-1 w-full text-[16px] font-semibold"/></label>
-          <label className="mt-3 block text-[13px] font-medium text-muted">Problem<textarea value={editSummary} onChange={(event) => setEditSummary(event.target.value)} disabled={!canEdit || demoLocked} rows={3} className="field mt-1 w-full resize-y leading-relaxed"/></label>
-          {(editTitle.trim() !== reviewTheme.title || editSummary.trim() !== reviewTheme.summary) && <p className="mt-2 text-[12px] text-caution">Edited. Approving now records it as approved with edits.</p>}
-          {!canEdit && <p className="mt-3 text-[13px] text-muted">You have view-only access, so you can read the evidence but not approve or reject.</p>}
-
-          <h3 className="mt-6 text-[15px] font-semibold text-ink">What customers said</h3>
-          {reviewTheme.cited_quotes?.length ? (
-            <ul className="mt-2">{reviewTheme.cited_quotes.map((quote, index) => (
-              <li key={index} className={`py-3 ${index ? 'border-t border-rule' : ''}`}>
-                <blockquote className="quote">“<span className="marked">{quote.quote_text}</span>”</blockquote>
-                <p className="mt-1 text-[13px] text-muted">{[quote.customer_id, quote.customer_id && quote.customer_tier && quote.customer_tier !== 'free' ? `${quote.customer_tier} plan` : null, quote.source_name].filter(Boolean).join(', ') || 'From your sources'}</p>
-              </li>
-            ))}</ul>
-          ) : <p className="mt-2 text-muted">No verified quotes for this theme.</p>}
-
-          <ScoreProof breakdown={reviewTheme.score_breakdown}/>
-
-          {reviewTheme.activity?.length ? <>
-            <h3 className="mt-6 text-[15px] font-semibold text-ink">History</h3>
-            <ul className="mt-1 text-[13px] text-muted" aria-label="History">{reviewTheme.activity.map((item, index) => <li key={index} className="py-0.5">{describeActivity(item)}</li>)}</ul>
-          </> : null}
-
-          <div className="sticky -bottom-6 -mx-6 -mb-6 mt-6 flex flex-wrap items-center justify-end gap-2 border-t border-rule bg-surface px-6 py-4">
-            <button onClick={() => setReviewTheme(null)} className="btn-text mr-auto">Close</button>
-            {demoLocked ? <button onClick={() => launchTheme(reviewTheme)} disabled={Boolean(working)} className="btn-primary">{working === reviewTheme.id && <LoaderCircle size={14} className="animate-spin"/>} Preview PRD</button> : <>
-              <button onClick={() => dismissTheme(reviewTheme)} disabled={Boolean(working) || !canEdit} className="btn-danger">Reject</button>
-              <button onClick={() => launchTheme(reviewTheme, { title: editTitle, summary: editSummary })} disabled={Boolean(working) || !editTitle.trim() || !canEdit} title="Writes the PRD and opens a GitHub issue" className="btn-primary">{working === reviewTheme.id ? <LoaderCircle size={14} className="animate-spin"/> : <Check size={14}/>} Approve</button>
-            </>}
-          </div>
-        </div>
-      </div>
-    )}
-
-    {prdTheme && (
-      <div className="modal-backdrop" role="dialog" aria-modal="true" aria-label="PRD">
-        <div className="modal-card max-h-[88vh] max-w-2xl overflow-y-auto">
-          <div className="flex items-start justify-between gap-3">
-            <div><p className="text-[13px] text-muted">PRD</p><h2 className="mt-0.5 text-[18px] font-semibold text-ink">{prdTheme.title}</h2></div>
-            <button onClick={() => setPrdTheme(null)} aria-label="Close" className="icon-btn -mr-2 -mt-1"><X size={16}/></button>
-          </div>
-          {prdTheme.github_issue_url
-            ? <a href={prdTheme.github_issue_url} target="_blank" rel="noreferrer" className="mt-4 inline-flex items-center gap-1.5 font-medium text-action hover:underline">Issue #{prdTheme.github_issue_number} is open in GitHub <ExternalLink size={13}/></a>
-            : <p className="mt-4 rounded-md border-l-[3px] border-caution bg-caution-soft px-4 py-3 text-[13px] text-caution">Not sent to GitHub. To open real issues, set GITHUB_TOKEN, GITHUB_REPO_OWNER and GITHUB_REPO_NAME in the backend .env file.</p>}
-          <pre className="mt-4 max-h-[50vh] overflow-auto whitespace-pre-wrap rounded-md bg-paper p-4 font-mono text-[12.5px] leading-relaxed text-ink">{prdTheme.prd_markdown || 'No PRD text came back for this theme.'}</pre>
-          <div className="mt-5 flex justify-end gap-2">
-            {prdTheme.prd_markdown && <button onClick={() => copyPrd(prdTheme.prd_markdown || '')} className="btn"><Clipboard size={14}/>{copied ? 'Copied' : 'Copy PRD'}</button>}
-            <button onClick={() => setPrdTheme(null)} className="btn-primary">Done</button>
-          </div>
-        </div>
-      </div>
-    )}
+    <EvidencePanel theme={reviewTheme} canEdit={canEdit} demoLocked={demoLocked} working={working} onClose={() => setReviewTheme(null)} onApprove={(t, edits) => launchTheme(t, edits)} onReject={dismissTheme}/>
+    <PrdDialog theme={prdTheme} onClose={() => setPrdTheme(null)}/>
   </div>;
 }

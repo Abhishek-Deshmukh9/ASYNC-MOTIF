@@ -38,7 +38,7 @@ export function ScoreStrip({ breakdown }: { breakdown?: Breakdown | null; score?
           const max = signal.max_points ?? signal.weight * 100;
           const isTop = top && top.key === key && signal.points > 0;
           return (
-            <div key={key} data-testid={`param-${key}`} title={signal.how} className={`bg-surface px-3 py-2.5 ${isTop ? 'shadow-[inset_0_2px_0_var(--color-action)]' : ''}`}>
+            <div key={key} data-testid={`param-${key}`} title={signal.how} className={`bg-paper px-3 py-2.5 ${isTop ? 'shadow-[inset_0_2px_0_var(--color-action)]' : ''}`}>
               <dt className="flex items-baseline justify-between gap-2 text-[12px] text-muted">
                 <span>{signal.label}</span>
                 {isTop && <span className="text-[11px] font-medium text-action">biggest factor</span>}

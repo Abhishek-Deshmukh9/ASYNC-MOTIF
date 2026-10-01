@@ -7,7 +7,7 @@
   --color-surface: #ffffff;
   --color-ink: #1f2633;
   --color-muted: #5a6372;
-  --color-faint: #8a93a3;
+  --color-faint: #717a8a;
   --color-rule: #e1e4ea;
   --color-action: #0e6b5f;
   --color-action-strong: #0a5249;
@@ -17,6 +17,9 @@
   --color-danger-soft: #fdecea;
   --color-caution: #8a5a00;
   --color-caution-soft: #fff5d6;
+
+  --color-danger-badge: #fef2f2;
+  --color-caution-badge: #fffbeb;
 
   --font-sans: "Schibsted Grotesk Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-serif: "Newsreader Variable", Georgia, "Times New Roman", serif;
@@ -102,4 +105,28 @@ body {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* Slide-over evidence panel */
+.slide-over {
+  @apply fixed inset-y-0 right-0 z-40 flex w-full max-w-2xl flex-col border-l border-rule bg-surface;
+  box-shadow: -8px 0 40px rgba(31, 38, 51, 0.12);
+  animation: slide-in 200ms ease-out;
+}
+.slide-over-backdrop {
+  @apply fixed inset-0 z-30 bg-ink/20;
+  animation: fade-in 150ms ease-out;
+}
+@keyframes slide-in {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Skeleton loading */
+.skeleton {
+  @apply animate-pulse rounded bg-rule;
 }

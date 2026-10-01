@@ -1,5 +1,5 @@
 import { getAccessToken } from './supabase';
-import { ApprovalResult, Connection, ConnectionOption, ProviderId, SyncResult, EvalMetrics, ProjectSource, ServerProject, Theme, UploadResult, UploadedSource } from './types';
+import { ApprovalResult, Connection, ConnectionOption, Member, MemberList, ProviderId, SyncResult, EvalMetrics, ProjectSource, ServerProject, Theme, UploadResult, UploadedSource } from './types';
 
 export const SIGN_IN_REQUIRED = 'motif:sign-in-required';
 
@@ -24,8 +24,8 @@ export type PipelineResult = { themes_created?: number; duration_seconds?: numbe
 const pipelineStatus = (projectId?: string) => request<PipelineProgress>(`/pipeline/status${scopeQuery(projectId)}`);
 // projectId undefined = the labelled demo corpus loaded by seed.py.
 // The run happens on the server in the background; this polls its progress and resolves with the result.
-export async function runPipeline(projectId?: string, onProgress?: (progress: PipelineProgress) => void): Promise<PipelineResult> {
-  const started = await request<{ status: string }>('/pipeline/run?background=true', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ batch_size: 100, project_id: projectId ?? null }) });
+export async function runPipeline(projectId?: string, onProgress?: (progress: PipelineProgress) => void, profile?: string): Promise<PipelineResult> {
+  const started = await request<{ status: string }>('/pipeline/run?background=true', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ batch_size: 100, project_id: projectId ?? null, ...(profile ? { profile } : {}) }) });
   if (started.status !== 'running') throw new Error('The analysis did not start.');
   let failures = 0;
   for (;;) {
@@ -82,3 +82,10 @@ export const connectionOptions = (id: string) => request<ConnectionOption[]>(`/c
 export const updateConnection = (id: string, config: Record<string, unknown>) => request<Connection>(`/connections/${id}`, { method: 'PATCH', ...json({ config }) });
 export const syncConnection = (id: string) => request<SyncResult>(`/connections/${id}/sync`, { method: 'POST' });
 export const deleteConnection = (id: string, removeSources: boolean) => request<{ sources_removed: number }>(`/connections/${id}?remove_sources=${removeSources}`, { method: 'DELETE' });
+
+// Team projects: the owner invites teammates by email as editors or viewers
+const membersPath = (projectId: string) => `/projects/${encodeURIComponent(projectId)}/members`;
+export const fetchMembers = (projectId: string) => request<MemberList>(membersPath(projectId));
+export const inviteMember = (projectId: string, email: string, role: 'editor' | 'viewer') => request<Member>(membersPath(projectId), { method: 'POST', ...json({ email, role }) });
+export const changeMemberRole = (projectId: string, memberId: string, role: 'editor' | 'viewer') => request<Member>(`${membersPath(projectId)}/${memberId}`, { method: 'PATCH', ...json({ role }) });
+export const removeMember = (projectId: string, memberId: string) => request<{ removed: boolean; left: boolean }>(`${membersPath(projectId)}/${memberId}`, { method: 'DELETE' });

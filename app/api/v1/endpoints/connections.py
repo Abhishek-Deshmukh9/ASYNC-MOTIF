@@ -61,11 +61,11 @@ def _payload(conn: Connection, sources: int = 0) -> Dict[str, Any]:
     }
 
 
-async def _load(db: AsyncSession, connection_id: uuid.UUID, user: Optional[CurrentUser]) -> Connection:
+async def _load(db: AsyncSession, connection_id: uuid.UUID, user: Optional[CurrentUser], need: str = "owner") -> Connection:
     conn = await db.scalar(select(Connection).where(Connection.id == connection_id))
     if conn is None or conn.provider not in PROVIDERS:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Connection not found.")
-    await authorize_project(db, (conn.config or {}).get("project_key") or str(conn.project_id), user)
+    await authorize_project(db, (conn.config or {}).get("project_key") or str(conn.project_id), user, need=need)
     return conn
 
 
@@ -96,7 +96,7 @@ async def create_connection(body: ConnectionCreate, db: AsyncSession = Depends(g
     if body.provider not in PROVIDERS:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Unknown service.")
     project_id = validate_project_id(body.project_id)
-    await authorize_project(db, project_id, user)
+    await authorize_project(db, project_id, user, need="owner")
     provider = PROVIDERS[body.provider](body.credentials)
     try:
         info = await provider.validate()
@@ -144,7 +144,7 @@ def _to_documents(remote: RemoteDoc) -> List[ExtractedDocument]:
 
 @router.post("/{connection_id}/sync", response_model=Dict[str, Any])
 async def sync_connection(connection_id: uuid.UUID, db: AsyncSession = Depends(get_db), user: Optional[CurrentUser] = Depends(get_current_user)):
-    conn = await _load(db, connection_id, user)
+    conn = await _load(db, connection_id, user, need="edit")
     now = datetime.now(timezone.utc)
     if conn.status == "syncing" and conn.last_synced_at is not None and now - conn.last_synced_at < STALE_SYNC:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="A sync is already running for this connection.")

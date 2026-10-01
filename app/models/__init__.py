@@ -1,7 +1,7 @@
 from app.models.feedback import FeedbackItem, theme_feedback_associations
 from app.models.theme import Theme
 from app.models.audit import ApprovalAuditLog
-from app.models.project import Project, Connection, Source, Meeting, MeetingSegment
+from app.models.project import Project, ProjectMember, Connection, Source, Meeting, MeetingSegment
 
 __all__ = [
     "FeedbackItem",
@@ -9,6 +9,7 @@ __all__ = [
     "Theme",
     "ApprovalAuditLog",
     "Project",
+    "ProjectMember",
     "Connection",
     "Source",
     "Meeting",

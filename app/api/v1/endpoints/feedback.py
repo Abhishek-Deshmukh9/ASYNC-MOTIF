@@ -67,7 +67,7 @@ async def upload_feedback_file(
         if None in project_ids or "" in project_ids:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Each record needs metadata.project_id when signed in.")
         for pid in project_ids:
-            await authorize_project(db, pid, user)
+            await authorize_project(db, pid, user, need="edit")
 
     # Persist to database
     db_items: List[FeedbackItem] = []

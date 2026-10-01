@@ -1,4 +1,5 @@
 import asyncio
+from datetime import datetime, timezone
 import logging
 import time
 import uuid
@@ -13,11 +14,31 @@ from app.core.embeddings import embed_all_unembedded_items
 from app.core.clustering import cluster_feedback_embeddings, ClusterResult
 from app.core.llm_labeler import synthesize_cluster_theme
 from app.core.ranker import calculate_revenue_at_risk
+from app.core.scoring import DEFAULT_PROFILE, score_themes
 
 logger = logging.getLogger(__name__)
 
 # progress(stage, done, total): stage is embedding | clustering | labelling | saving
 Progress = Callable[[str, int, int], None]
+
+
+def _event_date(item: Any, project_id: Optional[str]) -> Optional[datetime]:
+    raw = (item.metadata_ or {}).get("occurred_at")
+    if raw:
+        try:
+            parsed = datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
+            return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
+        except ValueError:
+            return None
+    return item.created_at if project_id is None else None
+
+
+def _verified_count(items: List[Dict[str, Any]], quotes: List[str]) -> int:
+    """Messages in the theme that contain one of its quotes word for word: the same count the theme card shows."""
+    return sum(
+        1 for it in items
+        if any(q and q in (it.get("content") or "") + (it.get("clean_content") or "") for q in quotes)
+    )
 
 
 async def run_ai_pipeline(
@@ -26,6 +47,7 @@ async def run_ai_pipeline(
     min_samples: int = 2,
     project_id: Optional[str] = None,
     progress: Optional[Progress] = None,
+    profile: str = DEFAULT_PROFILE,
 ) -> Dict[str, Any]:
     """
     Executes Phase 3 Core AI Processing:
@@ -84,6 +106,11 @@ async def run_ai_pipeline(
                 "churn_risk_flag": bool(item.churn_risk_flag),
                 "source_type": item.source_type,
                 "source_name": (item.metadata_ or {}).get("source_name"),
+                "speaker": item.speaker,
+                "source_id": str(item.source_id) if item.source_id else None,
+                # Real event date: carried in metadata by connectors; the seeded demo corpus stores it in created_at.
+                # Upload time is not an event date, so projects without a carried date get none.
+                "occurred_at": _event_date(item, project_id),
                 "embedding": item.embedding,
             }
             for item in db_items
@@ -133,6 +160,22 @@ async def run_ai_pipeline(
     ]
     cluster_payloads = await asyncio.gather(*tasks)
 
+    # Transparent ranking: every theme gets a priority score plus the signals, evidence and reasons behind it
+    all_sources = {s for it in items_for_clustering for s in [it.get("source_name") or it.get("source_type")] if s}
+    breakdowns = score_themes(
+        [
+            {
+                "items": c_items,
+                "cohesion": cluster_res.cohesion_scores.get(cluster_id, 1.0),
+                "verified_quotes": _verified_count(c_items, synthesized.cited_quotes),
+            }
+            for cluster_id, c_items, synthesized, _ in cluster_payloads
+        ],
+        profile=profile,
+        project_source_count=len(all_sources),
+    )
+    breakdown_by_cluster = {payload[0]: breakdowns[i] for i, payload in enumerate(cluster_payloads)}
+
     # Step 5: Fast atomic persistence to database
     report("saving", total_clusters, total_clusters)
     created_themes: List[Dict[str, Any]] = []
@@ -157,6 +200,8 @@ async def run_ai_pipeline(
                 summary=synthesized.problem_statement,
                 revenue_at_risk=risk_metrics["revenue_at_risk"],
                 affected_accounts_count=risk_metrics["affected_accounts_count"],
+                priority_score=breakdown_by_cluster[cluster_id]["priority_score"],
+                score_breakdown=breakdown_by_cluster[cluster_id],
                 status="pending_review",
             )
             session.add(theme_record)
@@ -189,6 +234,7 @@ async def run_ai_pipeline(
                 "cluster_id": cluster_id,
                 "title": synthesized.title,
                 "revenue_at_risk": risk_metrics["revenue_at_risk"],
+                "priority_score": breakdown_by_cluster[cluster_id]["priority_score"],
                 "affected_accounts": risk_metrics["affected_accounts_count"],
                 "cited_quotes": synthesized.cited_quotes,
             })
@@ -198,8 +244,8 @@ async def run_ai_pipeline(
 
         await session.commit()
 
-    # Sort themes by revenue at risk descending
-    created_themes.sort(key=lambda x: x["revenue_at_risk"], reverse=True)
+    # Sort themes by priority score, then revenue at risk
+    created_themes.sort(key=lambda x: (x["priority_score"], x["revenue_at_risk"]), reverse=True)
 
     logger.info(f">>> Motif AI Pipeline Finished: {len(created_themes)} themes created and persisted. <<<")
 

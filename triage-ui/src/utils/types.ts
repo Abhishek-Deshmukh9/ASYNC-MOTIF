@@ -1,3 +1,16 @@
+export type ScoreSignal = {
+  key: string; label: string; raw: number; display: string; percentile: number; weight: number; points: number;
+  evidence: Record<string, unknown>[]; why: string; how: string;
+  value?: string; note?: string; max_points?: number; // short form for the theme card
+};
+
+export type ScoreBreakdown = {
+  version: number; profile: string; profile_label: string; priority_score: number; rank: number; of: number; verdict: string;
+  signals: ScoreSignal[];
+  dropped: { key: string; label: string; reason: string; short?: string }[];
+  confidence: { cohesion: number; verified_quotes: number; mentions: number; level: 'supported' | 'thin' };
+};
+
 export type Theme = {
   id: string;
   cluster_id: number;
@@ -10,6 +23,9 @@ export type Theme = {
   github_issue_url?: string | null;
   github_issue_number?: number | null;
   cited_quotes?: { quote_text: string; customer_id?: string | null; customer_tier?: string | null; arr_value?: number; source_name?: string | null }[];
+  priority_score?: number | null; // 0-100, built from the signals in score_breakdown
+  score_breakdown?: ScoreBreakdown | null;
+  activity?: ThemeActivity[];
   mention_count?: number; // passages grouped into this theme
   source_count?: number; // distinct uploaded sources among them
 };
@@ -25,9 +41,17 @@ export type ProjectSource = {
   passages?: number; // how many passages the backend split it into
 };
 
-export type ServerProject = { id: string; name: string; github_repo: string | null; created_at: string | null };
+export type ProjectRole = 'owner' | 'editor' | 'viewer';
+export type ServerProject = { id: string; name: string; github_repo: string | null; created_at: string | null; role?: ProjectRole; owner_email?: string | null };
 
-export type Project = { id: string; name: string; repo?: string; driveFolder?: string; sources: ProjectSource[] };
+// Teammates on a project (GET /projects/{id}/members)
+export type Member = { id: string; email: string; role: 'editor' | 'viewer'; status: 'joined' | 'invited'; invited_by?: string | null; joined_at?: string | null };
+export type MemberList = { owner_email: string | null; my_role: ProjectRole; members: Member[] };
+
+// Who approved, edited or rejected a theme, newest first
+export type ThemeActivity = { action: string; by: string; at: string | null; title?: string | null; changed_title?: boolean };
+
+export type Project = { id: string; name: string; repo?: string; driveFolder?: string; sources: ProjectSource[]; role?: ProjectRole; ownerEmail?: string | null };
 
 // Benchmark metrics from GET /api/v1/metrics/eval. A metric is null when there is nothing
 // to measure yet (no themes, no PM decisions, no quotes, or no ground-truth labels).

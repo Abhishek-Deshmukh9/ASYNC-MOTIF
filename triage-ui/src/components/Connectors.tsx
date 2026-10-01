@@ -12,6 +12,7 @@ type Props = {
   onClose: () => void;
   onSynced: () => void;        // reload the project's sources after a sync
   onMessage: (text: string, isError?: boolean) => void;
+  role?: 'owner' | 'editor' | 'viewer'; // owner connects and disconnects; editors can sync; viewers only look
 };
 
 const PROVIDERS: { id: ProviderId; name: string; blurb: string; icon: React.ReactNode }[] = [
@@ -54,7 +55,9 @@ const summary = (r: SyncResult) => {
   return `${parts.length ? parts.join(', ') : 'Nothing to import yet'}.${failed}`;
 };
 
-export default function Connectors({ projectId, projectName, open, onClose, onSynced, onMessage }: Props) {
+export default function Connectors({ projectId, projectName, open, onClose, onSynced, onMessage, role = 'owner' }: Props) {
+  const isOwner = role === 'owner';
+  const canSync = role !== 'viewer';
   const [connections, setConnections] = useState<Connection[]>([]);
   const [busy, setBusy] = useState('');
   const [picker, setPicker] = useState<ProviderId | null>(null);     // credential form for a provider
@@ -154,10 +157,10 @@ export default function Connectors({ projectId, projectName, open, onClose, onSy
               </div>
             </div>
             {connection ? <div className="flex items-center gap-1">
-              <button onClick={() => runSync(connection)} disabled={busy === connection.id} title="Sync now" aria-label={`Sync ${provider.name}`} className="icon-btn !h-8 !w-8">{busy === connection.id ? <LoaderCircle size={14} className="animate-spin"/> : <RefreshCw size={14}/>}</button>
-              {provider.id !== 'github' && <button onClick={() => openScope(connection)} className="rounded-lg border border-slate-200 px-2.5 py-1.5 text-[11px] font-medium text-slate-700 hover:bg-slate-50">Choose</button>}
-              <button onClick={() => disconnect(connection)} title="Disconnect" aria-label={`Disconnect ${provider.name}`} className="icon-btn !h-8 !w-8"><Trash2 size={14}/></button>
-            </div> : <button onClick={() => { setPicker(provider.id); setSecret(''); setRepo(''); setFormError(''); }} className="rounded-lg bg-[#0f766e] px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-[#115e59]">Connect</button>}
+              {canSync && <button onClick={() => runSync(connection)} disabled={busy === connection.id} title="Sync now" aria-label={`Sync ${provider.name}`} className="icon-btn !h-8 !w-8">{busy === connection.id ? <LoaderCircle size={14} className="animate-spin"/> : <RefreshCw size={14}/>}</button>}
+              {isOwner && provider.id !== 'github' && <button onClick={() => openScope(connection)} className="rounded-lg border border-slate-200 px-2.5 py-1.5 text-[11px] font-medium text-slate-700 hover:bg-slate-50">Choose</button>}
+              {isOwner && <button onClick={() => disconnect(connection)} title="Disconnect" aria-label={`Disconnect ${provider.name}`} className="icon-btn !h-8 !w-8"><Trash2 size={14}/></button>}
+            </div> : !isOwner ? <span className="text-[10px] text-slate-400">Owner connects</span> : <button onClick={() => { setPicker(provider.id); setSecret(''); setRepo(''); setFormError(''); }} className="rounded-lg bg-[#0f766e] px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-[#115e59]">Connect</button>}
           </div>;
         })}
       </div>

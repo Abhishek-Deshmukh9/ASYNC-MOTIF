@@ -66,7 +66,7 @@ async def upload_sources(
     if len(files) > MAX_FILES_PER_REQUEST:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Upload at most {MAX_FILES_PER_REQUEST} files at a time.")
 
-    await authorize_project(db, project_id, user)
+    await authorize_project(db, project_id, user, need="edit")
     pid = await ensure_project(db, project_id, project_name, user)
     await db.commit()
 
@@ -169,7 +169,7 @@ async def list_sources(project_id: str, db: AsyncSession = Depends(get_db), user
 async def delete_source(source_id: uuid.UUID, project_id: str, db: AsyncSession = Depends(get_db), user: Optional[CurrentUser] = Depends(get_current_user)):
     """Remove a source and its passages from the project. Themes are rebuilt on the next analysis."""
     project_id = validate_project_id(project_id)
-    await authorize_project(db, project_id, user)
+    await authorize_project(db, project_id, user, need="edit")
     source = await db.scalar(select(Source).where(Source.id == source_id, Source.project_id == project_uuid(project_id)))
     if source is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Source not found in this project.")

@@ -22,6 +22,48 @@ from app.config import settings
 
 logger = logging.getLogger(__name__)
 
+DECIDED = ("approved", "rejected")
+
+
+async def _activity(db: AsyncSession, theme_ids: List[UUID]) -> Dict[UUID, List[Dict[str, Any]]]:
+    """Who did what to each theme, newest first, from the audit log."""
+    if not theme_ids:
+        return {}
+    rows = (await db.execute(
+        select(ApprovalAuditLog.theme_id, ApprovalAuditLog.action, ApprovalAuditLog.pm_user_id, ApprovalAuditLog.timestamp, ApprovalAuditLog.original_title, ApprovalAuditLog.final_title)
+        .where(ApprovalAuditLog.theme_id.in_(theme_ids))
+        .order_by(desc(ApprovalAuditLog.timestamp))
+    )).all()
+    out: Dict[UUID, List[Dict[str, Any]]] = {}
+    for row in rows:
+        out.setdefault(row.theme_id, []).append({
+            "action": row.action, "by": row.pm_user_id,
+            "at": row.timestamp.isoformat() if row.timestamp else None, "title": row.final_title,
+            "changed_title": bool(row.original_title and row.final_title and row.original_title != row.final_title),
+        })
+    return out
+
+
+async def _lock_undecided(db: AsyncSession, theme_id: UUID) -> Theme:
+    """
+    Lock the theme row for the rest of this request, so two teammates acting at once are handled one at a
+    time. If someone already approved or rejected it, stop and say who, instead of acting twice.
+    """
+    theme = await db.scalar(select(Theme).where(Theme.id == theme_id).with_for_update().execution_options(populate_existing=True))
+    if theme is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Theme {theme_id} not found")
+    if theme.status in DECIDED:
+        by = await db.scalar(
+            select(ApprovalAuditLog.pm_user_id)
+            .where(ApprovalAuditLog.theme_id == theme.id, ApprovalAuditLog.action == theme.status)
+            .order_by(desc(ApprovalAuditLog.timestamp)).limit(1)
+        )
+        decided = theme.status
+        await db.rollback()
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"Already {decided} by {by or 'a teammate'}. Refresh to see the latest.")
+    return theme
+
+
 router = APIRouter(prefix="/themes", tags=["Themes"])
 
 
@@ -48,7 +90,7 @@ async def list_themes(
     )
     query = (
         select(Theme)
-        .order_by(desc(Theme.revenue_at_risk), desc(mentions), desc(Theme.created_at))
+        .order_by(Theme.priority_score.desc().nulls_last(), desc(Theme.revenue_at_risk), desc(mentions), desc(Theme.created_at))
         .offset(offset)
         .limit(limit)
     )
@@ -64,6 +106,7 @@ async def list_themes(
         return response
 
     theme_ids = [t.id for t in themes]
+    activity = await _activity(db, theme_ids)
     assoc_query = (
         select(
             theme_feedback_associations.c.theme_id,
@@ -127,6 +170,9 @@ async def list_themes(
                 affected_accounts_count=t.affected_accounts_count or 0,
                 status=t.status,
                 prd_markdown=t.prd_markdown,
+                priority_score=float(t.priority_score) if t.priority_score is not None else None,
+                score_breakdown=t.score_breakdown,
+                activity=activity.get(t.id, []),
                 github_issue_url=t.github_issue_url,
                 github_issue_number=t.github_issue_number,
                 created_at=t.created_at,
@@ -201,6 +247,9 @@ async def get_theme(
         affected_accounts_count=theme.affected_accounts_count or 0,
         status=theme.status,
         prd_markdown=theme.prd_markdown,
+        priority_score=float(theme.priority_score) if theme.priority_score is not None else None,
+        score_breakdown=theme.score_breakdown,
+        activity=(await _activity(db, [theme.id])).get(theme.id, []),
         github_issue_url=theme.github_issue_url,
         github_issue_number=theme.github_issue_number,
         created_at=theme.created_at,
@@ -227,9 +276,12 @@ async def update_theme(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Theme {theme_id} not found",
         )
-    await authorize_project(db, theme.project_id, user)
+    await authorize_project(db, theme.project_id, user, need="edit")
     if demo_is_locked(project_id=theme.project_id, signed_in=user is not None, writable=settings.DEMO_WRITABLE):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=DEMO_READ_ONLY_MESSAGE)
+    if payload.status is not None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Use Approve or Reject to change a theme's status.")
+    theme = await _lock_undecided(db, theme_id)
 
     if user is not None:
         pm_user_id = user.email or user.id
@@ -285,7 +337,8 @@ async def approve_and_dispatch_theme(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Theme {theme_id} not found",
         )
-    await authorize_project(db, theme.project_id, user)
+    await authorize_project(db, theme.project_id, user, need="edit")
+    theme = await _lock_undecided(db, theme_id)
 
     # A project's issues go to its own saved repository, else the backend's configured one.
     # The shared demo never opens real issues for signed-in users, and a request cannot steer
@@ -444,10 +497,11 @@ async def reject_theme(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Theme {theme_id} not found",
         )
-    await authorize_project(db, theme.project_id, user)
+    await authorize_project(db, theme.project_id, user, need="edit")
     if demo_is_locked(project_id=theme.project_id, signed_in=user is not None, writable=settings.DEMO_WRITABLE):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=DEMO_READ_ONLY_MESSAGE)
 
+    theme = await _lock_undecided(db, theme_id)
     if user is not None:
         pm_user_id = user.email or user.id
     theme.status = "rejected"

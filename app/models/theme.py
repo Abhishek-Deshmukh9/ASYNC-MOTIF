@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime, timezone
 from sqlalchemy import Column, String, Text, Numeric, Integer, DateTime
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import relationship
 
 from app.db.base import Base
@@ -23,6 +23,9 @@ class Theme(Base):
         default="pending_review",
     )  # 'pending_review', 'approved', 'rejected', 'shipped'
     prd_markdown = Column(Text, nullable=True)
+    # Transparent ranking (migration 004): the score and the signals, evidence and reasons behind it
+    priority_score = Column(Numeric(6, 2), nullable=True)
+    score_breakdown = Column(JSONB, nullable=True)
     github_issue_url = Column(String(500), nullable=True)
     github_issue_number = Column(Integer, nullable=True)
     created_at = Column(
